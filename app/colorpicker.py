@@ -379,4 +379,3 @@ def getColor(lc: tuple = None) -> tuple:
         __instance = ColorPicker(useAlpha=__useAlpha, lightTheme=__lightTheme)
 
     return __instance.getColor(lc)
-

@@ -5,7 +5,7 @@
 """
 
 from typing import Optional, Tuple
-from colorpicker import (
+from app import (
     ColorPicker, 
     get_color, 
     use_alpha, 
