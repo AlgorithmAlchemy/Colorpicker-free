@@ -107,9 +107,6 @@ strict_equality = true
 [[tool.mypy.overrides]]
 module = [
     "qtpy.*",
-    "PyQt5.*",
-    "PyQt6.*",
-    "PySide2.*",
     "PySide6.*",
 ]
 ignore_missing_imports = true
