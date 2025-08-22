@@ -8,7 +8,6 @@ from typing import Optional, Tuple
 from .simple_picker import get_simple_color, SimpleColorPicker
 from .config import get_config, use_light_theme, use_alpha
 
-
 # Глобальный экземпляр пикера
 _instance: Optional[SimpleColorPicker] = None
 
@@ -29,17 +28,16 @@ def get_color(initial_color: Optional[Tuple] = None) -> Tuple:
         >>> color = get_color((255, 0, 0, 50))  # с альфа-каналом
     """
     global _instance
-    
+
     # Получение текущей конфигурации
     config = get_config()
-    
+
     # Создание нового экземпляра если не существует или настройки изменились
     if _instance is None or config.use_alpha != _instance.use_alpha:
-        
         _instance = SimpleColorPicker(
             use_alpha=config.use_alpha
         )
-    
+
     return _instance.get_color(initial_color)
 
 
@@ -56,4 +54,3 @@ def reset_instance() -> None:
     """
     global _instance
     _instance = None
-
