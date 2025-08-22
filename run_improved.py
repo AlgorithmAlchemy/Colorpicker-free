@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Desktop Color Picker с пипеткой
+Desktop Color Picker с пипеткой - Улучшенная версия
 
 Показывает координаты курсора и позволяет захватывать цвет с экрана.
 Используйте CTRL для захвата цвета.
@@ -9,10 +9,35 @@ Desktop Color Picker с пипеткой
 import sys
 import subprocess
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
+    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QThread, Signal
+from PySide6.QtGui import QColor
 import pyautogui
+
+
+class ColorCaptureThread(QThread):
+    """Поток для захвата цвета без блокировки UI."""
+    color_captured = Signal(str, int, int, int, str)  # hex, r, g, b, coords
+    error_occurred = Signal(str)
+    
+    def __init__(self, x, y):
+        super().__init__()
+        self.x = x
+        self.y = y
+    
+    def run(self):
+        try:
+            # Получаем цвет под курсором
+            pixel_color = pyautogui.pixel(self.x, self.y)
+            r, g, b = pixel_color
+            hex_color = f"#{r:02x}{g:02x}{b:02x}"
+            
+            # Отправляем результат в основной поток
+            self.color_captured.emit(hex_color, r, g, b, f"({self.x}, {self.y})")
+            
+        except Exception as e:
+            self.error_occurred.emit(str(e))
 
 
 class DesktopColorPicker(QWidget):
@@ -20,14 +45,15 @@ class DesktopColorPicker(QWidget):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Desktop Color Picker")
-        self.setFixedSize(300, 200)
+        self.setWindowTitle("Desktop Color Picker - Улучшенная версия")
+        self.setFixedSize(320, 200)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         
         # Переменные
         self.captured_colors = []
         self.is_capturing = False
         self._capturing = False  # Флаг для защиты от повторных вызовов
+        self.capture_thread = None
         
         # Создание UI
         self.setup_ui()
@@ -59,6 +85,13 @@ class DesktopColorPicker(QWidget):
         self.color_label = QLabel("Цвет: #000000")
         self.color_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.color_label)
+        
+        # Статус (скрыт по умолчанию)
+        self.status_label = QLabel("")
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("color: #00ff00; font-size: 10px;")
+        self.status_label.setVisible(False)  # Скрываем по умолчанию
+        layout.addWidget(self.status_label)
         
         # Кнопка захвата
         self.capture_btn = QPushButton("CTRL - Захватить цвет")
@@ -105,7 +138,7 @@ class DesktopColorPicker(QWidget):
     def update_coordinates(self):
         """Обновляет координаты курсора и цвет под ним."""
         # Защита от частых обновлений во время захвата
-        if hasattr(self, '_capturing') and self._capturing:
+        if self._capturing:
             return
             
         try:
@@ -146,46 +179,67 @@ class DesktopColorPicker(QWidget):
     def capture_color(self):
         """Захватывает текущий цвет."""
         # Защита от повторных вызовов
-        if hasattr(self, '_capturing') and self._capturing:
+        if self._capturing:
             return
         
         self._capturing = True
+        self.status_label.setText("Захватываю цвет...")
+        self.status_label.setStyleSheet("color: #ffff00; font-size: 10px;")
+        self.status_label.setVisible(True)  # Показываем только при захвате
         
         try:
             # Получаем позицию курсора
             cursor_pos = pyautogui.position()
             x, y = cursor_pos.x, cursor_pos.y
             
-            # Получаем цвет под курсором
-            pixel_color = pyautogui.pixel(x, y)
-            r, g, b = pixel_color
-            hex_color = f"#{r:02x}{g:02x}{b:02x}"
-            
-            # Добавляем в список захваченных цветов
-            self.captured_colors.append({
-                'coords': (x, y),
-                'color': (r, g, b),
-                'hex': hex_color
-            })
-            
-            print(f"Захвачен цвет: {hex_color} RGB({r}, {g}, {b}) в позиции ({x}, {y})")
-            
-            # Показываем уведомление
-            self.capture_btn.setText(f"Захвачен: {hex_color}")
-            
-            # Сбрасываем текст кнопки через 1 секунду
-            QTimer.singleShot(1000, self.reset_capture_button)
+            # Создаем поток для захвата цвета
+            self.capture_thread = ColorCaptureThread(x, y)
+            self.capture_thread.color_captured.connect(self.on_color_captured)
+            self.capture_thread.error_occurred.connect(self.on_capture_error)
+            self.capture_thread.finished.connect(self.on_capture_finished)
+            self.capture_thread.start()
             
         except Exception as e:
-            print(f"Ошибка захвата цвета: {e}")
-            self.capture_btn.setText("Ошибка захвата")
-            QTimer.singleShot(1000, self.reset_capture_button)
-        finally:
-            self._capturing = False
+            self.on_capture_error(str(e))
+    
+    def on_color_captured(self, hex_color, r, g, b, coords):
+        """Обработчик успешного захвата цвета."""
+        # Добавляем в список захваченных цветов
+        self.captured_colors.append({
+            'coords': coords,
+            'color': (r, g, b),
+            'hex': hex_color
+        })
+        
+        print(f"Захвачен цвет: {hex_color} RGB({r}, {g}, {b}) в позиции {coords}")
+        
+        # Показываем уведомление
+        self.capture_btn.setText(f"Захвачен: {hex_color}")
+        self.status_label.setText(f"Захвачен: {hex_color}")
+        self.status_label.setStyleSheet("color: #00ff00; font-size: 10px;")
+        
+        # Сбрасываем текст кнопки через 2 секунды
+        QTimer.singleShot(2000, self.reset_capture_button)
+    
+    def on_capture_error(self, error_msg):
+        """Обработчик ошибки захвата."""
+        print(f"Ошибка захвата цвета: {error_msg}")
+        self.capture_btn.setText("Ошибка захвата")
+        self.status_label.setText("Ошибка захвата")
+        self.status_label.setStyleSheet("color: #ff0000; font-size: 10px;")
+        
+        # Сбрасываем через 2 секунды
+        QTimer.singleShot(2000, self.reset_capture_button)
+    
+    def on_capture_finished(self):
+        """Обработчик завершения захвата."""
+        self._capturing = False
+        self.capture_thread = None
     
     def reset_capture_button(self):
         """Сбрасывает текст кнопки захвата."""
         self.capture_btn.setText("CTRL - Захватить цвет")
+        self.status_label.setVisible(False)  # Скрываем статус
             
     def keyPressEvent(self, event):
         """Обработка нажатий клавиш."""
@@ -206,6 +260,13 @@ class DesktopColorPicker(QWidget):
         """Обработка движения мыши для перетаскивания окна."""
         if event.buttons() == Qt.LeftButton:
             self.move(event.globalPosition().toPoint() - self.drag_position)
+    
+    def closeEvent(self, event):
+        """Обработчик закрытия окна."""
+        if self.capture_thread and self.capture_thread.isRunning():
+            self.capture_thread.terminate()
+            self.capture_thread.wait()
+        event.accept()
 
 
 def check_dependencies():
@@ -240,29 +301,11 @@ def check_dependencies():
     
     return dependencies_ok
 
-def install_dependencies():
-    """Устанавливает зависимости."""
-    print("🔧 Установка зависимостей...")
-    try:
-        # Устанавливаем только основные зависимости
-        subprocess.run([
-            sys.executable, "-m", "pip", "install", 
-            "PySide6", "pyautogui"
-        ], check=True)
-        
-        print("✅ Основные зависимости установлены")
-        print("💡 NumPy можно установить позже для лучшей производительности")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Ошибка установки: {e}")
-        print("💡 Попробуйте установить вручную:")
-        print("   pip install PySide6 pyautogui")
-        return False
 
 def main():
     """Основная функция."""
-    print("🎨 Desktop Color Picker")
-    print("=" * 30)
+    print("🎨 Desktop Color Picker - Улучшенная версия")
+    print("=" * 40)
     
     # Проверяем зависимости
     if not check_dependencies():
@@ -293,8 +336,29 @@ def main():
     print("   - Нажмите CTRL или кнопку для захвата цвета")
     print("   - ESC для выхода")
     print("   - Перетаскивайте окно мышью")
+    print("   - Статус захвата отображается в реальном времени")
     
     return app.exec()
+
+
+def install_dependencies():
+    """Устанавливает зависимости."""
+    print("🔧 Установка зависимостей...")
+    try:
+        # Устанавливаем только основные зависимости
+        subprocess.run([
+            sys.executable, "-m", "pip", "install", 
+            "PySide6", "pyautogui"
+        ], check=True)
+        
+        print("✅ Основные зависимости установлены")
+        print("💡 NumPy можно установить позже для лучшей производительности")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Ошибка установки: {e}")
+        print("💡 Попробуйте установить вручную:")
+        print("   pip install PySide6 pyautogui")
+        return False
 
 
 if __name__ == "__main__":
