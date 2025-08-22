@@ -9,9 +9,9 @@
 import sys
 import time
 from typing import Optional, Tuple
-from qtpy.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
-from qtpy.QtCore import Qt, QTimer, QPoint
-from qtpy.QtGui import QPixmap, QPainter, QColor, QFont, QPalette
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from PySide6.QtCore import Qt, QTimer, QPoint
+from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QPalette
 import pyautogui
 
 
