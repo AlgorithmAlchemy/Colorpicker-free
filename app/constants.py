@@ -41,7 +41,7 @@ DEFAULT_COLOR_WITH_ALPHA = (0, 0, 0, 100)
 # Форматы цветов
 COLOR_FORMATS = {
     "RGB": "rgb",
-    "RGBA": "rgba", 
+    "RGBA": "rgba",
     "HSV": "hsv",
     "HSVA": "hsva",
     "HEX": "hex"
@@ -70,4 +70,3 @@ WARNING_MESSAGES = {
     "DEPRECATED_USEALPHA": "useAlpha() устарела. Используйте use_alpha() вместо неё.",
     "DEPRECATED_USELIGHTTHEME": "useLightTheme() устарела. Используйте use_light_theme() вместо неё."
 }
-

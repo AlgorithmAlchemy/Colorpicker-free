@@ -32,41 +32,41 @@ def main():
     """Основная функция настройки."""
     print("🚀 Настройка среды разработки colorpicker")
     print("=" * 50)
-    
+
     # Проверка Python версии
     if sys.version_info < (3, 8):
         print("❌ Требуется Python 3.8 или выше")
         sys.exit(1)
-    
+
     print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
-    
+
     # Установка зависимостей для разработки
     commands = [
         (["pip", "install", "-e", "."], "Установка пакета в режиме разработки"),
         (["pip", "install", "-e", ".[dev]"], "Установка зависимостей для разработки"),
         (["pip", "install", "-e", ".[docs]"], "Установка зависимостей для документации"),
     ]
-    
+
     success = True
     for command, description in commands:
         if not run_command(command, description):
             success = False
             break
-    
+
     if success:
         print("\n🎉 Настройка завершена успешно!")
         print("\nДоступные команды:")
         print("  pytest tests/                    # Запуск тестов")
-            print("  black colorpicker/              # Форматирование кода")
-    print("  isort colorpicker/              # Сортировка импортов")
-    print("  flake8 colorpicker/             # Проверка стиля кода")
-    print("  mypy colorpicker/               # Проверка типов")
-    print("  python -m colorpicker           # Запуск цветового пикера")
-    else:
-        print("\n❌ Настройка завершена с ошибками")
-        sys.exit(1)
+        print("  black colorpicker/              # Форматирование кода")
 
+
+print("  isort colorpicker/              # Сортировка импортов")
+print("  flake8 colorpicker/             # Проверка стиля кода")
+print("  mypy colorpicker/               # Проверка типов")
+print("  python -m colorpicker           # Запуск цветового пикера")
+else:
+print("\n❌ Настройка завершена с ошибками")
+sys.exit(1)
 
 if __name__ == "__main__":
     main()
-
