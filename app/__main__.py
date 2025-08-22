@@ -29,25 +29,25 @@ def parse_arguments() -> argparse.Namespace:
   python -m app -l -a              # Светлая тема + альфа-канал
         """
     )
-    
+
     parser.add_argument(
         "-l", "--light-theme",
         action="store_true",
         help="использовать светлую тему интерфейса"
     )
-    
+
     parser.add_argument(
         "-a", "--alpha",
         action="store_true",
         help="включить поддержку альфа-канала"
     )
-    
+
     parser.add_argument(
         "-v", "--version",
         action="version",
         version="app 2.0.0"
     )
-    
+
     return parser.parse_args()
 
 
@@ -60,26 +60,26 @@ def main() -> int:
     """
     try:
         args = parse_arguments()
-        
+
         # Настройка темы
         if args.light_theme:
             use_light_theme(True)
             print("Используется светлая тема")
-        
+
         # Настройка альфа-канала
         if args.alpha:
             use_alpha(True)
             print("Включена поддержка альфа-канала")
-        
+
         # Сброс экземпляра для применения новых настроек
         reset_instance()
-        
+
         print("Открывается цветовой пикер...")
         print("Выберите цвет и нажмите OK, или Cancel для отмены")
-        
+
         # Открытие пикера
         color = get_color()
-        
+
         if color:
             if len(color) == 4:
                 r, g, b, a = color
@@ -93,7 +93,7 @@ def main() -> int:
         else:
             print("Выбор цвета отменен")
             return 1
-            
+
     except KeyboardInterrupt:
         print("\nОперация прервана пользователем")
         return 1
