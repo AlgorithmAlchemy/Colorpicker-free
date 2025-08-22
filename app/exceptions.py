@@ -12,7 +12,7 @@ class ColorPickerError(Exception):
 
 class ColorFormatError(ColorPickerError):
     """Исключение для ошибок формата цвета."""
-    
+
     def __init__(self, message: str, color_value=None):
         super().__init__(message)
         self.color_value = color_value
@@ -30,9 +30,8 @@ class UIError(ColorPickerError):
 
 class ValidationError(ColorPickerError):
     """Исключение для ошибок валидации."""
-    
+
     def __init__(self, message: str, field_name: str = None, value=None):
         super().__init__(message)
         self.field_name = field_name
         self.value = value
-
