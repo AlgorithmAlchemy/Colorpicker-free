@@ -62,7 +62,7 @@ class EventBus:
     
     Централизованная система для управления событиями между компонентами.
     """
-    
+
     def __init__(self):
         self._handlers: Dict[EventType, List[EventHandler]] = defaultdict(list)
         self._event_history: List[Event] = []
@@ -70,9 +70,9 @@ class EventBus:
         self._lock = threading.RLock()
         self._async_loop: Optional[asyncio.AbstractEventLoop] = None
         self._enabled = True
-    
-    def subscribe(self, 
-                  event_type: EventType, 
+
+    def subscribe(self,
+                  event_type: EventType,
                   callback: Callable[[Event], None],
                   priority: EventPriority = EventPriority.NORMAL,
                   async_handler: bool = False,
@@ -99,14 +99,14 @@ class EventBus:
             one_time=one_time,
             filter_func=filter_func
         )
-        
+
         with self._lock:
             self._handlers[event_type].append(handler)
             # Сортируем по приоритету
             self._handlers[event_type].sort(key=lambda h: h.priority.value, reverse=True)
-        
+
         return f"{event_type.value}_{id(handler)}"
-    
+
     def unsubscribe(self, event_type: EventType, callback: Callable[[Event], None]):
         """
         Отписывается от события.
@@ -118,10 +118,10 @@ class EventBus:
         with self._lock:
             if event_type in self._handlers:
                 self._handlers[event_type] = [
-                    h for h in self._handlers[event_type] 
+                    h for h in self._handlers[event_type]
                     if h.callback != callback
                 ]
-    
+
     def publish(self, event: Event) -> bool:
         """
         Публикует событие.
@@ -134,36 +134,36 @@ class EventBus:
         """
         if not self._enabled:
             return False
-        
+
         # Добавляем в историю
         self._add_to_history(event)
-        
+
         # Получаем обработчики
         handlers = self._get_handlers(event.type)
-        
+
         if not handlers:
             return True
-        
+
         # Фильтруем обработчики
         filtered_handlers = [
-            h for h in handlers 
+            h for h in handlers
             if h.filter_func is None or h.filter_func(event)
         ]
-        
+
         # Выполняем обработчики
         success = True
         one_time_handlers = []
-        
+
         for handler in filtered_handlers:
             try:
                 if handler.async_handler:
                     self._schedule_async_handler(handler, event)
                 else:
                     handler.callback(event)
-                
+
                 if handler.one_time:
                     one_time_handlers.append(handler)
-                    
+
             except Exception as e:
                 success = False
                 # Публикуем событие об ошибке
@@ -173,7 +173,7 @@ class EventBus:
                     priority=EventPriority.HIGH
                 )
                 self.publish(error_event)
-        
+
         # Удаляем одноразовые обработчики
         if one_time_handlers:
             with self._lock:
@@ -183,9 +183,9 @@ class EventBus:
                             self._handlers[event.type].remove(handler)
                         except ValueError:
                             pass
-        
+
         return success
-    
+
     def publish_sync(self, event_type: EventType, **data) -> bool:
         """
         Публикует событие синхронно.
@@ -199,7 +199,7 @@ class EventBus:
         """
         event = Event(type=event_type, data=data)
         return self.publish(event)
-    
+
     async def publish_async(self, event_type: EventType, **data) -> bool:
         """
         Публикует событие асинхронно.
@@ -213,7 +213,7 @@ class EventBus:
         """
         event = Event(type=event_type, data=data)
         return await self._publish_async(event)
-    
+
     def get_history(self, event_type: Optional[EventType] = None, limit: Optional[int] = None) -> List[Event]:
         """
         Получает историю событий.
@@ -230,51 +230,51 @@ class EventBus:
                 history = [e for e in self._event_history if e.type == event_type]
             else:
                 history = self._event_history.copy()
-            
+
             if limit:
                 history = history[-limit:]
-            
+
             return history
-    
+
     def clear_history(self):
         """Очищает историю событий."""
         with self._lock:
             self._event_history.clear()
-    
+
     def set_max_history_size(self, size: int):
         """Устанавливает максимальный размер истории."""
         with self._lock:
             self._max_history_size = size
             self._trim_history()
-    
+
     def enable(self):
         """Включает обработку событий."""
         self._enabled = True
-    
+
     def disable(self):
         """Отключает обработку событий."""
         self._enabled = False
-    
+
     def is_enabled(self) -> bool:
         """Проверяет, включена ли обработка событий."""
         return self._enabled
-    
+
     def _get_handlers(self, event_type: EventType) -> List[EventHandler]:
         """Получает обработчики для типа события."""
         with self._lock:
             return self._handlers[event_type].copy()
-    
+
     def _add_to_history(self, event: Event):
         """Добавляет событие в историю."""
         with self._lock:
             self._event_history.append(event)
             self._trim_history()
-    
+
     def _trim_history(self):
         """Обрезает историю до максимального размера."""
         if len(self._event_history) > self._max_history_size:
             self._event_history = self._event_history[-self._max_history_size:]
-    
+
     def _schedule_async_handler(self, handler: EventHandler, event: Event):
         """Планирует асинхронный обработчик."""
         if self._async_loop and self._async_loop.is_running():
@@ -286,7 +286,7 @@ class EventBus:
                 args=(handler, event),
                 daemon=True
             ).start()
-    
+
     async def _run_async_handler(self, handler: EventHandler, event: Event):
         """Запускает асинхронный обработчик."""
         try:
@@ -302,7 +302,7 @@ class EventBus:
                 priority=EventPriority.HIGH
             )
             self.publish(error_event)
-    
+
     def _run_async_handler_sync(self, handler: EventHandler, event: Event):
         """Запускает асинхронный обработчик синхронно."""
         try:
@@ -311,38 +311,38 @@ class EventBus:
             loop.run_until_complete(self._run_async_handler(handler, event))
         finally:
             loop.close()
-    
+
     async def _publish_async(self, event: Event) -> bool:
         """Публикует событие асинхронно."""
         # Добавляем в историю
         self._add_to_history(event)
-        
+
         # Получаем обработчики
         handlers = self._get_handlers(event.type)
-        
+
         if not handlers:
             return True
-        
+
         # Фильтруем обработчики
         filtered_handlers = [
-            h for h in handlers 
+            h for h in handlers
             if h.filter_func is None or h.filter_func(event)
         ]
-        
+
         # Выполняем обработчики
         success = True
         one_time_handlers = []
-        
+
         for handler in filtered_handlers:
             try:
                 if handler.async_handler:
                     await self._run_async_handler(handler, event)
                 else:
                     handler.callback(event)
-                
+
                 if handler.one_time:
                     one_time_handlers.append(handler)
-                    
+
             except Exception as e:
                 success = False
                 # Публикуем событие об ошибке
@@ -352,7 +352,7 @@ class EventBus:
                     priority=EventPriority.HIGH
                 )
                 await self._publish_async(error_event)
-        
+
         # Удаляем одноразовые обработчики
         if one_time_handlers:
             with self._lock:
@@ -362,7 +362,7 @@ class EventBus:
                             self._handlers[event.type].remove(handler)
                         except ValueError:
                             pass
-        
+
         return success
 
 
@@ -372,32 +372,36 @@ class EventSystem:
     
     Высокоуровневый интерфейс для работы с событиями.
     """
-    
+
     def __init__(self):
         self._event_bus = EventBus()
         self._subscriptions: Dict[str, tuple] = {}
         self._event_filters: Dict[EventType, List[Callable[[Event], bool]]] = defaultdict(list)
-    
-    def on_color_changed(self, callback: Callable[[Event], None], priority: EventPriority = EventPriority.NORMAL) -> str:
+
+    def on_color_changed(self, callback: Callable[[Event], None],
+                         priority: EventPriority = EventPriority.NORMAL) -> str:
         """Подписывается на изменение цвета."""
         return self._event_bus.subscribe(EventType.COLOR_CHANGED, callback, priority)
-    
-    def on_color_selected(self, callback: Callable[[Event], None], priority: EventPriority = EventPriority.NORMAL) -> str:
+
+    def on_color_selected(self, callback: Callable[[Event], None],
+                          priority: EventPriority = EventPriority.NORMAL) -> str:
         """Подписывается на выбор цвета."""
         return self._event_bus.subscribe(EventType.COLOR_SELECTED, callback, priority)
-    
-    def on_color_cancelled(self, callback: Callable[[Event], None], priority: EventPriority = EventPriority.NORMAL) -> str:
+
+    def on_color_cancelled(self, callback: Callable[[Event], None],
+                           priority: EventPriority = EventPriority.NORMAL) -> str:
         """Подписывается на отмену выбора цвета."""
         return self._event_bus.subscribe(EventType.COLOR_CANCELLED, callback, priority)
-    
-    def on_theme_changed(self, callback: Callable[[Event], None], priority: EventPriority = EventPriority.NORMAL) -> str:
+
+    def on_theme_changed(self, callback: Callable[[Event], None],
+                         priority: EventPriority = EventPriority.NORMAL) -> str:
         """Подписывается на изменение темы."""
         return self._event_bus.subscribe(EventType.THEME_CHANGED, callback, priority)
-    
+
     def on_error(self, callback: Callable[[Event], None], priority: EventPriority = EventPriority.HIGH) -> str:
         """Подписывается на ошибки."""
         return self._event_bus.subscribe(EventType.ERROR_OCCURRED, callback, priority)
-    
+
     def emit_color_changed(self, color: tuple, source: str = None):
         """Эмитирует событие изменения цвета."""
         event = Event(
@@ -406,7 +410,7 @@ class EventSystem:
             source=source
         )
         self._event_bus.publish(event)
-    
+
     def emit_color_selected(self, color: tuple, source: str = None):
         """Эмитирует событие выбора цвета."""
         event = Event(
@@ -415,7 +419,7 @@ class EventSystem:
             source=source
         )
         self._event_bus.publish(event)
-    
+
     def emit_color_cancelled(self, source: str = None):
         """Эмитирует событие отмены выбора цвета."""
         event = Event(
@@ -423,7 +427,7 @@ class EventSystem:
             source=source
         )
         self._event_bus.publish(event)
-    
+
     def emit_theme_changed(self, theme: str, source: str = None):
         """Эмитирует событие изменения темы."""
         event = Event(
@@ -432,7 +436,7 @@ class EventSystem:
             source=source
         )
         self._event_bus.publish(event)
-    
+
     def emit_error(self, error: str, original_event: Event = None, source: str = None):
         """Эмитирует событие ошибки."""
         event = Event(
@@ -442,11 +446,11 @@ class EventSystem:
             priority=EventPriority.HIGH
         )
         self._event_bus.publish(event)
-    
+
     def add_filter(self, event_type: EventType, filter_func: Callable[[Event], bool]):
         """Добавляет фильтр для событий."""
         self._event_filters[event_type].append(filter_func)
-    
+
     def remove_filter(self, event_type: EventType, filter_func: Callable[[Event], bool]):
         """Удаляет фильтр для событий."""
         if event_type in self._event_filters:
@@ -454,27 +458,27 @@ class EventSystem:
                 self._event_filters[event_type].remove(filter_func)
             except ValueError:
                 pass
-    
+
     def get_event_history(self, event_type: Optional[EventType] = None, limit: Optional[int] = None) -> List[Event]:
         """Получает историю событий."""
         return self._event_bus.get_history(event_type, limit)
-    
+
     def clear_history(self):
         """Очищает историю событий."""
         self._event_bus.clear_history()
-    
+
     def enable(self):
         """Включает систему событий."""
         self._event_bus.enable()
-    
+
     def disable(self):
         """Отключает систему событий."""
         self._event_bus.disable()
-    
+
     def is_enabled(self) -> bool:
         """Проверяет, включена ли система событий."""
         return self._event_bus.is_enabled()
-    
+
     @contextmanager
     def temporary_subscription(self, event_type: EventType, callback: Callable[[Event], None]):
         """
