@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vcolorpicker"
+name = "colorpicker"
 version = "2.0.0"
 description = "Простой и удобный цветовой пикер с графическим интерфейсом"
 readme = "README.md"
@@ -50,20 +50,20 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/nlfmt/vcolorpicker"
-Repository = "https://github.com/nlfmt/vcolorpicker.git"
-Documentation = "https://vcolorpicker.readthedocs.io/"
-"Bug Tracker" = "https://github.com/nlfmt/vcolorpicker/issues"
+    Homepage = "https://github.com/nlfmt/colorpicker"
+    Repository = "https://github.com/nlfmt/colorpicker.git"
+    Documentation = "https://colorpicker.readthedocs.io/"
+    "Bug Tracker" = "https://github.com/nlfmt/colorpicker/issues"
 
 [project.scripts]
-vcolorpicker = "vcolorpicker.__main__:main"
+colorpicker = "colorpicker.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vcolorpicker*"]
+include = ["colorpicker*"]
 
 [tool.setuptools.package-data]
-vcolorpicker = ["ui/*.ui", "ui/*.qrc", "ui/*.ico"]
+colorpicker = ["ui/*.ui", "ui/*.qrc", "ui/*.ico"]
 
 [tool.black]
 line-length = 88
@@ -87,7 +87,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["vcolorpicker"]
+known_first_party = ["colorpicker"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -128,7 +128,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["vcolorpicker"]
+source = ["colorpicker"]
 omit = [
     "*/tests/*",
     "*/test_*",

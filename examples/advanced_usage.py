@@ -1,11 +1,11 @@
 """
-Примеры продвинутого использования vcolorpicker 2.0
+Примеры продвинутого использования colorpicker 2.0
 
 Демонстрирует новые возможности и улучшенный API.
 """
 
 from typing import Optional, Tuple
-from vcolorpicker import (
+from colorpicker import (
     ColorPicker, 
     get_color, 
     use_alpha, 
@@ -226,7 +226,7 @@ def demonstrate_configuration():
 
 def main():
     """Основная функция демонстрации."""
-    print("🎨 Демонстрация vcolorpicker 2.0")
+    print("🎨 Демонстрация colorpicker 2.0")
     print("=" * 50)
     
     try:
