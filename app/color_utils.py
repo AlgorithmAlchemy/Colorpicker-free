@@ -12,11 +12,11 @@ from .exceptions import ColorFormatError
 
 class ColorConverter:
     """Класс для конвертации между различными цветовыми форматами."""
-    
+
     @staticmethod
-    def hsv_to_rgb(h_or_color: Union[HSVColor, HSVAColor, int], 
-                   s: int = 0, 
-                   v: int = 0, 
+    def hsv_to_rgb(h_or_color: Union[HSVColor, HSVAColor, int],
+                   s: int = 0,
+                   v: int = 0,
                    a: Optional[int] = None) -> Union[RGBColor, RGBAColor]:
         """
         Конвертирует HSV цвет в RGB цвет.
@@ -37,20 +37,20 @@ class ColorConverter:
             (255, 128, 0, 60)
         """
         h, s, v = ColorConverter._extract_hsv_values(h_or_color, s, v)
-        
+
         # Конвертация через colorsys
         r, g, b = colorsys.hsv_to_rgb(h / 100.0, s / 100.0, v / 100.0)
         rgb = (int(r * 255), int(g * 255), int(b * 255))
-        
+
         # Добавление альфа-канала если указан
         if a is not None:
             return rgb + (a,)
         return rgb
-    
+
     @staticmethod
-    def rgb_to_hsv(r_or_color: Union[RGBColor, RGBAColor, int], 
-                   g: int = 0, 
-                   b: int = 0, 
+    def rgb_to_hsv(r_or_color: Union[RGBColor, RGBAColor, int],
+                   g: int = 0,
+                   b: int = 0,
                    a: Optional[int] = None) -> Union[HSVColor, HSVAColor]:
         """
         Конвертирует RGB цвет в HSV цвет.
@@ -71,16 +71,16 @@ class ColorConverter:
             (30, 100, 100, 60)
         """
         r, g, b = ColorConverter._extract_rgb_values(r_or_color, g, b)
-        
+
         # Конвертация через colorsys
         h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
         hsv = (int(h * 100), int(s * 100), int(v * 100))
-        
+
         # Добавление альфа-канала если указан
         if a is not None:
             return hsv + (a,)
         return hsv
-    
+
     @staticmethod
     def hex_to_rgb(hex_color: HexColor) -> RGBColor:
         """
@@ -99,12 +99,12 @@ class ColorConverter:
             (255, 136, 0)
         """
         normalized_hex = ColorConverter._normalize_hex_string(hex_color)
-        return tuple(int(normalized_hex[i:i+2], 16) for i in (0, 2, 4))
-    
+        return tuple(int(normalized_hex[i:i + 2], 16) for i in (0, 2, 4))
+
     @staticmethod
-    def rgb_to_hex(r_or_color: Union[RGBColor, int], 
-                   g: int = 0, 
-                   b: int = 0, 
+    def rgb_to_hex(r_or_color: Union[RGBColor, int],
+                   g: int = 0,
+                   b: int = 0,
                    a: int = 0) -> HexColor:
         """
         Конвертирует RGB цвет в hex цвет.
@@ -126,7 +126,7 @@ class ColorConverter:
         """
         r, g, b = ColorConverter._extract_rgb_values(r_or_color, g, b)
         return '%02x%02x%02x' % (int(r), int(g), int(b))
-    
+
     @staticmethod
     def hex_to_hsv(hex_color: HexColor) -> HSVColor:
         """
@@ -144,11 +144,11 @@ class ColorConverter:
         """
         rgb = ColorConverter.hex_to_rgb(hex_color)
         return ColorConverter.rgb_to_hsv(rgb)
-    
+
     @staticmethod
-    def hsv_to_hex(h_or_color: Union[HSVColor, int], 
-                   s: int = 0, 
-                   v: int = 0, 
+    def hsv_to_hex(h_or_color: Union[HSVColor, int],
+                   s: int = 0,
+                   v: int = 0,
                    a: int = 0) -> HexColor:
         """
         Конвертирует HSV цвет в hex цвет.
@@ -171,11 +171,11 @@ class ColorConverter:
         h, s, v = ColorConverter._extract_hsv_values(h_or_color, s, v)
         rgb = ColorConverter.hsv_to_rgb(h, s, v)
         return ColorConverter.rgb_to_hex(rgb)
-    
+
     @staticmethod
-    def _extract_hsv_values(h_or_color: Union[HSVColor, HSVAColor, int], 
-                           s: int, 
-                           v: int) -> Tuple[int, int, int]:
+    def _extract_hsv_values(h_or_color: Union[HSVColor, HSVAColor, int],
+                            s: int,
+                            v: int) -> Tuple[int, int, int]:
         """Извлекает HSV значения из различных форматов ввода."""
         if isinstance(h_or_color, tuple):
             if len(h_or_color) == 4:
@@ -185,11 +185,11 @@ class ColorConverter:
         else:
             h = h_or_color
         return h, s, v
-    
+
     @staticmethod
-    def _extract_rgb_values(r_or_color: Union[RGBColor, RGBAColor, int], 
-                           g: int, 
-                           b: int) -> Tuple[int, int, int]:
+    def _extract_rgb_values(r_or_color: Union[RGBColor, RGBAColor, int],
+                            g: int,
+                            b: int) -> Tuple[int, int, int]:
         """Извлекает RGB значения из различных форматов ввода."""
         if isinstance(r_or_color, tuple):
             if len(r_or_color) == 4:
@@ -199,25 +199,25 @@ class ColorConverter:
         else:
             r = r_or_color
         return r, g, b
-    
+
     @staticmethod
     def _normalize_hex_string(hex_color: str) -> str:
         """Нормализует hex строку до 6 символов."""
         # Убираем # если есть
         hex_color = hex_color.lstrip('#')
-        
+
         # Дополняем до 6 символов если нужно
         if len(hex_color) < 6:
             hex_color += "0" * (6 - len(hex_color))
         elif len(hex_color) > 6:
             hex_color = hex_color[:6]
-        
+
         return hex_color
 
 
 class ColorValidator:
     """Класс для валидации и нормализации цветовых значений."""
-    
+
     @staticmethod
     def clamp_rgb(rgb: RGBColor) -> RGBColor:
         """
@@ -234,19 +234,19 @@ class ColorValidator:
             (255, 0, 128)
         """
         r, g, b = rgb
-        
+
         # Убираем значения близкие к нулю
         r = 0 if r < 0.0001 else r
         g = 0 if g < 0.0001 else g
         b = 0 if b < 0.0001 else b
-        
+
         # Ограничиваем максимум
         r = min(255, r)
         g = min(255, g)
         b = min(255, b)
-        
+
         return int(r), int(g), int(b)
-    
+
     @staticmethod
     def clamp_alpha(alpha: int) -> int:
         """
@@ -259,7 +259,7 @@ class ColorValidator:
             Ограниченное альфа значение
         """
         return max(0, min(100, alpha))
-    
+
     @staticmethod
     def clamp_hsv(hsv: HSVColor) -> HSVColor:
         """
@@ -281,7 +281,7 @@ class ColorValidator:
 
 class ColorParser:
     """Класс для парсинга и преобразования цветовых значений."""
-    
+
     @staticmethod
     def safe_int(value: Union[str, int, float]) -> int:
         """
@@ -305,7 +305,7 @@ class ColorParser:
             return int(value)
         except (ValueError, TypeError):
             return 0
-    
+
     @staticmethod
     def parse_hex(hex_string: str) -> str:
         """
@@ -318,7 +318,7 @@ class ColorParser:
             Нормализованная hex строка
         """
         return ColorConverter._normalize_hex_string(hex_string)
-    
+
     @staticmethod
     def parse_rgb_tuple(color_tuple: Tuple) -> RGBColor:
         """
@@ -332,23 +332,23 @@ class ColorParser:
         """
         if len(color_tuple) < 3:
             raise ColorFormatError(f"RGB кортеж должен содержать минимум 3 значения, получено {len(color_tuple)}")
-        
+
         rgb = tuple(ColorParser.safe_int(v) for v in color_tuple[:3])
         return ColorValidator.clamp_rgb(rgb)
 
 
 # Функции-обертки для обратной совместимости
-def hsv2rgb(h_or_color: Union[HSVColor, HSVAColor, int], 
-            s: int = 0, 
-            v: int = 0, 
+def hsv2rgb(h_or_color: Union[HSVColor, HSVAColor, int],
+            s: int = 0,
+            v: int = 0,
             a: Optional[int] = None) -> Union[RGBColor, RGBAColor]:
     """Конвертирует HSV цвет в RGB цвет."""
     return ColorConverter.hsv_to_rgb(h_or_color, s, v, a)
 
 
-def rgb2hsv(r_or_color: Union[RGBColor, RGBAColor, int], 
-            g: int = 0, 
-            b: int = 0, 
+def rgb2hsv(r_or_color: Union[RGBColor, RGBAColor, int],
+            g: int = 0,
+            b: int = 0,
             a: Optional[int] = None) -> Union[HSVColor, HSVAColor]:
     """Конвертирует RGB цвет в HSV цвет."""
     return ColorConverter.rgb_to_hsv(r_or_color, g, b, a)
@@ -359,9 +359,9 @@ def hex2rgb(hex_color: HexColor) -> RGBColor:
     return ColorConverter.hex_to_rgb(hex_color)
 
 
-def rgb2hex(r_or_color: Union[RGBColor, int], 
-            g: int = 0, 
-            b: int = 0, 
+def rgb2hex(r_or_color: Union[RGBColor, int],
+            g: int = 0,
+            b: int = 0,
             a: int = 0) -> HexColor:
     """Конвертирует RGB цвет в hex цвет."""
     return ColorConverter.rgb_to_hex(r_or_color, g, b, a)
@@ -372,9 +372,9 @@ def hex2hsv(hex_color: HexColor) -> HSVColor:
     return ColorConverter.hex_to_hsv(hex_color)
 
 
-def hsv2hex(h_or_color: Union[HSVColor, int], 
-            s: int = 0, 
-            v: int = 0, 
+def hsv2hex(h_or_color: Union[HSVColor, int],
+            s: int = 0,
+            v: int = 0,
             a: int = 0) -> HexColor:
     """Конвертирует HSV цвет в hex цвет."""
     return ColorConverter.hsv_to_hex(h_or_color, s, v, a)
@@ -388,4 +388,3 @@ def clamp_rgb(rgb: RGBColor) -> RGBColor:
 def safe_int(value: Union[str, int, float]) -> int:
     """Безопасно конвертирует значение в int."""
     return ColorParser.safe_int(value)
-

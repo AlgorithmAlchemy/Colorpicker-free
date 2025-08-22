@@ -82,4 +82,3 @@ def useLightTheme(value: bool = True) -> None:
 
 # Экспорт для обратной совместимости
 __all__ = ["getColor", "useAlpha", "useLightTheme"]
-
