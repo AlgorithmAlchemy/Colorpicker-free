@@ -23,7 +23,7 @@ cd colorpicker-free
 
 # Windows - двойной клик на start.bat
 # Или командная строка:
-python desktop_picker.py
+python run.py
 ```
 
 ### Ручная установка
@@ -33,7 +33,7 @@ python desktop_picker.py
 pip install -r requirements.txt
 
 # Запустите десктопный пикер
-python desktop_picker.py
+python run.py
 ```
 
 ### Если возникают ошибки
@@ -43,7 +43,7 @@ python desktop_picker.py
 python fix_qt.py
 
 # Затем попробуйте снова
-python desktop_picker.py
+python run.py
 ```
 
 ## 📖 Использование
@@ -52,7 +52,7 @@ python desktop_picker.py
 
 ```bash
 # Запуск color picker
-python desktop_picker.py
+python run.py
 ```
 
 ### Управление
