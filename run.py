@@ -185,44 +185,53 @@ class DesktopColorPicker(QWidget):
 
 def check_dependencies():
     """Проверяет наличие необходимых зависимостей."""
+    dependencies_ok = True
+    
     try:
         import PySide6
         print(f"✅ PySide6 найден: {PySide6.__version__}")
-        
-        import pyautogui
-        print(f"✅ pyautogui найден: {pyautogui.__version__}")
-        
-        import numpy
-        print(f"✅ numpy найден: {numpy.__version__}")
-        
-        return True
     except ImportError as e:
         print(f"❌ Отсутствует зависимость: {e}")
+        dependencies_ok = False
+        
+    try:
+        import pyautogui
+        print(f"✅ pyautogui найден: {pyautogui.__version__}")
+    except ImportError as e:
+        print(f"❌ Отсутствует зависимость: {e}")
+        dependencies_ok = False
+    
+    # NumPy опциональный - приложение может работать без него
+    try:
+        import numpy
+        print(f"✅ numpy найден: {numpy.__version__}")
+    except ImportError:
+        print("⚠️  numpy не найден (опциональная зависимость)")
+        print("💡 Для лучшей производительности установите: pip install numpy")
+    
+    if not dependencies_ok:
         print("💡 Установите зависимости:")
         print("   pip install -r requirements.txt")
-        return False
+    
+    return dependencies_ok
 
 def install_dependencies():
     """Устанавливает зависимости."""
     print("🔧 Установка зависимостей...")
     try:
-        # Сначала устанавливаем совместимую версию NumPy
+        # Устанавливаем только основные зависимости
         subprocess.run([
             sys.executable, "-m", "pip", "install", 
-            "numpy<2.0.0"
+            "PySide6", "pyautogui"
         ], check=True)
         
-        # Затем основные зависимости
-        subprocess.run([
-            sys.executable, "-m", "pip", "install", 
-            "PySide6", "pyautogui", "opencv-python>=4.8.0"
-        ], check=True)
-        print("✅ Зависимости установлены")
+        print("✅ Основные зависимости установлены")
+        print("💡 NumPy можно установить позже для лучшей производительности")
         return True
     except subprocess.CalledProcessError as e:
         print(f"❌ Ошибка установки: {e}")
         print("💡 Попробуйте установить вручную:")
-        print("   pip install -r requirements.txt")
+        print("   pip install PySide6 pyautogui")
         return False
 
 def main():
