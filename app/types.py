@@ -24,4 +24,3 @@ Position = Tuple[int, int]
 
 # Размер
 Size = Tuple[int, int]
-

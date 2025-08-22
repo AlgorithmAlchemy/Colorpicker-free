@@ -24,16 +24,16 @@ def get_simple_color(initial_color: Optional[RGBColor] = None) -> Optional[RGBCo
     app = QApplication.instance()
     if not app:
         app = QApplication([])
-    
+
     # Создаем цвет из начального значения
     if initial_color:
         qcolor = QColor(*initial_color)
     else:
         qcolor = QColor(0, 0, 0)
-    
+
     # Показываем диалог выбора цвета
     color = QColorDialog.getColor(qcolor)
-    
+
     if color.isValid():
         return (color.red(), color.green(), color.blue())
     else:
@@ -53,7 +53,7 @@ def get_simple_color_with_alpha(initial_color: Optional[RGBColor] = None) -> Opt
     app = QApplication.instance()
     if not app:
         app = QApplication([])
-    
+
     # Создаем цвет из начального значения
     if initial_color:
         if len(initial_color) == 4:
@@ -62,11 +62,11 @@ def get_simple_color_with_alpha(initial_color: Optional[RGBColor] = None) -> Opt
             qcolor = QColor(*initial_color, 255)
     else:
         qcolor = QColor(0, 0, 0, 255)
-    
+
     # Показываем диалог выбора цвета с опциями
     dialog = QColorDialog(qcolor)
     dialog.setOption(QColorDialog.ShowAlphaChannel, True)
-    
+
     if dialog.exec_() == QColorDialog.Accepted:
         color = dialog.currentColor()
         return (color.red(), color.green(), color.blue(), color.alpha())
@@ -78,10 +78,10 @@ class SimpleColorPicker:
     """
     Простой класс для выбора цвета.
     """
-    
+
     def __init__(self, use_alpha: bool = False):
         self.use_alpha = use_alpha
-    
+
     def get_color(self, initial_color: Optional[RGBColor] = None) -> Optional[RGBColor]:
         """
         Получает цвет от пользователя.
