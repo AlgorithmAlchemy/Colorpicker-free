@@ -11,6 +11,14 @@
 
 import sys
 import argparse
+
+# Автоматическая установка зависимостей при первом запуске
+try:
+    from app.utils.auto_install import ensure_requirements_installed, check_qt_backend
+    ensure_requirements_installed()
+except ImportError:
+    print("⚠️ Модуль автоустановки недоступен, пропускаем проверку зависимостей")
+
 from app.facade import get_color, reset_instance
 from app.config import use_light_theme, use_alpha
 
@@ -62,6 +70,17 @@ def main():
 
         print("🎨 ColorPicker 2.0.0")
         print("=" * 30)
+
+        # Проверка Qt backend
+        try:
+            if not check_qt_backend():
+                print("❌ Qt backend не найден!")
+                print("💡 Установите PySide6:")
+                print("   pip install PySide6")
+                return 1
+        except NameError:
+            # Функция check_qt_backend недоступна
+            pass
 
         # Настройка темы
         if args.light_theme:

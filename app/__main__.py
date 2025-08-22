@@ -12,6 +12,13 @@ import argparse
 import sys
 from typing import Optional
 
+# Автоматическая установка зависимостей при первом запуске
+try:
+    from .utils.auto_install import ensure_requirements_installed, check_qt_backend
+    ensure_requirements_installed()
+except ImportError:
+    print("⚠️ Модуль автоустановки недоступен, пропускаем проверку зависимостей")
+
 from .facade import get_color, reset_instance
 from .config import use_light_theme, use_alpha
 
@@ -60,6 +67,17 @@ def main() -> int:
     """
     try:
         args = parse_arguments()
+
+        # Проверка Qt backend
+        try:
+            if not check_qt_backend():
+                print("❌ Qt backend не найден!")
+                print("💡 Установите PySide6:")
+                print("   pip install PySide6")
+                return 1
+        except NameError:
+            # Функция check_qt_backend недоступна
+            pass
 
         # Настройка темы
         if args.light_theme:
