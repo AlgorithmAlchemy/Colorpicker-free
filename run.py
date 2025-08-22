@@ -35,7 +35,7 @@ class DesktopColorPicker(QWidget):
         # Таймер для обновления координат
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_coordinates)
-        self.timer.start(100)  # Обновление каждые 100мс
+        self.timer.start(16)  # Обновление каждые 16мс (~60 FPS)
         
         # Позиционирование в правом верхнем углу
         self.position_window()
