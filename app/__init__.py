@@ -34,11 +34,11 @@ from .colorpicker import ColorPicker, getColor, useAlpha, useLightTheme
 
 # Утилиты для работы с цветами
 from .color_utils import (
-    hsv2rgb, 
-    rgb2hsv, 
-    rgb2hex, 
-    hex2rgb, 
-    hex2hsv, 
+    hsv2rgb,
+    rgb2hsv,
+    rgb2hex,
+    hex2rgb,
+    hex2hsv,
     hsv2hex,
     clamp_rgb,
     safe_int
@@ -56,9 +56,9 @@ from .colorpicker import (
 
 # Конфигурация
 from .config import (
-    use_alpha, 
-    use_light_theme, 
-    get_config, 
+    use_alpha,
+    use_light_theme,
+    get_config,
     set_config,
     ColorPickerConfig
 )
@@ -88,7 +88,7 @@ __all__ = [
     'get_enhanced_color',
     'pick_screen_color',
     'reset_instance',
-    
+
     # Утилиты для работы с цветами
     'hsv2rgb',
     'rgb2hsv',
@@ -98,7 +98,7 @@ __all__ = [
     'hsv2hex',
     'clamp_rgb',
     'safe_int',
-    
+
     # Функции из colorpicker.py для обратной совместимости
     'hsv2rgb_legacy',
     'rgb2hsv_legacy',
@@ -106,14 +106,14 @@ __all__ = [
     'hex2rgb_legacy',
     'hex2hsv_legacy',
     'hsv2hex_legacy',
-    
+
     # Конфигурация
     'use_alpha',
     'use_light_theme',
     'get_config',
     'set_config',
     'ColorPickerConfig',
-    
+
     # Типы данных
     'RGBColor',
     'RGBAColor',
@@ -125,4 +125,3 @@ __all__ = [
 
 # Функции для обратной совместимости
 from .compat import getColor as getColor_compat, useAlpha as useAlpha_compat, useLightTheme as useLightTheme_compat
-
