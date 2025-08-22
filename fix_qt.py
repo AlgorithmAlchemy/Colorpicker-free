@@ -16,9 +16,9 @@ def check_python_version():
         return False
     return True
 
-def check_qt_installation():
-    """Проверяет установку Qt."""
-    print("\n🔍 Проверка Qt установки...")
+def check_pyside6_installation():
+    """Проверяет установку PySide6."""
+    print("\n🔍 Проверка PySide6 установки...")
     
     try:
         import PySide6
@@ -29,9 +29,9 @@ def check_qt_installation():
         print(f"📁 PySide6 путь: {pyside_path}")
         
         # Проверяем plugins
-        plugins_path = pyside_path / "Qt" / "plugins"
+        plugins_path = pyside_path / "plugins"
         if plugins_path.exists():
-            print(f"✅ Qt plugins найдены: {plugins_path}")
+            print(f"✅ PySide6 plugins найдены: {plugins_path}")
             
             # Проверяем platforms
             platforms_path = plugins_path / "platforms"
@@ -48,7 +48,7 @@ def check_qt_installation():
                 print("❌ Папка platforms не найдена!")
                 return False
         else:
-            print("❌ Qt plugins не найдены!")
+            print("❌ PySide6 plugins не найдены!")
             return False
             
         return True
@@ -60,25 +60,25 @@ def check_qt_installation():
         print(f"❌ Ошибка проверки PySide6: {e}")
         return False
 
-def check_qt_environment():
-    """Проверяет переменные окружения Qt."""
-    print("\n🌍 Проверка переменных окружения Qt...")
+def check_pyside6_environment():
+    """Проверяет переменные окружения PySide6."""
+    print("\n🌍 Проверка переменных окружения PySide6...")
     
-    qt_vars = [
+    pyside_vars = [
         "QT_PLUGIN_PATH",
         "QT_QPA_PLATFORM_PLUGIN_PATH", 
         "QT_QPA_PLATFORM"
     ]
     
-    for var in qt_vars:
+    for var in pyside_vars:
         value = os.environ.get(var)
         if value:
             print(f"✅ {var} = {value}")
         else:
             print(f"ℹ️ {var} не установлена")
 
-def fix_qt_installation():
-    """Пытается исправить установку Qt."""
+def fix_pyside6_installation():
+    """Пытается исправить установку PySide6."""
     print("\n🔧 Попытка исправления...")
     
     commands = [
@@ -105,9 +105,9 @@ def fix_qt_installation():
         except Exception as e:
             print(f"❌ Ошибка выполнения команды: {e}")
 
-def test_qt_app():
-    """Тестирует создание Qt приложения."""
-    print("\n🧪 Тест Qt приложения...")
+def test_pyside6_app():
+    """Тестирует создание PySide6 приложения."""
+    print("\n🧪 Тест PySide6 приложения...")
     
     try:
         # Устанавливаем переменную окружения для headless режима
@@ -129,44 +129,44 @@ def test_qt_app():
         return True
         
     except Exception as e:
-        print(f"❌ Ошибка создания Qt приложения: {e}")
+        print(f"❌ Ошибка создания PySide6 приложения: {e}")
         return False
 
 def main():
     """Основная функция диагностики."""
-    print("🔧 Qt Диагностика и исправление")
+    print("🔧 PySide6 Диагностика и исправление")
     print("=" * 40)
     
     # Проверяем Python
     if not check_python_version():
         return 1
     
-    # Проверяем Qt
-    qt_ok = check_qt_installation()
+    # Проверяем PySide6
+    pyside6_ok = check_pyside6_installation()
     
     # Проверяем окружение
-    check_qt_environment()
+    check_pyside6_environment()
     
-    if not qt_ok:
-        print("\n❌ Обнаружены проблемы с Qt установкой")
+    if not pyside6_ok:
+        print("\n❌ Обнаружены проблемы с PySide6 установкой")
         
         answer = input("\n🤔 Попытаться исправить автоматически? (y/N): ").lower().strip()
         if answer in ['y', 'yes', 'да']:
-            fix_qt_installation()
+            fix_pyside6_installation()
             
             print("\n🔄 Повторная проверка...")
-            qt_ok = check_qt_installation()
+            pyside6_ok = check_pyside6_installation()
     
-    # Тестируем Qt приложение
-    if qt_ok:
-        app_ok = test_qt_app()
+    # Тестируем PySide6 приложение
+    if pyside6_ok:
+        app_ok = test_pyside6_app()
         if app_ok:
-            print("\n🎉 Qt работает корректно!")
+            print("\n🎉 PySide6 работает корректно!")
             print("\n🚀 Теперь можно запускать:")
             print("   python desktop_picker.py")
             return 0
     
-    print("\n❌ Qt не работает корректно")
+    print("\n❌ PySide6 не работает корректно")
     print("\n💡 Рекомендации:")
     print("1. Переустановите PySide6:")
     print("   pip uninstall PySide6")
