@@ -32,6 +32,8 @@ def install_dependencies():
         return True
     except subprocess.CalledProcessError as e:
         print(f"❌ Ошибка установки: {e}")
+        print("💡 Попробуйте установить вручную:")
+        print("   pip install PySide6 pyautogui qtpy")
         return False
 
 def main():
