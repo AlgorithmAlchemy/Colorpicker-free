@@ -16,15 +16,30 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint
 from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAction
 
-# Попытка импорта keyboard для глобальных горячих клавиш
+# Попытка импорта win32api для глобальных горячих клавиш
+try:
+    import win32api
+    import win32con
+    import win32gui
+    WIN32_AVAILABLE = True
+except ImportError:
+    WIN32_AVAILABLE = False
+
+# Попытка импорта keyboard для глобальных горячих клавиш (резервный)
 try:
     import keyboard
     KEYBOARD_AVAILABLE = True
 except ImportError:                                                                           
     KEYBOARD_AVAILABLE = False
-    print("⚠️  Библиотека 'keyboard' не установлена. "
-          "Глобальные горячие клавиши недоступны.")
-    print("💡 Установите: pip install keyboard")
+
+# Выводим информацию о доступности
+if not WIN32_AVAILABLE and not KEYBOARD_AVAILABLE:
+    print("⚠️  Библиотеки для глобальных горячих клавиш не установлены.")
+    print("💡 Установите: pip install pywin32 keyboard")
+elif WIN32_AVAILABLE:
+    print("✅ win32api доступен для глобальных горячих клавиш")
+elif KEYBOARD_AVAILABLE:
+    print("✅ keyboard доступен для глобальных горячих клавиш")
 
 
 def get_pixel_color_qt(x: int, y: int):
@@ -105,8 +120,122 @@ def get_cursor_position():
         return 0, 0
 
 
-class GlobalHotkeyManager(QObject):
-    """Менеджер глобальных горячих клавиш."""
+class Win32HotkeyManager(QObject):
+    """Менеджер глобальных горячих клавиш через win32api."""
+    
+    ctrl_pressed = Signal()
+    escape_pressed = Signal()
+    
+    def __init__(self):
+        super().__init__()
+        self._running = False
+        self._thread = None
+        self._hwnd = None
+        
+    def start(self):
+        """Запускает мониторинг глобальных горячих клавиш."""
+        if not WIN32_AVAILABLE:
+            return False
+            
+        if self._running:
+            return True
+            
+        try:
+            # Останавливаем предыдущий поток если он есть
+            if self._thread and self._thread.is_alive():
+                self._running = False
+                self._thread.join(timeout=1)
+            
+            self._running = True
+            self._thread = threading.Thread(
+                target=self._monitor_hotkeys, daemon=True
+            )
+            self._thread.start()
+            
+            # Ждем немного чтобы убедиться что поток запустился
+            time.sleep(0.2)
+            
+            return True
+        except Exception as e:
+            print(f"❌ Ошибка запуска глобальных горячих клавиш (win32): {e}")
+            self._running = False
+            return False
+    
+    def stop(self):
+        """Останавливает мониторинг глобальных горячих клавиш."""
+        self._running = False
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=1)
+    
+    def _monitor_hotkeys(self):
+        """Мониторит глобальные горячие клавиши через win32api."""
+        try:
+            # Создаем невидимое окно для получения сообщений
+            wc = win32gui.WNDCLASS()
+            wc.lpfnWndProc = self._window_proc
+            wc.lpszClassName = "HotkeyWindow"
+            wc.hInstance = win32api.GetModuleHandle(None)
+            
+            # Регистрируем класс окна
+            win32gui.RegisterClass(wc)
+            
+            # Создаем окно
+            self._hwnd = win32gui.CreateWindow(
+                wc.lpszClassName, "Hotkey Window",
+                0, 0, 0, 0, 0, 0, 0, wc.hInstance, None
+            )
+            
+            # Регистрируем горячие клавиши
+            win32api.RegisterHotKey(self._hwnd, 1, win32con.MOD_CONTROL, ord('C'))
+            win32api.RegisterHotKey(self._hwnd, 2, 0, win32con.VK_ESCAPE)
+            
+            print("✅ Глобальные горячие клавиши зарегистрированы (win32api)")
+            
+            # Обрабатываем сообщения
+            while self._running:
+                try:
+                    msg = win32gui.GetMessage(None, 0, 0)
+                    if msg[0] == 0:  # WM_QUIT
+                        break
+                    win32gui.TranslateMessage(msg)
+                    win32gui.DispatchMessage(msg)
+                except Exception:
+                    time.sleep(0.01)
+                    
+        except Exception as e:
+            print(f"❌ Ошибка в мониторинге горячих клавиш (win32api): {e}")
+        finally:
+            try:
+                if self._hwnd:
+                    win32gui.DestroyWindow(self._hwnd)
+            except Exception:
+                pass
+    
+    def _window_proc(self, hwnd, msg, wparam, lparam):
+        """Обработчик сообщений окна."""
+        if msg == win32con.WM_HOTKEY:
+            if wparam == 1:  # Ctrl+C
+                self._on_ctrl_pressed()
+            elif wparam == 2:  # Escape
+                self._on_escape_pressed()
+            return 0
+        return win32gui.DefWindowProc(hwnd, msg, wparam, lparam)
+    
+    def _on_ctrl_pressed(self):
+        """Обработчик нажатия Ctrl."""
+        if self._running:
+            print("🎯 Ctrl нажат! (win32api)")
+            self.ctrl_pressed.emit()
+    
+    def _on_escape_pressed(self):
+        """Обработчик нажатия Escape."""
+        if self._running:
+            print("🎯 Escape нажат! (win32api)")
+            self.escape_pressed.emit()
+
+
+class KeyboardHotkeyManager(QObject):
+    """Менеджер глобальных горячих клавиш через keyboard (резервный)."""
     
     ctrl_pressed = Signal()
     escape_pressed = Signal()
@@ -141,7 +270,7 @@ class GlobalHotkeyManager(QObject):
             
             return True
         except Exception as e:
-            print(f"❌ Ошибка запуска глобальных горячих клавиш: {e}")
+            print(f"❌ Ошибка запуска глобальных горячих клавиш (keyboard): {e}")
             self._running = False
             return False
     
@@ -157,21 +286,24 @@ class GlobalHotkeyManager(QObject):
             # Очищаем предыдущие хуки
             keyboard.unhook_all()
             
+            # Принудительная инициализация keyboard
+            keyboard._listener.start_if_necessary()
+            
             # Небольшая задержка для стабилизации
-            time.sleep(0.1)
+            time.sleep(0.2)
             
             # Регистрируем горячие клавиши
             keyboard.on_press_key('ctrl', lambda e: self._on_ctrl_pressed())
             keyboard.on_press_key('esc', lambda e: self._on_escape_pressed())
             
-            print("✅ Глобальные горячие клавиши зарегистрированы")
+            print("✅ Глобальные горячие клавиши зарегистрированы (keyboard)")
             
-            # Держим поток активным
+            # Держим поток активным с более частой проверкой
             while self._running:
-                time.sleep(0.1)
+                time.sleep(0.05)
                 
         except Exception as e:
-            print(f"❌ Ошибка в мониторинге горячих клавиш: {e}")
+            print(f"❌ Ошибка в мониторинге горячих клавиш (keyboard): {e}")
         finally:
             try:
                 keyboard.unhook_all()
@@ -181,12 +313,49 @@ class GlobalHotkeyManager(QObject):
     def _on_ctrl_pressed(self):
         """Обработчик нажатия Ctrl."""
         if self._running:
+            print("🎯 Ctrl нажат! (keyboard)")
             self.ctrl_pressed.emit()
     
     def _on_escape_pressed(self):
         """Обработчик нажатия Escape."""
         if self._running:
+            print("🎯 Escape нажат! (keyboard)")
             self.escape_pressed.emit()
+
+
+class GlobalHotkeyManager(QObject):
+    """Универсальный менеджер глобальных горячих клавиш."""
+    
+    ctrl_pressed = Signal()
+    escape_pressed = Signal()
+    
+    def __init__(self):
+        super().__init__()
+        # Выбираем лучший доступный менеджер
+        if WIN32_AVAILABLE:
+            self._manager = Win32HotkeyManager()
+            print("🔧 Используется win32api для глобальных горячих клавиш")
+        elif KEYBOARD_AVAILABLE:
+            self._manager = KeyboardHotkeyManager()
+            print("🔧 Используется keyboard для глобальных горячих клавиш")
+        else:
+            self._manager = None
+            print("❌ Нет доступных методов для глобальных горячих клавиш")
+        
+        if self._manager:
+            self._manager.ctrl_pressed.connect(self.ctrl_pressed.emit)
+            self._manager.escape_pressed.connect(self.escape_pressed.emit)
+    
+    def start(self):
+        """Запускает мониторинг глобальных горячих клавиш."""
+        if self._manager:
+            return self._manager.start()
+        return False
+    
+    def stop(self):
+        """Останавливает мониторинг глобальных горячих клавиш."""
+        if self._manager:
+            self._manager.stop()
 
 
 class CopyNotification(QWidget):
@@ -359,6 +528,14 @@ class FixedDesktopColorPicker(QWidget):
         if not self.hotkey_manager.start():
             self._show_hotkey_warning()
         
+        # Принудительная инициализация keyboard если доступен
+        if KEYBOARD_AVAILABLE:
+            try:
+                keyboard._listener.start_if_necessary()
+                print("🔧 Принудительная инициализация keyboard выполнена")
+            except Exception as e:
+                print(f"⚠️ Ошибка инициализации keyboard: {e}")
+        
     def setup_ui(self):
         """Настройка интерфейса."""
         layout = QVBoxLayout()
@@ -374,11 +551,12 @@ class FixedDesktopColorPicker(QWidget):
         layout.addWidget(title)
         
         # Статус глобальных горячих клавиш
-        status_text = (
-            "🌐 Глобальные горячие клавиши: Активны" 
-            if KEYBOARD_AVAILABLE 
-            else "⚠️ Глобальные горячие клавиши: Недоступны"
-        )
+        if WIN32_AVAILABLE:
+            status_text = "🌐 Глобальные горячие клавиши: Активны (win32api)"
+        elif KEYBOARD_AVAILABLE:
+            status_text = "🌐 Глобальные горячие клавиши: Активны (keyboard)"
+        else:
+            status_text = "⚠️ Глобальные горячие клавиши: Недоступны"
         self.hotkey_status = QLabel(status_text)
         self.hotkey_status.setAlignment(Qt.AlignCenter)
         self.hotkey_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -727,11 +905,19 @@ class FixedDesktopColorPicker(QWidget):
     
     def restart_global_hotkeys(self):
         """Перезапускает глобальные горячие клавиши."""
-        if KEYBOARD_AVAILABLE:
+        if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
             self.hotkey_manager.stop()
             time.sleep(0.1)
             if self.hotkey_manager.start():
                 print("✅ Глобальные горячие клавиши перезапущены")
+                
+                # Принудительная инициализация keyboard
+                if KEYBOARD_AVAILABLE:
+                    try:
+                        keyboard._listener.start_if_necessary()
+                        print("🔧 Принудительная инициализация keyboard выполнена")
+                    except Exception as e:
+                        print(f"⚠️ Ошибка инициализации keyboard: {e}")
             else:
                 print("❌ Не удалось перезапустить глобальные горячие клавиши")
     
@@ -774,7 +960,7 @@ class FixedDesktopColorPicker(QWidget):
         if event.button() == Qt.LeftButton:
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             # При первом клике перезапускаем горячие клавиши если они не работают
-            if KEYBOARD_AVAILABLE and not hasattr(self, '_hotkeys_initialized'):
+            if (WIN32_AVAILABLE or KEYBOARD_AVAILABLE) and not hasattr(self, '_hotkeys_initialized'):
                 QTimer.singleShot(100, self.restart_global_hotkeys)
                 self._hotkeys_initialized = True
             event.accept()
@@ -858,7 +1044,7 @@ class FixedDesktopColorPicker(QWidget):
             menu.addSeparator()
             
             # Перезапустить глобальные горячие клавиши
-            if KEYBOARD_AVAILABLE:
+            if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
                 restart_hotkeys_action = QAction("🔄 Перезапустить горячие клавиши", self)
                 restart_hotkeys_action.triggered.connect(self.restart_global_hotkeys)
                 menu.addAction(restart_hotkeys_action)
