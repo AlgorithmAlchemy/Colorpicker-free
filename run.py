@@ -11,9 +11,10 @@ import threading
 import time
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox,
-    QSizePolicy
+    QSizePolicy, QToolTip
 )
 from PySide6.QtCore import Qt, QTimer, Signal, QObject
+from PySide6.QtGui import QClipboard
 import pyautogui
 
 # Попытка импорта keyboard для глобальных горячих клавиш
@@ -94,6 +95,30 @@ class GlobalHotkeyManager(QObject):
             self.escape_pressed.emit()
 
 
+class ClickableLabel(QLabel):
+    """Кликабельный лейбл с копированием в буфер обмена."""
+    
+    def __init__(self, text="", parent=None):
+        super().__init__(text, parent)
+        self.setCursor(Qt.PointingHandCursor)  # Курсор-рука при наведении
+    
+    def mousePressEvent(self, event):
+        """Обработчик клика мыши."""
+        if event.button() == Qt.LeftButton:
+            # Копируем текст в буфер обмена
+            clipboard = QApplication.clipboard()
+            clipboard.setText(self.text())
+            
+            # Временно меняем цвет для обратной связи
+            original_style = self.styleSheet()
+            self.setStyleSheet(original_style + "; background-color: #4CAF50;")
+            
+            # Возвращаем исходный стиль через 200мс
+            QTimer.singleShot(200, lambda: self.setStyleSheet(original_style))
+        
+        super().mousePressEvent(event)
+
+
 class DesktopColorPicker(QWidget):
     """Десктопный color picker с пипеткой."""
     
@@ -169,16 +194,16 @@ class DesktopColorPicker(QWidget):
         )
         layout.addWidget(self.hotkey_status)
         
-        # Координаты
-        self.coords_label = QLabel("Координаты: (0, 0)")
+        # Координаты (кликабельный)
+        self.coords_label = ClickableLabel("Координаты: (0, 0)")
         self.coords_label.setAlignment(Qt.AlignCenter)
         self.coords_label.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         layout.addWidget(self.coords_label)
         
-        # Цвет
-        self.color_label = QLabel("Цвет: #000000")
+        # Цвет (кликабельный)
+        self.color_label = ClickableLabel("Цвет: #000000")
         self.color_label.setAlignment(Qt.AlignCenter)
         self.color_label.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Preferred
@@ -224,6 +249,19 @@ class DesktopColorPicker(QWidget):
                 margin: 1px;
                 padding: 2px;
                 font-size: 10px;
+            }
+            ClickableLabel {
+                color: #e0e0e0;
+                font-weight: 500;
+                margin: 1px;
+                padding: 4px;
+                font-size: 10px;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+            ClickableLabel:hover {
+                border: 1px solid #666;
+                background-color: rgba(255, 255, 255, 0.1);
             }
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -315,7 +353,7 @@ class DesktopColorPicker(QWidget):
                 # Окрашиваем лейбл в соответствующий цвет
                 text_color = 'white' if (r + g + b) < 384 else 'black'
                 self.color_label.setStyleSheet(f"""
-                    QLabel {{
+                    ClickableLabel {{
                         color: {text_color};
                         font-weight: bold;
                         margin: 1px;
@@ -324,6 +362,10 @@ class DesktopColorPicker(QWidget):
                         background-color: rgb({r}, {g}, {b});
                         border: 2px solid #ff4444;
                         border-radius: 4px;
+                    }}
+                    ClickableLabel:hover {{
+                        border: 3px solid #ff6666;
+                        background-color: rgb({r}, {g}, {b});
                     }}
                 """)
             
@@ -340,7 +382,7 @@ class DesktopColorPicker(QWidget):
                 # Окрашиваем лейбл в соответствующий цвет
                 text_color = 'white' if (r + g + b) < 384 else 'black'
                 self.color_label.setStyleSheet(f"""
-                    QLabel {{
+                    ClickableLabel {{
                         color: {text_color};
                         font-weight: 500;
                         margin: 1px;
@@ -349,6 +391,10 @@ class DesktopColorPicker(QWidget):
                         background-color: rgb({r}, {g}, {b});
                         border: 1px solid #555;
                         border-radius: 4px;
+                    }}
+                    ClickableLabel:hover {{
+                        border: 2px solid #888;
+                        background-color: rgb({r}, {g}, {b});
                     }}
                 """)
             
