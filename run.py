@@ -459,11 +459,11 @@ class DesktopColorPicker(QWidget):
                         padding: 4px;
                         font-size: 10px;
                         background-color: rgb({r}, {g}, {b});
-                        border: 2px solid #ff4444;
+                        border: 1px solid #555;
                         border-radius: 4px;
                     }}
                     ClickableLabel:hover {{
-                        border: 3px solid #ff6666;
+                        border: 2px solid #888;
                         background-color: rgb({r}, {g}, {b});
                     }}
                 """)
