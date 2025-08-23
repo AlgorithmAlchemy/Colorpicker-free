@@ -317,8 +317,8 @@ class DesktopColorPicker(QWidget):
             self.color_label.setText(color_text)
             
             # Обновляем цвет кнопки только если цвет действительно изменился
-            if (r != self._last_color[0] or g != self._last_color[1] or 
-                b != self._last_color[2] or self.frozen):
+            if (r != self._last_color[0] or g != self._last_color[1] or
+                    b != self._last_color[2] or self.frozen):
                 self._update_button_color(r, g, b)
             
         except Exception:
