@@ -310,7 +310,7 @@ class DesktopColorPicker(QWidget):
         layout.addWidget(self.color_label)
         
         # Кнопка захвата
-        self.capture_btn = QPushButton("CTRL - Захватить цвет")
+        self.capture_btn = QPushButton("CTRL")
         self.capture_btn.clicked.connect(self.capture_color)
         self.capture_btn.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Preferred
@@ -364,7 +364,7 @@ class DesktopColorPicker(QWidget):
             }
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #4a4a4a, stop:1 #3a3a3a);
+                    stop:0 #2a2a2a, stop:1 #1e1e1e);
                 border: 1px solid #555;
                 border-radius: 6px;
                 padding: 6px 12px;
@@ -375,12 +375,12 @@ class DesktopColorPicker(QWidget):
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #5a5a5a, stop:1 #4a4a4a);
+                    stop:0 #3a3a3a, stop:1 #2a2a2a);
                 border: 1px solid #666;
             }
             QPushButton:pressed {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #3a3a3a, stop:1 #2a2a2a);
+                    stop:0 #1e1e1e, stop:1 #161616);
                 border: 1px solid #444;
             }
         """)
@@ -617,7 +617,7 @@ class DesktopColorPicker(QWidget):
     
     def reset_capture_button(self):
         """Сбрасывает текст кнопки захвата."""
-        self.capture_btn.setText("CTRL - Захватить цвет")
+        self.capture_btn.setText("CTRL")
     
     def _on_global_ctrl_pressed(self):
         """Обработчик глобального нажатия Ctrl."""
@@ -648,7 +648,7 @@ class DesktopColorPicker(QWidget):
         else:
             # Размораживаем
             self.frozen = False
-            self.capture_btn.setText("CTRL - Захватить цвет")
+            self.capture_btn.setText("CTRL")
             print("Разморожено")
             
     def keyPressEvent(self, event):
