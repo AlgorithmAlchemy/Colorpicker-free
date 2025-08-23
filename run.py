@@ -7,7 +7,6 @@ Desktop Color Picker с пипеткой
 """
 
 import sys
-import subprocess
 import threading
 import time
 from PySide6.QtWidgets import (
@@ -68,13 +67,13 @@ class GlobalHotkeyManager(QObject):
     def _monitor_hotkeys(self):
         """Мониторит глобальные горячие клавиши в отдельном потоке."""
         try:
-            # Регистрируем горячие клавиши
-            keyboard.on_press_key('ctrl', lambda _: self._on_ctrl_pressed())
-            keyboard.on_press_key('esc', lambda _: self._on_escape_pressed())
+            # Регистрируем горячие клавиши (оптимизированно)
+            keyboard.on_press_key('ctrl', self._on_ctrl_pressed)
+            keyboard.on_press_key('esc', self._on_escape_pressed)
             
-            # Держим поток активным
+            # Держим поток активным с более длительным сном
             while self._running:
-                time.sleep(0.1)
+                time.sleep(0.2)  # Увеличиваем интервал для экономии ресурсов
                 
         except Exception as e:
             print(f"❌ Ошибка в мониторинге горячих клавиш: {e}")
@@ -124,11 +123,16 @@ class DesktopColorPicker(QWidget):
         self.timer.timeout.connect(self.update_coordinates)
         self.timer.start(100)  # Обновление каждые 100мс (~10 FPS) - достаточно для координат
         
-        # Переменные для оптимизации
-        self._last_pos = (0, 0)
-        self._last_color = (0, 0, 0)
+        # Переменные для оптимизации (слайсы для экономии памяти)
+        self._last_pos = [0, 0]  # Список вместо кортежа для изменения на месте
+        self._last_color = [0, 0, 0]  # Список вместо кортежа
         self._last_update_time = 0
-        self._update_threshold = 50  # Обновлять только если позиция изменилась на 50+ пикселей
+        self._update_threshold = 50
+        self._is_window_active = True
+        
+        # Кэш для стилей (экономия памяти)
+        self._style_cache = {}
+        self._last_style_key = None
         
         # Позиционирование в правом верхнем углу
         self.position_window()
@@ -268,9 +272,13 @@ class DesktopColorPicker(QWidget):
         self.move(x, y)
         
     def update_coordinates(self):
-        """Обновляет координаты курсора и цвет под ним."""
+        """Обновляет координаты курсора и цвет под ним (оптимизированная версия)."""
         # Защита от частых обновлений во время захвата
         if hasattr(self, '_capturing') and self._capturing:
+            return
+        
+        # Оптимизация: не обновляем если окно не активно
+        if not self._is_window_active and not self.frozen:
             return
             
         try:
@@ -279,9 +287,21 @@ class DesktopColorPicker(QWidget):
                 cursor_pos = pyautogui.position()
                 x, y = cursor_pos.x, cursor_pos.y
                 
-                # Получаем цвет под курсором
+                # Проверяем, нужно ли обновлять (оптимизация)
+                distance = abs(x - self._last_pos[0]) + abs(y - self._last_pos[1])
+                if distance < self._update_threshold and not self.frozen:
+                    return  # Пропускаем обновление если курсор не сдвинулся значительно
+                
+                # Получаем цвет под курсором только если позиция изменилась
                 pixel_color = pyautogui.pixel(x, y)
                 r, g, b = pixel_color
+                
+                # Кэшируем значения (изменяем на месте для экономии памяти)
+                self._last_pos[0] = x
+                self._last_pos[1] = y
+                self._last_color[0] = r
+                self._last_color[1] = g
+                self._last_color[2] = b
             else:
                 # Используем замороженные значения
                 x, y = self.frozen_coords
@@ -296,30 +316,76 @@ class DesktopColorPicker(QWidget):
             color_text = f"{status_text}Цвет: {hex_color} RGB({r}, {g}, {b})"
             self.color_label.setText(color_text)
             
-            # Изменяем цвет фона кнопки на захваченный цвет
-            self.capture_btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 rgb({min(255, r + 30)}, {min(255, g + 30)}, {min(255, b + 30)}),
-                        stop:1 rgb({r}, {g}, {b}));
-                    color: {'white' if (r + g + b) < 384 else 'black'};
-                    border: 1px solid #555;
-                    border-radius: 6px;
-                    padding: 6px 12px;
-                    margin: 2px;
-                    font-weight: bold;
-                    font-size: 10px;
-                }}
-                QPushButton:hover {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 rgb({min(255, r + 50)}, {min(255, g + 50)}, {min(255, b + 50)}),
-                        stop:1 rgb({min(255, r + 20)}, {min(255, g + 20)}, {min(255, b + 20)}));
-                    border: 1px solid #666;
-                }}
-            """)
+            # Обновляем цвет кнопки только если цвет действительно изменился
+            if (r != self._last_color[0] or g != self._last_color[1] or 
+                b != self._last_color[2] or self.frozen):
+                self._update_button_color(r, g, b)
             
         except Exception:
             # Не выводим ошибки в консоль при каждом обновлении
+            pass
+    
+    def _update_button_color(self, r, g, b):
+        """Обновляет цвет кнопки захвата (оптимизированная версия с кэшированием)."""
+        try:
+            # Создаем ключ для кэша
+            style_key = f"{r},{g},{b}"
+            
+            # Проверяем кэш
+            if style_key == self._last_style_key:
+                return  # Стиль уже применен
+            
+            # Проверяем кэш стилей
+            if style_key in self._style_cache:
+                self.capture_btn.setStyleSheet(self._style_cache[style_key])
+                self._last_style_key = style_key
+                return
+            
+            # Вычисляем цвета (оптимизированно)
+            r_light = min(255, r + 30)
+            g_light = min(255, g + 30)
+            b_light = min(255, b + 30)
+            r_hover = min(255, r + 50)
+            g_hover = min(255, g + 50)
+            b_hover = min(255, b + 50)
+            r_hover_light = min(255, r + 20)
+            g_hover_light = min(255, g + 20)
+            b_hover_light = min(255, b + 20)
+            text_color = 'white' if (r + g + b) < 384 else 'black'
+            
+            # Создаем стиль
+            style = f"""QPushButton {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgb({r_light}, {g_light}, {b_light}),
+                    stop:1 rgb({r}, {g}, {b}));
+                color: {text_color};
+                border: 1px solid #555;
+                border-radius: 6px;
+                padding: 6px 12px;
+                margin: 2px;
+                font-weight: bold;
+                font-size: 10px;
+            }}
+            QPushButton:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgb({r_hover}, {g_hover}, {b_hover}),
+                    stop:1 rgb({r_hover_light}, {g_hover_light}, {b_hover_light}));
+                border: 1px solid #666;
+            }}"""
+            
+            # Кэшируем и применяем
+            self._style_cache[style_key] = style
+            self.capture_btn.setStyleSheet(style)
+            self._last_style_key = style_key
+            
+            # Ограничиваем размер кэша
+            if len(self._style_cache) > 50:
+                # Удаляем старые записи
+                old_keys = list(self._style_cache.keys())[:10]
+                for key in old_keys:
+                    del self._style_cache[key]
+                    
+        except Exception:
             pass
             
     def capture_color(self):
@@ -428,7 +494,35 @@ class DesktopColorPicker(QWidget):
         """Обработчик закрытия окна."""
         # Останавливаем глобальные горячие клавиши
         self.hotkey_manager.stop()
+        
+        # Очищаем ресурсы
+        self._cleanup_resources()
+        
         super().closeEvent(event)
+    
+    def _cleanup_resources(self):
+        """Очищает ресурсы для экономии памяти."""
+        # Очищаем кэш стилей
+        self._style_cache.clear()
+        self._last_style_key = None
+        
+        # Останавливаем таймер
+        if hasattr(self, 'timer'):
+            self.timer.stop()
+        
+        # Очищаем ссылки
+        self._last_pos = None
+        self._last_color = None
+    
+    def focusInEvent(self, event):
+        """Обработчик получения фокуса окном."""
+        self._is_window_active = True
+        super().focusInEvent(event)
+    
+    def focusOutEvent(self, event):
+        """Обработчик потери фокуса окном."""
+        self._is_window_active = False
+        super().focusOutEvent(event)
 
 
 def check_dependencies():
