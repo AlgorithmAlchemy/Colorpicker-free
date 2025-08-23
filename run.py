@@ -135,10 +135,13 @@ class DesktopColorPicker(QWidget):
         """Настройка интерфейса."""
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignHCenter)
+        layout.setSpacing(8)  # Увеличиваем расстояние между элементами
+        layout.setContentsMargins(15, 15, 15, 15)  # Отступы от краев
         
         # Заголовок
         title = QLabel("Desktop Color Picker")
         title.setAlignment(Qt.AlignCenter)
+        title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         title.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px;")
         layout.addWidget(title)
         
@@ -150,6 +153,7 @@ class DesktopColorPicker(QWidget):
         )
         self.hotkey_status = QLabel(status_text)
         self.hotkey_status.setAlignment(Qt.AlignCenter)
+        self.hotkey_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.hotkey_status.setStyleSheet(
             "font-size: 10px; color: #888; margin: 2px;"
         )
@@ -159,7 +163,7 @@ class DesktopColorPicker(QWidget):
         self.coords_label = QLabel("Координаты: (0, 0)")
         self.coords_label.setAlignment(Qt.AlignCenter)
         self.coords_label.setSizePolicy(
-            QSizePolicy.Preferred, QSizePolicy.Preferred
+            QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         layout.addWidget(self.coords_label)
         
@@ -167,7 +171,7 @@ class DesktopColorPicker(QWidget):
         self.color_label = QLabel("Цвет: #000000")
         self.color_label.setAlignment(Qt.AlignCenter)
         self.color_label.setSizePolicy(
-            QSizePolicy.Preferred, QSizePolicy.Preferred
+            QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         layout.addWidget(self.color_label)
         
@@ -175,7 +179,7 @@ class DesktopColorPicker(QWidget):
         self.capture_btn = QPushButton("CTRL - Захватить цвет")
         self.capture_btn.clicked.connect(self.capture_color)
         self.capture_btn.setSizePolicy(
-            QSizePolicy.Preferred, QSizePolicy.Preferred
+            QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         layout.addWidget(self.capture_btn)
         
@@ -183,7 +187,7 @@ class DesktopColorPicker(QWidget):
         close_btn = QPushButton("Закрыть")
         close_btn.clicked.connect(self.close)
         close_btn.setSizePolicy(
-            QSizePolicy.Preferred, QSizePolicy.Preferred
+            QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         layout.addWidget(close_btn)
         
@@ -208,6 +212,7 @@ class DesktopColorPicker(QWidget):
                 color: #e0e0e0;
                 font-weight: 500;
                 margin: 2px;
+                padding: 4px;
             }
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
