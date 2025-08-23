@@ -11,10 +11,9 @@ import threading
 import time
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox,
-    QSizePolicy, QToolTip
+    QSizePolicy
 )
 from PySide6.QtCore import Qt, QTimer, Signal, QObject
-from PySide6.QtGui import QClipboard
 import pyautogui
 
 # Попытка импорта keyboard для глобальных горячих клавиш
@@ -95,12 +94,107 @@ class GlobalHotkeyManager(QObject):
             self.escape_pressed.emit()
 
 
+class CopyNotification(QWidget):
+    """Всплывающее уведомление о копировании."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.ToolTip | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_ShowWithoutActivating)
+        
+        # Создаем лейбл для текста
+        self.label = QLabel("✓ Скопировано!", self)
+        self.label.setStyleSheet("""
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #00C851, stop:1 #007E33);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 12px;
+                font-weight: bold;
+                font-size: 11px;
+                border: none;
+                box-shadow: 0 4px 15px rgba(0, 200, 81, 0.4);
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
+        """)
+        
+        # Размещаем лейбл
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.label)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Таймер для автоматического скрытия
+        self.hide_timer = QTimer(self)
+        self.hide_timer.timeout.connect(self._fade_out)
+        self.hide_timer.setSingleShot(True)
+    
+    def show_at_position(self, pos, duration=700):
+        """Показывает уведомление в указанной позиции."""
+        # Позиционируем над местом клика
+        self.move(pos.x() - self.width() // 2, pos.y() - self.height() - 20)
+        
+        # Начинаем с прозрачности 0 и масштаба 0.8
+        self.setWindowOpacity(0.0)
+        self.setStyleSheet(self.label.styleSheet() + "transform: scale(0.8);")
+        self.show()
+        
+        # Анимация появления с масштабированием
+        self.fade_in_timer = QTimer(self)
+        self.fade_in_timer.timeout.connect(self._fade_in)
+        self.fade_in_timer.start(16)  # 60 FPS
+        
+        # Таймер для скрытия
+        self.hide_timer.start(duration)
+    
+    def _fade_in(self):
+        """Анимация появления с масштабированием."""
+        current_opacity = self.windowOpacity()
+        if current_opacity < 1.0:
+            # Увеличиваем прозрачность и масштаб одновременно
+            new_opacity = min(1.0, current_opacity + 0.15)
+            scale = 0.8 + (new_opacity * 0.2)  # От 0.8 до 1.0
+            
+            self.setWindowOpacity(new_opacity)
+            self.setStyleSheet(self.label.styleSheet() + f"transform: scale({scale:.2f});")
+        else:
+            # Финальное состояние
+            self.setStyleSheet(self.label.styleSheet() + "transform: scale(1.0);")
+            self.fade_in_timer.stop()
+    
+    def _fade_out(self):
+        """Анимация исчезновения."""
+        self.fade_out_timer = QTimer(self)
+        self.fade_out_timer.timeout.connect(self._fade_out_step)
+        self.fade_out_timer.start(16)  # 60 FPS
+    
+    def _fade_out_step(self):
+        """Шаг анимации исчезновения с масштабированием."""
+        current_opacity = self.windowOpacity()
+        if current_opacity > 0.0:
+            # Уменьшаем прозрачность и масштаб одновременно
+            new_opacity = max(0.0, current_opacity - 0.2)
+            scale = 1.0 - ((1.0 - new_opacity) * 0.3)  # От 1.0 до 0.7
+            
+            self.setWindowOpacity(new_opacity)
+            self.setStyleSheet(self.label.styleSheet() + f"transform: scale({scale:.2f});")
+        else:
+            self.fade_out_timer.stop()
+            self.hide()
+
+
 class ClickableLabel(QLabel):
     """Кликабельный лейбл с копированием в буфер обмена."""
     
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
         self.setCursor(Qt.PointingHandCursor)  # Курсор-рука при наведении
+        self.notification = None  # Создадим позже
+    
+    def _ensure_notification(self):
+        """Создает уведомление при необходимости."""
+        if self.notification is None:
+            self.notification = CopyNotification(self.window())
     
     def mousePressEvent(self, event):
         """Обработчик клика мыши."""
@@ -111,7 +205,12 @@ class ClickableLabel(QLabel):
             
             # Временно меняем цвет для обратной связи
             original_style = self.styleSheet()
-            self.setStyleSheet(original_style + "; background-color: #4CAF50;")
+            self.setStyleSheet(original_style + "; background-color: #00C851;")
+            
+            # Показываем уведомление о копировании
+            self._ensure_notification()
+            global_pos = self.mapToGlobal(event.pos())
+            self.notification.show_at_position(global_pos)
             
             # Возвращаем исходный стиль через 200мс
             QTimer.singleShot(200, lambda: self.setStyleSheet(original_style))
