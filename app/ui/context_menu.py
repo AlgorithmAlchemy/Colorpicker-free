@@ -16,6 +16,8 @@ from PySide6.QtGui import QIcon, QFont, QAction
 from ..core.settings_manager import (
     get_settings_manager, SettingsKeys, get_setting, set_setting
 )
+from ..i18n import get_text, Language
+from ..ui_updater import update_all_widgets
 
 
 class ContextMenu(QMenu):
@@ -66,20 +68,20 @@ class ContextMenu(QMenu):
     def _add_basic_actions(self):
         """Добавляет основные действия."""
         # Захват цвета
-        capture_action = QAction("📸 Захватить цвет", self)
+        capture_action = QAction(get_text("capture_color"), self)
         capture_action.setShortcut("Ctrl")
         capture_action.triggered.connect(self._on_capture_color)
         self.addAction(capture_action)
         
         # Закрепить поверх всех окон
-        always_on_top_action = QAction("📌 Закрепить поверх окон", self)
+        always_on_top_action = QAction(get_text("always_on_top"), self)
         always_on_top_action.setCheckable(True)
         always_on_top_action.setChecked(get_setting(SettingsKeys.ALWAYS_ON_TOP, False))
         always_on_top_action.triggered.connect(self._on_always_on_top_toggled)
         self.addAction(always_on_top_action)
         
         # Автокопирование
-        auto_copy_action = QAction("📋 Автокопирование", self)
+        auto_copy_action = QAction(get_text("auto_copy"), self)
         auto_copy_action.setCheckable(True)
         auto_copy_action.setChecked(get_setting(SettingsKeys.AUTO_COPY, True))
         auto_copy_action.triggered.connect(self._on_auto_copy_toggled)
@@ -88,19 +90,24 @@ class ContextMenu(QMenu):
     def _add_settings_actions(self):
         """Добавляет действия настроек."""
         # Настройки
-        settings_action = QAction("⚙️ Настройки", self)
+        settings_action = QAction(get_text("settings"), self)
         settings_action.triggered.connect(self._show_settings_dialog)
         self.addAction(settings_action)
         
         # Тема
-        theme_action = QAction("🎨 Тема", self)
+        theme_action = QAction(get_text("theme"), self)
         theme_action.triggered.connect(self._show_theme_menu)
         self.addAction(theme_action)
         
         # Горячие клавиши
-        hotkeys_action = QAction("⌨️ Горячие клавиши", self)
+        hotkeys_action = QAction(get_text("hotkeys"), self)
         hotkeys_action.triggered.connect(self._show_hotkeys_dialog)
         self.addAction(hotkeys_action)
+        
+        # Язык
+        language_action = QAction(get_text("language"), self)
+        language_action.triggered.connect(self._show_language_menu)
+        self.addAction(language_action)
     
     def _add_advanced_actions(self):
         """Добавляет дополнительные действия."""
@@ -117,12 +124,12 @@ class ContextMenu(QMenu):
         self.addSeparator()
         
         # О программе
-        about_action = QAction("ℹ️ О программе", self)
+        about_action = QAction(get_text("about"), self)
         about_action.triggered.connect(self._show_about)
         self.addAction(about_action)
         
         # Выход
-        exit_action = QAction("❌ Выход", self)
+        exit_action = QAction(get_text("exit"), self)
         exit_action.setShortcut("Esc")
         exit_action.triggered.connect(self._on_exit)
         self.addAction(exit_action)
@@ -149,24 +156,24 @@ class ContextMenu(QMenu):
     
     def _show_theme_menu(self):
         """Показывает меню выбора темы."""
-        theme_menu = QMenu("Выбор темы", self)
+        theme_menu = QMenu(get_text("theme"), self)
         theme_menu.setStyleSheet(self.styleSheet())
         
         current_theme = get_setting(SettingsKeys.THEME, "dark")
         
-        dark_action = QAction("🌙 Темная", theme_menu)
+        dark_action = QAction(f"🌙 {get_text('dark_theme')}", theme_menu)
         dark_action.setCheckable(True)
         dark_action.setChecked(current_theme == "dark")
         dark_action.triggered.connect(lambda: self._set_theme("dark"))
         theme_menu.addAction(dark_action)
         
-        light_action = QAction("☀️ Светлая", theme_menu)
+        light_action = QAction(f"☀️ {get_text('light_theme')}", theme_menu)
         light_action.setCheckable(True)
         light_action.setChecked(current_theme == "light")
         light_action.triggered.connect(lambda: self._set_theme("light"))
         theme_menu.addAction(light_action)
         
-        auto_action = QAction("🔄 Авто", theme_menu)
+        auto_action = QAction(f"🔄 {get_text('auto_theme')}", theme_menu)
         auto_action.setCheckable(True)
         auto_action.setChecked(current_theme == "auto")
         auto_action.triggered.connect(lambda: self._set_theme("auto"))
@@ -184,6 +191,47 @@ class ContextMenu(QMenu):
         """Показывает диалог горячих клавиш."""
         dialog = HotkeysDialog(self.parent())
         dialog.exec()
+    
+    def _show_language_menu(self):
+        """Показывает меню выбора языка."""
+        from ..i18n import get_language_name
+        
+        language_menu = QMenu(get_text("language"), self)
+        language_menu.setStyleSheet(self.styleSheet())
+        
+        current_language = get_setting("language", "ru")
+        
+        # Добавляем все поддерживаемые языки
+        languages = [
+            ("ru", "🇷🇺"),
+            ("en", "🇺🇸"),
+            ("de", "🇩🇪"),
+            ("fr", "🇫🇷"),
+            ("es", "🇪🇸")
+        ]
+        
+        for lang_code, flag in languages:
+            lang_name = get_language_name(Language(lang_code))
+            action = QAction(f"{flag} {lang_name}", language_menu)
+            action.setCheckable(True)
+            action.setChecked(current_language == lang_code)
+            action.triggered.connect(lambda checked, code=lang_code: self._set_language(code))
+            language_menu.addAction(action)
+        
+        language_menu.exec(self.mapToGlobal(self.rect().bottomLeft()))
+    
+    def _set_language(self, language_code: str):
+        """Устанавливает язык."""
+        from ..i18n import set_language, Language
+        
+        # Устанавливаем язык в системе интернационализации
+        set_language(Language(language_code))
+        
+        # Сохраняем в настройках
+        set_setting("language", language_code)
+        
+        # Обновляем интерфейс
+        update_all_widgets()
     
     def _show_color_history(self):
         """Показывает историю цветов."""

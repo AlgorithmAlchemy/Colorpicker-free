@@ -16,14 +16,30 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint
 from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAction
 
+# Импорт системы интернационализации
+try:
+    from app.i18n import get_text, set_language, Language, get_language_name
+    from app.core.settings_manager import get_setting, set_setting
+    I18N_AVAILABLE = True
+except ImportError:
+    I18N_AVAILABLE = False
+    print("⚠️ Система интернационализации недоступна")
+
 # Попытка импорта win32api для глобальных горячих клавиш
 try:
     import win32api
     import win32con
     import win32gui
-    WIN32_AVAILABLE = True
+    # Проверяем что RegisterHotKey действительно доступен
+    if hasattr(win32api, 'RegisterHotKey'):
+        WIN32_AVAILABLE = True
+        print("✅ win32api доступен для глобальных горячих клавиш")
+    else:
+        WIN32_AVAILABLE = False
+        print("❌ win32api не поддерживает RegisterHotKey")
 except ImportError:
     WIN32_AVAILABLE = False
+    print("❌ win32api не установлен")
 
 # Попытка импорта keyboard для глобальных горячих клавиш (резервный)
 try:
@@ -284,27 +300,44 @@ class KeyboardHotkeyManager(QObject):
     def _force_init_keyboard(self):
         """Принудительная инициализация keyboard."""
         try:
+            print("🔧 Начинаем принудительную инициализацию keyboard...")
+            
             # Очищаем все хуки
             keyboard.unhook_all()
+            time.sleep(0.2)
             
             # Принудительно запускаем listener
             if hasattr(keyboard, '_listener'):
                 keyboard._listener.start_if_necessary()
+                time.sleep(0.2)
             
             # Симулируем несколько событий для активации
-            for _ in range(3):
+            for i in range(5):
                 try:
-                    # Пытаемся получить состояние клавиш
+                    # Проверяем состояние клавиш
                     keyboard.is_pressed('ctrl')
                     time.sleep(0.1)
-                except:
-                    pass
+                    print(f"🔧 Активация keyboard: шаг {i+1}/5")
+                except Exception as e:
+                    print(f"⚠️ Ошибка активации шаг {i+1}: {e}")
             
             # Дополнительная задержка
-            time.sleep(0.3)
+            time.sleep(0.5)
             
-            self._initialized = True
-            print("🔧 Принудительная инициализация keyboard выполнена")
+            # Финальная проверка
+            try:
+                if hasattr(keyboard, '_listener'):
+                    # Проверяем работоспособность через is_pressed
+                    try:
+                        keyboard.is_pressed('ctrl')
+                        self._initialized = True
+                        print("🔧 Принудительная инициализация keyboard выполнена успешно")
+                    except Exception:
+                        print("⚠️ Keyboard listener не работает после инициализации")
+                else:
+                    print("⚠️ Keyboard listener не существует после инициализации")
+            except Exception as e:
+                print(f"⚠️ Ошибка проверки keyboard после инициализации: {e}")
             
         except Exception as e:
             print(f"⚠️ Ошибка принудительной инициализации: {e}")
@@ -315,15 +348,45 @@ class KeyboardHotkeyManager(QObject):
             # Принудительная инициализация
             self._force_init_keyboard()
             
-            # Регистрируем горячие клавиши
-            keyboard.on_press_key('ctrl', lambda e: self._on_ctrl_pressed())
-            keyboard.on_press_key('esc', lambda e: self._on_escape_pressed())
+            # Регистрируем горячие клавиши с более надежными обработчиками
+            def on_ctrl_press(e):
+                if self._running:
+                    print("🎯 Ctrl нажат! (keyboard)")
+                    self.ctrl_pressed.emit()
+            
+            def on_escape_press(e):
+                if self._running:
+                    print("🎯 Escape нажат! (keyboard)")
+                    self.escape_pressed.emit()
+            
+            keyboard.on_press_key('ctrl', on_ctrl_press)
+            keyboard.on_press_key('esc', on_escape_press)
             
             print("✅ Глобальные горячие клавиши зарегистрированы (keyboard)")
             
-            # Держим поток активным
+            # Держим поток активным с периодической проверкой
+            last_check = time.time()
             while self._running:
-                time.sleep(0.05)
+                time.sleep(0.1)
+                
+                # Проверяем состояние каждые 2 секунды
+                current_time = time.time()
+                if current_time - last_check > 2.0:
+                    last_check = current_time
+                    try:
+                        # Проверяем что keyboard все еще работает
+                        if not hasattr(keyboard, '_listener'):
+                            print("⚠️ Keyboard listener не существует, перезапускаем...")
+                            self._force_init_keyboard()
+                        else:
+                            # Проверяем работоспособность через is_pressed
+                            try:
+                                keyboard.is_pressed('ctrl')
+                            except Exception:
+                                print("⚠️ Keyboard listener не работает, перезапускаем...")
+                                self._force_init_keyboard()
+                    except Exception as e:
+                        print(f"⚠️ Ошибка проверки keyboard: {e}")
                 
         except Exception as e:
             print(f"❌ Ошибка в мониторинге горячих клавиш (keyboard): {e}")
@@ -415,6 +478,11 @@ class CopyNotification(QWidget):
         self.hide_timer = QTimer(self)
         self.hide_timer.timeout.connect(self._fade_out)
         self.hide_timer.setSingleShot(True)
+        
+        # Таймер для постоянного мониторинга горячих клавиш
+        self.hotkey_monitor_timer = QTimer(self)
+        self.hotkey_monitor_timer.timeout.connect(self._monitor_hotkeys_periodically)
+        self.hotkey_monitor_timer.start(5000)  # Проверяем каждые 5 секунд
     
     def show_at_position(self, pos, duration=700):
         """Показывает уведомление в указанной позиции."""
@@ -510,7 +578,22 @@ class FixedDesktopColorPicker(QWidget):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Desktop Color Picker (Fixed)")
+        
+        # Инициализация языка
+        if I18N_AVAILABLE:
+            try:
+                saved_language = get_setting("language", "ru")
+                set_language(Language(saved_language))
+                print(f"🌐 Язык инициализирован: {get_language_name(Language(saved_language))}")
+            except Exception as e:
+                print(f"⚠️ Ошибка инициализации языка: {e}")
+        
+        # Устанавливаем заголовок окна
+        if I18N_AVAILABLE:
+            self.setWindowTitle(get_text("window_title"))
+        else:
+            self.setWindowTitle("Desktop Color Picker (Fixed)")
+            
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         
         # Переменные
@@ -929,6 +1012,7 @@ class FixedDesktopColorPicker(QWidget):
     
     def _on_global_ctrl_pressed(self):
         """Обработчик глобального нажатия Ctrl."""
+        print("🎯 Глобальный Ctrl нажат! Вызываем _handle_ctrl_press...")
         # Выполняем в основном потоке Qt
         QTimer.singleShot(0, self._handle_ctrl_press)
     
@@ -939,35 +1023,63 @@ class FixedDesktopColorPicker(QWidget):
     
     def restart_global_hotkeys(self):
         """Перезапускает глобальные горячие клавиши."""
-        if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
-            self.hotkey_manager.stop()
-            time.sleep(0.1)
-            if self.hotkey_manager.start():
-                print("✅ Глобальные горячие клавиши перезапущены")
+        try:
+            print("🔄 Перезапуск глобальных горячих клавиш...")
+            
+            if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
+                # Останавливаем предыдущий менеджер
+                if hasattr(self, 'hotkey_manager') and self.hotkey_manager:
+                    self.hotkey_manager.stop()
+                    time.sleep(0.2)
                 
-                # Принудительная инициализация keyboard
-                if KEYBOARD_AVAILABLE:
-                    try:
-                        # Принудительно запускаем listener
-                        if hasattr(keyboard, '_listener'):
-                            keyboard._listener.start_if_necessary()
-                        
-                        # Симулируем несколько событий для активации
-                        for _ in range(3):
-                            try:
-                                keyboard.is_pressed('ctrl')
-                                time.sleep(0.1)
-                            except Exception:
-                                pass
-                        
-                        print("🔧 Принудительная инициализация keyboard выполнена")
-                    except Exception as e:
-                        print(f"⚠️ Ошибка инициализации keyboard: {e}")
-            else:
-                print("❌ Не удалось перезапустить глобальные горячие клавиши")
+                # Создаем новый менеджер
+                self.hotkey_manager = GlobalHotkeyManager()
+                self.hotkey_manager.ctrl_pressed.connect(self._on_global_ctrl_pressed)
+                self.hotkey_manager.escape_pressed.connect(self._on_global_escape_pressed)
+                
+                # Запускаем менеджер
+                if self.hotkey_manager.start():
+                    print("✅ Глобальные горячие клавиши перезапущены")
+                    
+                    # Принудительная инициализация keyboard
+                    if KEYBOARD_AVAILABLE:
+                        try:
+                            # Принудительно запускаем listener
+                            if hasattr(keyboard, '_listener'):
+                                keyboard._listener.start_if_necessary()
+                            
+                            # Симулируем несколько событий для активации
+                            for _ in range(3):
+                                try:
+                                    keyboard.is_pressed('ctrl')
+                                    time.sleep(0.1)
+                                except Exception:
+                                    pass
+                            
+                            print("🔧 Принудительная инициализация keyboard выполнена")
+                        except Exception as e:
+                            print(f"⚠️ Ошибка инициализации keyboard: {e}")
+                    
+                    # Запускаем дополнительную проверку через 1 секунду
+                    QTimer.singleShot(1000, self._verify_hotkeys_working)
+                else:
+                    print("❌ Не удалось перезапустить глобальные горячие клавиши")
+        except Exception as e:
+            print(f"❌ Ошибка перезапуска глобальных горячих клавиш: {e}")
+    
+    def _verify_hotkeys_working(self):
+        """Проверяет что горячие клавиши действительно работают после перезапуска."""
+        try:
+            if not self._test_hotkeys_working():
+                print("⚠️ Горячие клавиши все еще не работают, повторная попытка...")
+                # Повторная попытка через 2 секунды
+                QTimer.singleShot(2000, self.restart_global_hotkeys)
+        except Exception as e:
+            print(f"⚠️ Ошибка проверки после перезапуска: {e}")
     
     def _handle_ctrl_press(self):
         """Обрабатывает нажатие Ctrl (локальное или глобальное)."""
+        print("🔧 _handle_ctrl_press вызван! frozen =", self.frozen)
         if not self.frozen:
             # Замораживаем текущие координаты и цвет
             try:
@@ -1008,6 +1120,8 @@ class FixedDesktopColorPicker(QWidget):
             if (WIN32_AVAILABLE or KEYBOARD_AVAILABLE) and not hasattr(self, '_hotkeys_initialized'):
                 QTimer.singleShot(100, self.restart_global_hotkeys)
                 self._hotkeys_initialized = True
+            # Запускаем проверку и восстановление горячих клавиш
+            QTimer.singleShot(200, self._check_and_restore_hotkeys)
             event.accept()
         elif event.button() == Qt.RightButton:
             self._show_context_menu(event.globalPosition().toPoint())
@@ -1029,6 +1143,54 @@ class FixedDesktopColorPicker(QWidget):
         """Обработчик потери фокуса окном."""
         super().focusOutEvent(event)
         self._is_window_active = False
+        # Запускаем проверку горячих клавиш после потери фокуса
+        QTimer.singleShot(500, self._check_and_restore_hotkeys)
+    
+    def _check_and_restore_hotkeys(self):
+        """Проверяет и восстанавливает горячие клавиши если они не работают."""
+        try:
+            # Проверяем состояние горячих клавиш
+            if hasattr(self, 'hotkey_manager') and self.hotkey_manager:
+                # Если менеджер существует, но горячие клавиши не работают
+                if not self._test_hotkeys_working():
+                    print("⚠️ Горячие клавиши не работают, восстанавливаем...")
+                    self.restart_global_hotkeys()
+        except Exception as e:
+            print(f"⚠️ Ошибка проверки горячих клавиш: {e}")
+    
+    def _test_hotkeys_working(self):
+        """Тестирует работу горячих клавиш."""
+        try:
+            if KEYBOARD_AVAILABLE:
+                # Проверяем состояние keyboard
+                if hasattr(keyboard, '_listener'):
+                    # Проверяем что listener существует и работает
+                    try:
+                        # Пытаемся получить состояние клавиши - если работает, то listener активен
+                        keyboard.is_pressed('ctrl')
+                        print("🔍 Проверка keyboard: listener работает")
+                        return True
+                    except Exception as e:
+                        print(f"🔍 Проверка keyboard: listener не работает - {e}")
+                        return False
+                else:
+                    print("🔍 Проверка keyboard: listener не существует")
+                    return False
+            return True
+        except Exception as e:
+            print(f"🔍 Ошибка проверки keyboard: {e}")
+            return False
+    
+    def _monitor_hotkeys_periodically(self):
+        """Периодически проверяет и восстанавливает горячие клавиши."""
+        try:
+            # Проверяем только если окно активно и горячие клавиши должны работать
+            if (WIN32_AVAILABLE or KEYBOARD_AVAILABLE) and hasattr(self, '_hotkeys_initialized'):
+                if not self._test_hotkeys_working():
+                    print("🔄 Периодическая проверка: горячие клавиши не работают, восстанавливаем...")
+                    self.restart_global_hotkeys()
+        except Exception as e:
+            print(f"⚠️ Ошибка периодической проверки: {e}")
     
     def _show_context_menu(self, pos):
         """Показывает контекстное меню."""
@@ -1061,7 +1223,11 @@ class FixedDesktopColorPicker(QWidget):
             # Закрепить поверх всех окон
             is_on_top = bool(self.windowFlags() & Qt.WindowStaysOnTopHint)
             status_icon = "☑️" if is_on_top else "☐"
-            always_on_top_action = QAction(f"📌 Закрепить поверх всех окон {status_icon}", self)
+            if I18N_AVAILABLE:
+                always_on_top_text = f"{get_text('always_on_top')} {status_icon}"
+            else:
+                always_on_top_text = f"📌 Закрепить поверх всех окон {status_icon}"
+            always_on_top_action = QAction(always_on_top_text, self)
             always_on_top_action.triggered.connect(self._toggle_always_on_top)
             menu.addAction(always_on_top_action)
             
@@ -1095,9 +1261,20 @@ class FixedDesktopColorPicker(QWidget):
                 menu.addAction(restart_hotkeys_action)
             
             # Настройки
-            settings_action = QAction("⚙️ Настройки", self)
+            if I18N_AVAILABLE:
+                settings_text = get_text("settings")
+            else:
+                settings_text = "⚙️ Настройки"
+            settings_action = QAction(settings_text, self)
             settings_action.triggered.connect(self._show_settings)
             menu.addAction(settings_action)
+            
+            # Язык
+            if I18N_AVAILABLE:
+                language_text = get_text("language")
+                language_action = QAction(language_text, self)
+                language_action.triggered.connect(self._show_language_menu)
+                menu.addAction(language_action)
             
             # О программе
             about_action = QAction("ℹ️ О программе", self)
@@ -1199,6 +1376,76 @@ class FixedDesktopColorPicker(QWidget):
             print(f"🔍 Прозрачность установлена: {int(opacity * 100)}%")
         except Exception as e:
             print(f"Ошибка установки прозрачности: {e}")
+    
+    def _show_language_menu(self):
+        """Показывает меню выбора языка."""
+        if not I18N_AVAILABLE:
+            return
+            
+        try:
+            language_menu = QMenu(get_text("language"), self)
+            language_menu.setStyleSheet("""
+                QMenu {
+                    background-color: #2d2d2d;
+                    border: 1px solid #555;
+                    border-radius: 6px;
+                    padding: 4px;
+                    color: white;
+                    font-size: 12px;
+                }
+                QMenu::item {
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    margin: 1px;
+                }
+                QMenu::item:selected {
+                    background-color: #4a4a4a;
+                }
+            """)
+            
+            current_language = get_setting("language", "ru")
+            
+            # Добавляем все поддерживаемые языки
+            languages = [
+                ("ru", "🇷🇺"),
+                ("en", "🇺🇸"),
+                ("de", "🇩🇪"),
+                ("fr", "🇫🇷"),
+                ("es", "🇪🇸")
+            ]
+            
+            for lang_code, flag in languages:
+                lang_name = get_language_name(Language(lang_code))
+                action = QAction(f"{flag} {lang_name}", language_menu)
+                action.setCheckable(True)
+                action.setChecked(current_language == lang_code)
+                action.triggered.connect(lambda checked, code=lang_code: self._set_language(code))
+                language_menu.addAction(action)
+            
+            language_menu.exec(self.mapToGlobal(self.rect().center()))
+            
+        except Exception as e:
+            print(f"Ошибка показа меню языка: {e}")
+    
+    def _set_language(self, language_code: str):
+        """Устанавливает язык."""
+        if not I18N_AVAILABLE:
+            return
+            
+        try:
+            # Устанавливаем язык в системе интернационализации
+            set_language(Language(language_code))
+            
+            # Сохраняем в настройках
+            set_setting("language", language_code)
+            
+            # Обновляем заголовок окна
+            self.setWindowTitle(get_text("window_title"))
+            
+            print(f"🌐 Язык изменен на: {get_language_name(Language(language_code))}")
+            
+        except Exception as e:
+            print(f"Ошибка установки языка: {e}")
     
     def _show_settings(self):
         """Показывает диалог настроек."""

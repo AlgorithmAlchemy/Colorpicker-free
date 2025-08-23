@@ -21,6 +21,8 @@ except ImportError:
 
 from .facade import get_color, reset_instance
 from .config import use_light_theme, use_alpha
+from .i18n import set_language, Language, get_i18n_manager
+from .core.settings_manager import get_setting
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -89,6 +91,10 @@ def main() -> int:
             use_alpha(True)
             print("Включена поддержка альфа-канала")
 
+        # Инициализация языка из настроек
+        saved_language = get_setting("language", "ru")
+        set_language(Language(saved_language))
+        
         # Сброс экземпляра для применения новых настроек
         reset_instance()
 

@@ -18,6 +18,8 @@ from .ui_light import Ui_ColorPicker as Ui_Light
 from .ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
 
 from .img import *
+from .i18n import get_text
+from .ui_updater import register_widget, unregister_widget
 
 
 class ColorPicker(QDialog):
@@ -55,7 +57,7 @@ class ColorPicker(QDialog):
         # Make Frameless
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setWindowTitle("Color Picker")
+        self.setWindowTitle(get_text("window_title"))
 
         # Add DropShadow
         self.shadow = QGraphicsDropShadowEffect(self)
@@ -88,6 +90,12 @@ class ColorPicker(QDialog):
         self.ui.buttonBox.accepted.connect(self.accept)
         self.ui.buttonBox.rejected.connect(self.reject)
         self.ui.exit_btn.clicked.connect(self.reject)
+
+        # Update button texts with translations
+        self._update_button_texts()
+
+        # Register widget for language updates
+        register_widget(self)
 
         self.lastcolor = (0, 0, 0)
         self.color = (0, 0, 0)
@@ -177,6 +185,27 @@ class ColorPicker(QDialog):
             self.ui.alpha.setText(str(alpha))
             self.ui.alpha.selectAll()
         self.alpha = alpha
+
+    def _update_button_texts(self):
+        """Обновляет текст кнопок с переводами."""
+        # Обновляем текст кнопок в buttonBox
+        ok_button = self.ui.buttonBox.button(self.ui.buttonBox.Ok)
+        if ok_button:
+            ok_button.setText(get_text("ok"))
+        
+        cancel_button = self.ui.buttonBox.button(self.ui.buttonBox.Cancel)
+        if cancel_button:
+            cancel_button.setText(get_text("cancel"))
+    
+    def update_language(self):
+        """Обновляет интерфейс при смене языка."""
+        self.setWindowTitle(get_text("window_title"))
+        self._update_button_texts()
+    
+    def closeEvent(self, event):
+        """Обработчик закрытия окна."""
+        unregister_widget(self)
+        super().closeEvent(event)
 
     # Internal setting functions
     def setRGB(self, c):
