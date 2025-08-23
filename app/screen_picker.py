@@ -2,9 +2,11 @@
 Модуль для выбора цвета с экрана
 
 Позволяет пользователю выбирать цвет с любой точки экрана.
+Включает улучшенные методы для работы в играх.
 """
 
 import sys
+import time
 from typing import Tuple, Optional, Callable
 from qtpy.QtCore import Qt, QTimer, QRect, QPoint
 from qtpy.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QKeySequence
@@ -169,7 +171,7 @@ class ScreenColorPicker(QWidget):
             self._color_history.append({
                 'color': self._current_color,
                 'position': self._current_position,
-                'timestamp': __import__('time').time()
+                'timestamp': time.time()
             })
 
             # Ограничиваем историю 50 цветами
@@ -294,9 +296,16 @@ class ScreenOverlay(QWidget):
             if not screen:
                 return None
 
+            # Используем улучшенный метод захвата
             pixmap = screen.grabWindow(0, position.x(), position.y(), 1, 1)
             if pixmap.isNull():
-                return None
+                # Попробуем альтернативный метод
+                pixmap = screen.grabWindow(0)
+                if pixmap.isNull():
+                    return None
+                
+                # Обрезаем до нужного пикселя
+                pixmap = pixmap.copy(position.x(), position.y(), 1, 1)
 
             # Получаем цвет пикселя
             image = pixmap.toImage()
@@ -366,14 +375,189 @@ def pick_screen_color() -> Optional[RGBColor]:
     return result[0]
 
 
+# Улучшенная функция для получения цвета пикселя
+def get_pixel_color(x: int, y: int) -> Optional[RGBColor]:
+    """
+    Получает цвет пикселя в указанных координатах.
+    
+    Args:
+        x: X координата
+        y: Y координата
+        
+    Returns:
+        RGB цвет или None в случае ошибки
+    """
+    try:
+        app = QApplication.instance()
+        if not app:
+            return None
+
+        screen = app.primaryScreen()
+        if not screen:
+            return None
+
+        # Пробуем разные методы захвата
+        pixmap = screen.grabWindow(0, x, y, 1, 1)
+        if pixmap.isNull():
+            # Альтернативный метод - захватываем весь экран
+            pixmap = screen.grabWindow(0)
+            if not pixmap.isNull():
+                pixmap = pixmap.copy(x, y, 1, 1)
+
+        if pixmap.isNull():
+            return None
+
+        image = pixmap.toImage()
+        if image.isNull():
+            return None
+
+        pixel_color = image.pixel(0, 0)
+        qcolor = QColor(pixel_color)
+
+        return (qcolor.red(), qcolor.green(), qcolor.blue())
+
+    except Exception as e:
+        print(f"Ошибка получения цвета пикселя ({x}, {y}): {e}")
+        return None
+
+
+# Новые функции для работы в играх
+def get_pixel_color_advanced(x: int, y: int) -> Optional[RGBColor]:
+    """
+    Расширенная функция получения цвета пикселя для работы в играх.
+    
+    Args:
+        x: X координата
+        y: Y координата
+        
+    Returns:
+        RGB цвет или None в случае ошибки
+    """
+    try:
+        app = QApplication.instance()
+        if not app:
+            return None
+
+        screen = app.primaryScreen()
+        if not screen:
+            return None
+
+        # Метод 1: Прямой захват пикселя
+        try:
+            pixmap = screen.grabWindow(0, x, y, 1, 1)
+            if not pixmap.isNull():
+                image = pixmap.toImage()
+                if not image.isNull():
+                    pixel_color = image.pixel(0, 0)
+                    qcolor = QColor(pixel_color)
+                    return (qcolor.red(), qcolor.green(), qcolor.blue())
+        except Exception:
+            pass
+
+        # Метод 2: Захват области вокруг пикселя
+        try:
+            area_size = 3
+            pixmap = screen.grabWindow(0, x - area_size//2, y - area_size//2, area_size, area_size)
+            if not pixmap.isNull():
+                image = pixmap.toImage()
+                if not image.isNull():
+                    # Берем центральный пиксель
+                    center = area_size // 2
+                    pixel_color = image.pixel(center, center)
+                    qcolor = QColor(pixel_color)
+                    return (qcolor.red(), qcolor.green(), qcolor.blue())
+        except Exception:
+            pass
+
+        # Метод 3: Захват всего экрана и обрезка
+        try:
+            pixmap = screen.grabWindow(0)
+            if not pixmap.isNull():
+                # Проверяем границы экрана
+                if 0 <= x < pixmap.width() and 0 <= y < pixmap.height():
+                    pixmap = pixmap.copy(x, y, 1, 1)
+                    image = pixmap.toImage()
+                    if not image.isNull():
+                        pixel_color = image.pixel(0, 0)
+                        qcolor = QColor(pixel_color)
+                        return (qcolor.red(), qcolor.green(), qcolor.blue())
+        except Exception:
+            pass
+
+        # Метод 4: Попытка через DC (только для Windows)
+        try:
+            import win32gui
+            import win32ui
+            import win32con
+            import win32api
+            
+            # Получаем DC экрана
+            hdc = win32gui.GetDC(0)
+            if hdc:
+                # Получаем цвет пикселя
+                color = win32gui.GetPixel(hdc, x, y)
+                win32gui.ReleaseDC(0, hdc)
+                
+                if color != -1:  # -1 означает ошибку
+                    r = color & 0xFF
+                    g = (color >> 8) & 0xFF
+                    b = (color >> 16) & 0xFF
+                    return (r, g, b)
+        except ImportError:
+            # pywin32 не установлен
+            pass
+        except Exception:
+            pass
+
+        return None
+
+    except Exception as e:
+        print(f"Ошибка расширенного получения цвета пикселя ({x}, {y}): {e}")
+        return None
+
+
+def get_pixel_color_with_retry(x: int, y: int, max_retries: int = 3) -> Optional[RGBColor]:
+    """
+    Получает цвет пикселя с повторными попытками.
+    
+    Args:
+        x: X координата
+        y: Y координата
+        max_retries: Максимальное количество попыток
+        
+    Returns:
+        RGB цвет или None в случае ошибки
+    """
+    for attempt in range(max_retries):
+        try:
+            # Сначала пробуем обычный метод
+            color = get_pixel_color(x, y)
+            if color:
+                return color
+            
+            # Если не получилось, пробуем расширенный метод
+            color = get_pixel_color_advanced(x, y)
+            if color:
+                return color
+            
+            # Небольшая задержка перед следующей попыткой
+            if attempt < max_retries - 1:
+                time.sleep(0.1)
+                
+        except Exception as e:
+            print(f"Попытка {attempt + 1} получения цвета пикселя ({x}, {y}) не удалась: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(0.1)
+    
+    return None
+
+
 if __name__ == "__main__":
     # Тестирование модуля
     app = QApplication(sys.argv)
 
-
     def test_callback(color):
         print(f"Выбран цвет: RGB{color}")
-
 
     picker = create_screen_color_picker(test_callback)
     picker.show()
