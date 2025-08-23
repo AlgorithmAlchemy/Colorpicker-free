@@ -8,11 +8,90 @@ Desktop Color Picker с пипеткой
 
 import sys
 import subprocess
+import threading
+import time
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
+    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, Signal, QObject
 import pyautogui
+
+# Попытка импорта keyboard для глобальных горячих клавиш
+try:
+    import keyboard
+    KEYBOARD_AVAILABLE = True
+except ImportError:
+    KEYBOARD_AVAILABLE = False
+    print("⚠️  Библиотека 'keyboard' не установлена. "
+          "Глобальные горячие клавиши недоступны.")
+    print("💡 Установите: pip install keyboard")
+
+
+class GlobalHotkeyManager(QObject):
+    """Менеджер глобальных горячих клавиш."""
+    
+    ctrl_pressed = Signal()
+    escape_pressed = Signal()
+    
+    def __init__(self):
+        super().__init__()
+        self._running = False
+        self._thread = None
+        
+    def start(self):
+        """Запускает мониторинг глобальных горячих клавиш."""
+        if not KEYBOARD_AVAILABLE:
+            return False
+            
+        if self._running:
+            return True
+            
+        try:
+            self._running = True
+            self._thread = threading.Thread(
+                target=self._monitor_hotkeys, daemon=True
+            )
+            self._thread.start()
+            return True
+        except Exception as e:
+            print(f"❌ Ошибка запуска глобальных горячих клавиш: {e}")
+            self._running = False
+            return False
+    
+    def stop(self):
+        """Останавливает мониторинг глобальных горячих клавиш."""
+        self._running = False
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=1)
+    
+    def _monitor_hotkeys(self):
+        """Мониторит глобальные горячие клавиши в отдельном потоке."""
+        try:
+            # Регистрируем горячие клавиши
+            keyboard.on_press_key('ctrl', lambda _: self._on_ctrl_pressed())
+            keyboard.on_press_key('esc', lambda _: self._on_escape_pressed())
+            
+            # Держим поток активным
+            while self._running:
+                time.sleep(0.1)
+                
+        except Exception as e:
+            print(f"❌ Ошибка в мониторинге горячих клавиш: {e}")
+        finally:
+            try:
+                keyboard.unhook_all()
+            except Exception:
+                pass
+    
+    def _on_ctrl_pressed(self):
+        """Обработчик нажатия Ctrl."""
+        if self._running:
+            self.ctrl_pressed.emit()
+    
+    def _on_escape_pressed(self):
+        """Обработчик нажатия Escape."""
+        if self._running:
+            self.escape_pressed.emit()
 
 
 class DesktopColorPicker(QWidget):
@@ -28,6 +107,14 @@ class DesktopColorPicker(QWidget):
         self.captured_colors = []
         self.is_capturing = False
         self._capturing = False  # Флаг для защиты от повторных вызовов
+        self.frozen = False  # Режим заморозки координат и цвета
+        self.frozen_coords = (0, 0)  # Замороженные координаты
+        self.frozen_color = (0, 0, 0)  # Замороженный цвет
+        
+        # Менеджер глобальных горячих клавиш
+        self.hotkey_manager = GlobalHotkeyManager()
+        self.hotkey_manager.ctrl_pressed.connect(self._on_global_ctrl_pressed)
+        self.hotkey_manager.escape_pressed.connect(self._on_global_escape_pressed)
         
         # Создание UI
         self.setup_ui()
@@ -40,6 +127,10 @@ class DesktopColorPicker(QWidget):
         # Позиционирование в правом верхнем углу
         self.position_window()
         
+        # Запускаем глобальные горячие клавиши
+        if not self.hotkey_manager.start():
+            self._show_hotkey_warning()
+        
     def setup_ui(self):
         """Настройка интерфейса."""
         layout = QVBoxLayout()
@@ -49,6 +140,15 @@ class DesktopColorPicker(QWidget):
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px;")
         layout.addWidget(title)
+        
+        # Статус глобальных горячих клавиш
+        status_text = ("🌐 Глобальные горячие клавиши: Активны" 
+                      if KEYBOARD_AVAILABLE 
+                      else "⚠️ Глобальные горячие клавиши: Недоступны")
+        self.hotkey_status = QLabel(status_text)
+        self.hotkey_status.setAlignment(Qt.AlignCenter)
+        self.hotkey_status.setStyleSheet("font-size: 10px; color: #888; margin: 2px;")
+        layout.addWidget(self.hotkey_status)
         
         # Координаты
         self.coords_label = QLabel("Координаты: (0, 0)")
@@ -95,6 +195,22 @@ class DesktopColorPicker(QWidget):
             }
         """)
         
+    def _show_hotkey_warning(self):
+        """Показывает предупреждение о недоступности глобальных горячих клавиш."""
+        if not KEYBOARD_AVAILABLE:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle("Предупреждение")
+            msg.setText("Глобальные горячие клавиши недоступны")
+            msg.setInformativeText(
+                "Для работы горячих клавиш в играх и других приложениях "
+                "установите библиотеку 'keyboard':\n\n"
+                "pip install keyboard\n\n"
+                "Без неё горячие клавиши работают только когда окно активно."
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        
     def position_window(self):
         """Позиционирует окно в правом верхнем углу экрана."""
         screen = QApplication.primaryScreen().geometry()
@@ -109,20 +225,27 @@ class DesktopColorPicker(QWidget):
             return
             
         try:
-            # Получаем позицию курсора
-            cursor_pos = pyautogui.position()
-            x, y = cursor_pos.x, cursor_pos.y
+            if not self.frozen:
+                # Получаем позицию курсора
+                cursor_pos = pyautogui.position()
+                x, y = cursor_pos.x, cursor_pos.y
+                
+                # Получаем цвет под курсором
+                pixel_color = pyautogui.pixel(x, y)
+                r, g, b = pixel_color
+            else:
+                # Используем замороженные значения
+                x, y = self.frozen_coords
+                r, g, b = self.frozen_color
             
             # Обновляем координаты
-            self.coords_label.setText(f"Координаты: ({x}, {y})")
-            
-            # Получаем цвет под курсором
-            pixel_color = pyautogui.pixel(x, y)
-            r, g, b = pixel_color
+            status_text = "" if self.frozen else ""
+            self.coords_label.setText(f"{status_text}Координаты: ({x}, {y})")
             
             # Обновляем цвет
             hex_color = f"#{r:02x}{g:02x}{b:02x}"
-            self.color_label.setText(f"Цвет: {hex_color} RGB({r}, {g}, {b})")
+            color_text = f"{status_text}Цвет: {hex_color} RGB({r}, {g}, {b})"
+            self.color_label.setText(color_text)
             
             # Изменяем цвет фона кнопки на захваченный цвет
             self.capture_btn.setStyleSheet(f"""
@@ -152,13 +275,19 @@ class DesktopColorPicker(QWidget):
         self._capturing = True
         
         try:
-            # Получаем позицию курсора
-            cursor_pos = pyautogui.position()
-            x, y = cursor_pos.x, cursor_pos.y
+            if self.frozen:
+                # Используем замороженные значения
+                x, y = self.frozen_coords
+                r, g, b = self.frozen_color
+            else:
+                # Получаем текущую позицию курсора
+                cursor_pos = pyautogui.position()
+                x, y = cursor_pos.x, cursor_pos.y
+                
+                # Получаем цвет под курсором
+                pixel_color = pyautogui.pixel(x, y)
+                r, g, b = pixel_color
             
-            # Получаем цвет под курсором
-            pixel_color = pyautogui.pixel(x, y)
-            r, g, b = pixel_color
             hex_color = f"#{r:02x}{g:02x}{b:02x}"
             
             # Добавляем в список захваченных цветов
@@ -186,11 +315,43 @@ class DesktopColorPicker(QWidget):
     def reset_capture_button(self):
         """Сбрасывает текст кнопки захвата."""
         self.capture_btn.setText("CTRL - Захватить цвет")
+    
+    def _on_global_ctrl_pressed(self):
+        """Обработчик глобального нажатия Ctrl."""
+        # Выполняем в основном потоке Qt
+        QTimer.singleShot(0, self._handle_ctrl_press)
+    
+    def _on_global_escape_pressed(self):
+        """Обработчик глобального нажатия Escape."""
+        # Выполняем в основном потоке Qt
+        QTimer.singleShot(0, self.close)
+    
+    def _handle_ctrl_press(self):
+        """Обрабатывает нажатие Ctrl (локальное или глобальное)."""
+        if not self.frozen:
+            # Замораживаем текущие координаты и цвет
+            try:
+                cursor_pos = pyautogui.position()
+                self.frozen_coords = (cursor_pos.x, cursor_pos.y)
+                pixel_color = pyautogui.pixel(cursor_pos.x, cursor_pos.y)
+                self.frozen_color = pixel_color
+                self.frozen = True
+                self.capture_btn.setText("CTRL - Разморозить")
+                coords = f"({self.frozen_coords[0]}, {self.frozen_coords[1]})"
+                color = f"RGB{self.frozen_color}"
+                print(f"Заморожено: {coords} - {color}")
+            except Exception as e:
+                print(f"Ошибка заморозки: {e}")
+        else:
+            # Размораживаем
+            self.frozen = False
+            self.capture_btn.setText("CTRL - Захватить цвет")
+            print("Разморожено")
             
     def keyPressEvent(self, event):
-        """Обработка нажатий клавиш."""
+        """Обработка нажатий клавиш (локальные горячие клавиши)."""
         if event.key() == Qt.Key_Control:
-            self.capture_color()
+            self._handle_ctrl_press()
         elif event.key() == Qt.Key_Escape:
             self.close()
         else:
@@ -206,6 +367,12 @@ class DesktopColorPicker(QWidget):
         """Обработка движения мыши для перетаскивания окна."""
         if event.buttons() == Qt.LeftButton:
             self.move(event.globalPosition().toPoint() - self.drag_position)
+    
+    def closeEvent(self, event):
+        """Обработчик закрытия окна."""
+        # Останавливаем глобальные горячие клавиши
+        self.hotkey_manager.stop()
+        super().closeEvent(event)
 
 
 def check_dependencies():
@@ -226,6 +393,13 @@ def check_dependencies():
         print(f"❌ Отсутствует зависимость: {e}")
         dependencies_ok = False
     
+    # Проверяем keyboard для глобальных горячих клавиш
+    if KEYBOARD_AVAILABLE:
+        print("✅ keyboard найден")
+    else:
+        print("⚠️  keyboard не найден (опциональная зависимость)")
+        print("💡 Для глобальных горячих клавиш установите: pip install keyboard")
+    
     # NumPy опциональный - приложение может работать без него
     try:
         import numpy
@@ -244,10 +418,10 @@ def install_dependencies():
     """Устанавливает зависимости."""
     print("🔧 Установка зависимостей...")
     try:
-        # Устанавливаем только основные зависимости
+        # Устанавливаем основные зависимости
         subprocess.run([
             sys.executable, "-m", "pip", "install", 
-            "PySide6", "pyautogui"
+            "PySide6", "pyautogui", "keyboard"
         ], check=True)
         
         print("✅ Основные зависимости установлены")
@@ -256,7 +430,7 @@ def install_dependencies():
     except subprocess.CalledProcessError as e:
         print(f"❌ Ошибка установки: {e}")
         print("💡 Попробуйте установить вручную:")
-        print("   pip install PySide6 pyautogui")
+        print("   pip install PySide6 pyautogui keyboard")
         return False
 
 def main():
@@ -293,6 +467,10 @@ def main():
     print("   - Нажмите CTRL или кнопку для захвата цвета")
     print("   - ESC для выхода")
     print("   - Перетаскивайте окно мышью")
+    if KEYBOARD_AVAILABLE:
+        print("   - 🌐 Глобальные горячие клавиши активны (работают в играх)")
+    else:
+        print("   - ⚠️  Глобальные горячие клавиши недоступны")
     
     return app.exec()
 
