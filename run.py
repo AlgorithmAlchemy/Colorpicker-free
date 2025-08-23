@@ -785,18 +785,46 @@ class FixedDesktopColorPicker(QWidget):
             """)
             
             # Закрепить поверх всех окон
-            always_on_top_action = QAction("📌 Закрепить поверх всех окон", self)
-            always_on_top_action.setCheckable(True)
-            always_on_top_action.setChecked(self.windowFlags() & Qt.WindowStaysOnTopHint)
+            is_on_top = bool(self.windowFlags() & Qt.WindowStaysOnTopHint)
+            status_icon = "☑️" if is_on_top else "☐"
+            always_on_top_action = QAction(f"📌 Закрепить поверх всех окон {status_icon}", self)
             always_on_top_action.triggered.connect(self._toggle_always_on_top)
             menu.addAction(always_on_top_action)
             
+            # Прозрачность окна
+            transparency_action = QAction("🔍 Прозрачность", self)
+            transparency_action.triggered.connect(self._show_transparency_menu)
+            menu.addAction(transparency_action)
+            
             menu.addSeparator()
+            
+            # Сбросить позицию окна
+            reset_pos_action = QAction("📍 Сбросить позицию", self)
+            reset_pos_action.triggered.connect(self.position_window)
+            menu.addAction(reset_pos_action)
+            
+            # Скрыть/показать окно
+            if self.isVisible():
+                hide_action = QAction("👁️ Скрыть окно", self)
+                hide_action.triggered.connect(self.hide)
+            else:
+                hide_action = QAction("👁️ Показать окно", self)
+                hide_action.triggered.connect(self.show)
+            menu.addAction(hide_action)
+            
+            menu.addSeparator()
+            
+            # Настройки
+            settings_action = QAction("⚙️ Настройки", self)
+            settings_action.triggered.connect(self._show_settings)
+            menu.addAction(settings_action)
             
             # О программе
             about_action = QAction("ℹ️ О программе", self)
             about_action.triggered.connect(self._show_about)
             menu.addAction(about_action)
+            
+            menu.addSeparator()
             
             # Выход
             exit_action = QAction("❌ Выход", self)
@@ -807,20 +835,23 @@ class FixedDesktopColorPicker(QWidget):
         except Exception as e:
             print(f"Ошибка показа контекстного меню: {e}")
     
-    def _toggle_always_on_top(self, checked):
+    def _toggle_always_on_top(self):
         """Переключает режим 'поверх всех окон'."""
         try:
             # Сохраняем текущую позицию окна
             current_pos = self.pos()
             
-            if checked:
-                # Включаем режим "поверх всех окон"
-                self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-                print("📌 Окно закреплено поверх всех окон")
-            else:
+            # Проверяем текущее состояние
+            is_currently_on_top = bool(self.windowFlags() & Qt.WindowStaysOnTopHint)
+            
+            if is_currently_on_top:
                 # Отключаем режим "поверх всех окон"
                 self.setWindowFlags(Qt.FramelessWindowHint)
                 print("📌 Окно больше не поверх всех окон")
+            else:
+                # Включаем режим "поверх всех окон"
+                self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+                print("📌 Окно закреплено поверх всех окон")
             
             # Перепоказываем окно и восстанавливаем позицию
             self.show()
@@ -828,6 +859,86 @@ class FixedDesktopColorPicker(QWidget):
             
         except Exception as e:
             print(f"Ошибка переключения режима 'поверх всех окон': {e}")
+    
+    def _show_transparency_menu(self):
+        """Показывает меню настройки прозрачности."""
+        try:
+            transparency_menu = QMenu(self)
+            transparency_menu.setStyleSheet("""
+                QMenu {
+                    background-color: #2d2d2d;
+                    border: 1px solid #555;
+                    border-radius: 6px;
+                    padding: 4px;
+                    color: white;
+                    font-size: 12px;
+                }
+                QMenu::item {
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    margin: 1px;
+                }
+                QMenu::item:selected {
+                    background-color: #4a4a4a;
+                }
+            """)
+            
+            # Варианты прозрачности
+            opacity_values = [
+                ("100% (Непрозрачно)", 1.0),
+                ("90%", 0.9),
+                ("80%", 0.8),
+                ("70%", 0.7),
+                ("60%", 0.6),
+                ("50%", 0.5),
+                ("40%", 0.4),
+                ("30%", 0.3),
+                ("20%", 0.2),
+                ("10%", 0.1)
+            ]
+            
+            current_opacity = self.windowOpacity()
+            
+            for text, opacity in opacity_values:
+                action = QAction(text, self)
+                action.setCheckable(True)
+                action.setChecked(abs(current_opacity - opacity) < 0.01)
+                action.triggered.connect(lambda checked, o=opacity: self._set_opacity(o))
+                transparency_menu.addAction(action)
+            
+            # Показываем меню под курсором
+            transparency_menu.exec(self.mapToGlobal(self.rect().center()))
+            
+        except Exception as e:
+            print(f"Ошибка показа меню прозрачности: {e}")
+    
+    def _set_opacity(self, opacity):
+        """Устанавливает прозрачность окна."""
+        try:
+            self.setWindowOpacity(opacity)
+            print(f"🔍 Прозрачность установлена: {int(opacity * 100)}%")
+        except Exception as e:
+            print(f"Ошибка установки прозрачности: {e}")
+    
+    def _show_settings(self):
+        """Показывает диалог настроек."""
+        try:
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Настройки")
+            msg.setText("Настройки приложения")
+            msg.setInformativeText(
+                "🔧 Настройки будут добавлены в следующей версии\n\n"
+                "Планируемые функции:\n"
+                "• Автокопирование цветов\n"
+                "• Настройка горячих клавиш\n"
+                "• Сохранение позиции окна\n"
+                "• Темы оформления\n"
+                "• История цветов"
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        except Exception as e:
+            print(f"Ошибка показа настроек: {e}")
     
     def _show_about(self):
         """Показывает диалог 'О программе'."""
