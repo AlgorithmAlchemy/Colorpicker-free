@@ -18,9 +18,8 @@ from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAc
 
 # Импорт системы интернационализации
 try:
-    from app.i18n import get_text, set_language, Language, get_language_name
+    from app.i18n import get_text, set_language, Language, get_language_name, get_supported_languages
     from app.core.settings_manager import get_setting, set_setting
-    from translation_templates import translate_all_widgets
     I18N_AVAILABLE = True
 except ImportError:
     I18N_AVAILABLE = False
@@ -1260,16 +1259,16 @@ class FixedDesktopColorPicker(QWidget):
             menu.addSeparator()
             
             # Сбросить позицию окна
-            reset_pos_action = QAction("📍 Сбросить позицию", self)
+            reset_pos_action = QAction(get_text("reset_position"), self)
             reset_pos_action.triggered.connect(self.position_window)
             menu.addAction(reset_pos_action)
             
             # Скрыть/показать окно
             if self.isVisible():
-                hide_action = QAction("👁️ Скрыть окно", self)
+                hide_action = QAction(get_text("hide_window"), self)
                 hide_action.triggered.connect(self.hide)
             else:
-                hide_action = QAction("👁️ Показать окно", self)
+                hide_action = QAction(get_text("show_window"), self)
                 hide_action.triggered.connect(self.show)
             menu.addAction(hide_action)
             
@@ -1277,9 +1276,9 @@ class FixedDesktopColorPicker(QWidget):
             
             # Перезапустить глобальные горячие клавиши
             if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
-                restart_hotkeys_action = QAction("🔄 Перезапустить горячие клавиши", self)
-                restart_hotkeys_action.triggered.connect(self.restart_global_hotkeys)
-                menu.addAction(restart_hotkeys_action)
+                            restart_hotkeys_action = QAction(get_text("restart_hotkeys"), self)
+            restart_hotkeys_action.triggered.connect(self.restart_global_hotkeys)
+            menu.addAction(restart_hotkeys_action)
             
             # Настройки
             if I18N_AVAILABLE:
@@ -1298,14 +1297,14 @@ class FixedDesktopColorPicker(QWidget):
                 menu.addAction(language_action)
             
             # О программе
-            about_action = QAction("ℹ️ О программе", self)
+            about_action = QAction(get_text("about_menu"), self)
             about_action.triggered.connect(self._show_about)
             menu.addAction(about_action)
             
             menu.addSeparator()
             
             # Выход
-            exit_action = QAction("❌ Выход", self)
+            exit_action = QAction(get_text("exit"), self)
             exit_action.triggered.connect(self.close)
             menu.addAction(exit_action)
             
@@ -1427,20 +1426,22 @@ class FixedDesktopColorPicker(QWidget):
             current_language = get_setting("language", "ru")
             
             # Добавляем все поддерживаемые языки
-            languages = [
-                ("ru", "🇷🇺"),
-                ("en", "🇺🇸"),
-                ("de", "🇩🇪"),
-                ("fr", "🇫🇷"),
-                ("es", "🇪🇸")
-            ]
+            languages = get_supported_languages()
             
-            for lang_code, flag in languages:
-                lang_name = get_language_name(Language(lang_code))
+            for lang in languages:
+                flag = {
+                    Language.RUSSIAN: "🇷🇺",
+                    Language.ENGLISH: "🇺🇸",
+                    Language.GERMAN: "🇩🇪",
+                    Language.FRENCH: "🇫🇷",
+                    Language.SPANISH: "🇪🇸"
+                }.get(lang, "")
+                
+                lang_name = get_language_name(lang)
                 action = QAction(f"{flag} {lang_name}", language_menu)
                 action.setCheckable(True)
-                action.setChecked(current_language == lang_code)
-                action.triggered.connect(lambda checked, code=lang_code: self._set_language(code))
+                action.setChecked(current_language == lang.value)
+                action.triggered.connect(lambda checked, l=lang: self._set_language(l.value))
                 language_menu.addAction(action)
             
             language_menu.exec(self.mapToGlobal(self.rect().center()))
@@ -1464,13 +1465,45 @@ class FixedDesktopColorPicker(QWidget):
             # Обновляем заголовок окна
             self.setWindowTitle(get_text("app_title"))
             
-            # Переводим все виджеты интерфейса
-            translate_all_widgets(self, language)
+            # Обновляем основные элементы интерфейса
+            self._update_interface_language()
             
             print(f"🌐 Язык изменен на: {get_language_name(language)}")
             
         except Exception as e:
             print(f"Ошибка установки языка: {e}")
+    
+    def _update_interface_language(self):
+        """Обновляет язык основных элементов интерфейса."""
+        if not I18N_AVAILABLE:
+            return
+            
+        try:
+            # Обновляем заголовок
+            if hasattr(self, 'title'):
+                self.title.setText(get_text("app_title"))
+            
+            # Обновляем координаты
+            if hasattr(self, 'coords_label'):
+                coords_text = f"{get_text('coordinates')}: (0, 0)"
+                self.coords_label.setText(coords_text)
+            
+            # Обновляем статус горячих клавиш
+            if hasattr(self, 'hotkey_status'):
+                if WIN32_AVAILABLE:
+                    status_text = get_text("hotkeys_win32")
+                elif KEYBOARD_AVAILABLE:
+                    status_text = get_text("hotkeys_keyboard")
+                else:
+                    status_text = get_text("hotkeys_unavailable")
+                self.hotkey_status.setText(status_text)
+            
+            # Обновляем кнопку захвата
+            if hasattr(self, 'capture_btn'):
+                self.capture_btn.setText(get_text("ctrl"))
+                
+        except Exception as e:
+            print(f"Ошибка обновления интерфейса: {e}")
     
     def _show_settings(self):
         """Показывает диалог настроек."""
