@@ -244,6 +244,7 @@ class KeyboardHotkeyManager(QObject):
         super().__init__()
         self._running = False
         self._thread = None
+        self._initialized = False
         
     def start(self):
         """Запускает мониторинг глобальных горячих клавиш."""
@@ -265,8 +266,8 @@ class KeyboardHotkeyManager(QObject):
             )
             self._thread.start()
             
-            # Ждем немного чтобы убедиться что поток запустился
-            time.sleep(0.2)
+            # Ждем инициализации
+            time.sleep(0.5)
             
             return True
         except Exception as e:
@@ -280,17 +281,39 @@ class KeyboardHotkeyManager(QObject):
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=1)
     
+    def _force_init_keyboard(self):
+        """Принудительная инициализация keyboard."""
+        try:
+            # Очищаем все хуки
+            keyboard.unhook_all()
+            
+            # Принудительно запускаем listener
+            if hasattr(keyboard, '_listener'):
+                keyboard._listener.start_if_necessary()
+            
+            # Симулируем несколько событий для активации
+            for _ in range(3):
+                try:
+                    # Пытаемся получить состояние клавиш
+                    keyboard.is_pressed('ctrl')
+                    time.sleep(0.1)
+                except:
+                    pass
+            
+            # Дополнительная задержка
+            time.sleep(0.3)
+            
+            self._initialized = True
+            print("🔧 Принудительная инициализация keyboard выполнена")
+            
+        except Exception as e:
+            print(f"⚠️ Ошибка принудительной инициализации: {e}")
+    
     def _monitor_hotkeys(self):
         """Мониторит глобальные горячие клавиши в отдельном потоке."""
         try:
-            # Очищаем предыдущие хуки
-            keyboard.unhook_all()
-            
-            # Принудительная инициализация keyboard
-            keyboard._listener.start_if_necessary()
-            
-            # Небольшая задержка для стабилизации
-            time.sleep(0.2)
+            # Принудительная инициализация
+            self._force_init_keyboard()
             
             # Регистрируем горячие клавиши
             keyboard.on_press_key('ctrl', lambda e: self._on_ctrl_pressed())
@@ -298,7 +321,7 @@ class KeyboardHotkeyManager(QObject):
             
             print("✅ Глобальные горячие клавиши зарегистрированы (keyboard)")
             
-            # Держим поток активным с более частой проверкой
+            # Держим поток активным
             while self._running:
                 time.sleep(0.05)
                 
@@ -531,7 +554,18 @@ class FixedDesktopColorPicker(QWidget):
         # Принудительная инициализация keyboard если доступен
         if KEYBOARD_AVAILABLE:
             try:
-                keyboard._listener.start_if_necessary()
+                # Принудительно запускаем listener
+                if hasattr(keyboard, '_listener'):
+                    keyboard._listener.start_if_necessary()
+                
+                # Симулируем несколько событий для активации
+                for _ in range(3):
+                    try:
+                        keyboard.is_pressed('ctrl')
+                        time.sleep(0.1)
+                    except Exception:
+                        pass
+                
                 print("🔧 Принудительная инициализация keyboard выполнена")
             except Exception as e:
                 print(f"⚠️ Ошибка инициализации keyboard: {e}")
@@ -914,7 +948,18 @@ class FixedDesktopColorPicker(QWidget):
                 # Принудительная инициализация keyboard
                 if KEYBOARD_AVAILABLE:
                     try:
-                        keyboard._listener.start_if_necessary()
+                        # Принудительно запускаем listener
+                        if hasattr(keyboard, '_listener'):
+                            keyboard._listener.start_if_necessary()
+                        
+                        # Симулируем несколько событий для активации
+                        for _ in range(3):
+                            try:
+                                keyboard.is_pressed('ctrl')
+                                time.sleep(0.1)
+                            except Exception:
+                                pass
+                        
                         print("🔧 Принудительная инициализация keyboard выполнена")
                     except Exception as e:
                         print(f"⚠️ Ошибка инициализации keyboard: {e}")

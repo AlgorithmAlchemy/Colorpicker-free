@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Принудительная инициализация keyboard для решения проблемы с горячими клавишами
+Принудительная активация keyboard через системные события
 """
 
 import sys
@@ -17,9 +17,18 @@ except ImportError:
     KEYBOARD_AVAILABLE = False
     print("❌ keyboard не установлен")
 
+try:
+    import win32api
+    import win32con
+    WIN32_AVAILABLE = True
+    print("✅ win32api доступен")
+except ImportError:
+    WIN32_AVAILABLE = False
+    print("❌ win32api не установлен")
 
-class ForceInitHotkeyManager(QObject):
-    """Менеджер с принудительной инициализацией keyboard."""
+
+class SystemActivationHotkeyManager(QObject):
+    """Менеджер с принудительной активацией через системные события."""
     
     ctrl_pressed = Signal()
     escape_pressed = Signal()
@@ -28,10 +37,10 @@ class ForceInitHotkeyManager(QObject):
         super().__init__()
         self._running = False
         self._thread = None
-        self._initialized = False
+        self._activated = False
         
     def start(self):
-        """Запускает мониторинг с принудительной инициализацией."""
+        """Запускает мониторинг с принудительной активацией."""
         if not KEYBOARD_AVAILABLE:
             return False
             
@@ -50,8 +59,8 @@ class ForceInitHotkeyManager(QObject):
             )
             self._thread.start()
             
-            # Ждем инициализации
-            time.sleep(0.5)
+            # Ждем активации
+            time.sleep(1.0)
             
             return True
         except Exception as e:
@@ -65,45 +74,60 @@ class ForceInitHotkeyManager(QObject):
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=1)
     
-    def _force_init_keyboard(self):
-        """Принудительная инициализация keyboard."""
+    def _force_system_activation(self):
+        """Принудительная активация через системные события."""
         try:
+            print("🔧 Начинаем принудительную активацию...")
+            
             # Очищаем все хуки
             keyboard.unhook_all()
+            time.sleep(0.2)
             
             # Принудительно запускаем listener
             if hasattr(keyboard, '_listener'):
                 keyboard._listener.start_if_necessary()
             
-            # Симулируем несколько событий для активации
-            for _ in range(3):
+            # Симулируем системные события для активации
+            if WIN32_AVAILABLE:
+                # Симулируем нажатие и отпускание клавиш
+                for _ in range(5):
+                    try:
+                        # Симулируем нажатие Ctrl
+                        win32api.keybd_event(win32con.VK_CONTROL, 0, 0, 0)
+                        time.sleep(0.05)
+                        win32api.keybd_event(win32con.VK_CONTROL, 0, win32con.KEYEVENTF_KEYUP, 0)
+                        time.sleep(0.05)
+                    except Exception:
+                        pass
+            
+            # Дополнительные проверки состояния
+            for _ in range(10):
                 try:
-                    # Пытаемся получить состояние клавиш
                     keyboard.is_pressed('ctrl')
                     time.sleep(0.1)
-                except:
+                except Exception:
                     pass
             
-            # Дополнительная задержка
-            time.sleep(0.3)
+            # Финальная задержка
+            time.sleep(0.5)
             
-            self._initialized = True
-            print("🔧 Принудительная инициализация keyboard выполнена")
+            self._activated = True
+            print("🔧 Принудительная активация через системные события выполнена")
             
         except Exception as e:
-            print(f"⚠️ Ошибка принудительной инициализации: {e}")
+            print(f"⚠️ Ошибка принудительной активации: {e}")
     
     def _monitor_hotkeys(self):
-        """Мониторит горячие клавиши с принудительной инициализацией."""
+        """Мониторит горячие клавиши с принудительной активацией."""
         try:
-            # Принудительная инициализация
-            self._force_init_keyboard()
+            # Принудительная активация
+            self._force_system_activation()
             
             # Регистрируем горячие клавиши
             keyboard.on_press_key('ctrl', lambda e: self._on_ctrl_pressed())
             keyboard.on_press_key('esc', lambda e: self._on_escape_pressed())
             
-            print("✅ Горячие клавиши зарегистрированы (принудительная инициализация)")
+            print("✅ Горячие клавиши зарегистрированы (системная активация)")
             
             # Держим поток активным
             while self._running:
@@ -120,13 +144,13 @@ class ForceInitHotkeyManager(QObject):
     def _on_ctrl_pressed(self):
         """Обработчик нажатия Ctrl."""
         if self._running:
-            print("🎯 Ctrl нажат! (принудительная инициализация)")
+            print("🎯 Ctrl нажат! (системная активация)")
             self.ctrl_pressed.emit()
     
     def _on_escape_pressed(self):
         """Обработчик нажатия Escape."""
         if self._running:
-            print("🎯 Escape нажат! (принудительная инициализация)")
+            print("🎯 Escape нажат! (системная активация)")
             self.escape_pressed.emit()
 
 
@@ -135,13 +159,13 @@ class TestWindow(QWidget):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Тест принудительной инициализации")
+        self.setWindowTitle("Тест системной активации")
         self.setGeometry(100, 100, 400, 300)
         
         layout = QVBoxLayout()
         
         # Статус
-        self.status_label = QLabel("Статус: Инициализация...")
+        self.status_label = QLabel("Статус: Активация...")
         layout.addWidget(self.status_label)
         
         # Счетчик
@@ -150,7 +174,7 @@ class TestWindow(QWidget):
         layout.addWidget(self.ctrl_label)
         
         # Кнопка перезапуска
-        restart_btn = QPushButton("Перезапустить с принудительной инициализацией")
+        restart_btn = QPushButton("Перезапустить с системной активацией")
         restart_btn.clicked.connect(self.restart_hotkeys)
         layout.addWidget(restart_btn)
         
@@ -162,7 +186,7 @@ class TestWindow(QWidget):
         self.setLayout(layout)
         
         # Запускаем менеджер
-        self.hotkey_manager = ForceInitHotkeyManager()
+        self.hotkey_manager = SystemActivationHotkeyManager()
         self.hotkey_manager.ctrl_pressed.connect(self._on_ctrl_pressed)
         self.hotkey_manager.escape_pressed.connect(self._on_escape_pressed)
         
@@ -185,7 +209,7 @@ class TestWindow(QWidget):
     def restart_hotkeys(self):
         """Перезапускает горячие клавиши."""
         self.hotkey_manager.stop()
-        time.sleep(0.2)
+        time.sleep(0.5)
         if self.hotkey_manager.start():
             self.status_label.setText("Статус: Горячие клавиши перезапущены")
             print("✅ Горячие клавиши перезапущены")
@@ -206,7 +230,7 @@ def main():
     window = TestWindow()
     window.show()
     
-    print("🔧 Тест принудительной инициализации запущен")
+    print("🔧 Тест системной активации запущен")
     print("📝 Инструкции:")
     print("   - Нажмите Ctrl для тестирования")
     print("   - Нажмите Escape для закрытия")
@@ -217,4 +241,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
