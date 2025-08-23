@@ -11,7 +11,8 @@ import subprocess
 import threading
 import time
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox
+    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox,
+    QSizePolicy
 )
 from PySide6.QtCore import Qt, QTimer, Signal, QObject
 import pyautogui
@@ -100,7 +101,6 @@ class DesktopColorPicker(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Desktop Color Picker")
-        self.setFixedSize(300, 200)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         
         # Переменные
@@ -134,6 +134,7 @@ class DesktopColorPicker(QWidget):
     def setup_ui(self):
         """Настройка интерфейса."""
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignHCenter)
         
         # Заголовок
         title = QLabel("Desktop Color Picker")
@@ -142,35 +143,57 @@ class DesktopColorPicker(QWidget):
         layout.addWidget(title)
         
         # Статус глобальных горячих клавиш
-        status_text = ("🌐 Глобальные горячие клавиши: Активны" 
-                      if KEYBOARD_AVAILABLE 
-                      else "⚠️ Глобальные горячие клавиши: Недоступны")
+        status_text = (
+            "🌐 Глобальные горячие клавиши: Активны" 
+            if KEYBOARD_AVAILABLE 
+            else "⚠️ Глобальные горячие клавиши: Недоступны"
+        )
         self.hotkey_status = QLabel(status_text)
         self.hotkey_status.setAlignment(Qt.AlignCenter)
-        self.hotkey_status.setStyleSheet("font-size: 10px; color: #888; margin: 2px;")
+        self.hotkey_status.setStyleSheet(
+            "font-size: 10px; color: #888; margin: 2px;"
+        )
         layout.addWidget(self.hotkey_status)
         
         # Координаты
         self.coords_label = QLabel("Координаты: (0, 0)")
         self.coords_label.setAlignment(Qt.AlignCenter)
+        self.coords_label.setSizePolicy(
+            QSizePolicy.Preferred, QSizePolicy.Preferred
+        )
         layout.addWidget(self.coords_label)
         
         # Цвет
         self.color_label = QLabel("Цвет: #000000")
         self.color_label.setAlignment(Qt.AlignCenter)
+        self.color_label.setSizePolicy(
+            QSizePolicy.Preferred, QSizePolicy.Preferred
+        )
         layout.addWidget(self.color_label)
         
         # Кнопка захвата
         self.capture_btn = QPushButton("CTRL - Захватить цвет")
         self.capture_btn.clicked.connect(self.capture_color)
+        self.capture_btn.setSizePolicy(
+            QSizePolicy.Preferred, QSizePolicy.Preferred
+        )
         layout.addWidget(self.capture_btn)
         
         # Кнопка закрытия
         close_btn = QPushButton("Закрыть")
         close_btn.clicked.connect(self.close)
+        close_btn.setSizePolicy(
+            QSizePolicy.Preferred, QSizePolicy.Preferred
+        )
         layout.addWidget(close_btn)
         
         self.setLayout(layout)
+        
+        # Автоматически подстраиваем размер под содержимое
+        self.adjustSize()
+        
+        # Адаптивное окно - размер под содержимое
+        self.setFixedSize(self.sizeHint())
         
         # Стили
         self.setStyleSheet("""
