@@ -715,7 +715,11 @@ class FixedDesktopColorPicker(QWidget):
         layout.addWidget(self.coords_label)
         
         # Цвет (кликабельный)
-        self.color_label = ClickableLabel("Цвет: #000000")
+        if I18N_AVAILABLE:
+            color_text = f"{get_text('color')}: #000000"
+        else:
+            color_text = "Цвет: #000000"
+        self.color_label = ClickableLabel(color_text)
         self.color_label.setAlignment(Qt.AlignCenter)
         self.color_label.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Preferred
@@ -731,7 +735,11 @@ class FixedDesktopColorPicker(QWidget):
         layout.addWidget(self.capture_btn)
         
         # Кнопка закрытия
-        close_btn = QPushButton("Закрыть")
+        if I18N_AVAILABLE:
+            close_text = get_text('close')
+        else:
+            close_text = "Закрыть"
+        close_btn = QPushButton(close_text)
         close_btn.clicked.connect(self.close)
         close_btn.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Preferred
@@ -859,7 +867,10 @@ class FixedDesktopColorPicker(QWidget):
                 
                 # Обновляем цвет лейбла для замороженного состояния
                 hex_color = f"#{r:02x}{g:02x}{b:02x}"
-                color_text = f"Цвет: {hex_color} RGB({r}, {g}, {b})"
+                if I18N_AVAILABLE:
+                    color_text = f"{get_text('color')}: {hex_color} RGB({r}, {g}, {b})"
+                else:
+                    color_text = f"Цвет: {hex_color} RGB({r}, {g}, {b})"
                 self.color_label.setText(color_text)
                 
                 # Окрашиваем лейбл в соответствующий цвет
@@ -883,12 +894,19 @@ class FixedDesktopColorPicker(QWidget):
             
             # Обновляем координаты
             status_text = "" if self.frozen else ""
-            self.coords_label.setText(f"{status_text}Координаты: ({x}, {y})")
+            if I18N_AVAILABLE:
+                coords_text = f"{status_text}{get_text('coordinates')}: ({x}, {y})"
+            else:
+                coords_text = f"{status_text}Координаты: ({x}, {y})"
+            self.coords_label.setText(coords_text)
             
             # Обновляем цвет (только для незамороженного состояния)
             if not self.frozen:
                 hex_color = f"#{r:02x}{g:02x}{b:02x}"
-                color_text = f"{status_text}Цвет: {hex_color} RGB({r}, {g}, {b})"
+                if I18N_AVAILABLE:
+                    color_text = f"{status_text}{get_text('color')}: {hex_color} RGB({r}, {g}, {b})"
+                else:
+                    color_text = f"{status_text}Цвет: {hex_color} RGB({r}, {g}, {b})"
                 self.color_label.setText(color_text)
                 
                 # Окрашиваем лейбл в соответствующий цвет
