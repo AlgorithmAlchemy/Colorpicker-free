@@ -125,11 +125,20 @@ class GlobalHotkeyManager(QObject):
             return True
             
         try:
+            # Останавливаем предыдущий поток если он есть
+            if self._thread and self._thread.is_alive():
+                self._running = False
+                self._thread.join(timeout=1)
+            
             self._running = True
             self._thread = threading.Thread(
                 target=self._monitor_hotkeys, daemon=True
             )
             self._thread.start()
+            
+            # Ждем немного чтобы убедиться что поток запустился
+            time.sleep(0.2)
+            
             return True
         except Exception as e:
             print(f"❌ Ошибка запуска глобальных горячих клавиш: {e}")
@@ -145,13 +154,21 @@ class GlobalHotkeyManager(QObject):
     def _monitor_hotkeys(self):
         """Мониторит глобальные горячие клавиши в отдельном потоке."""
         try:
+            # Очищаем предыдущие хуки
+            keyboard.unhook_all()
+            
+            # Небольшая задержка для стабилизации
+            time.sleep(0.1)
+            
             # Регистрируем горячие клавиши
             keyboard.on_press_key('ctrl', lambda e: self._on_ctrl_pressed())
             keyboard.on_press_key('esc', lambda e: self._on_escape_pressed())
             
+            print("✅ Глобальные горячие клавиши зарегистрированы")
+            
             # Держим поток активным
             while self._running:
-                time.sleep(0.2)
+                time.sleep(0.1)
                 
         except Exception as e:
             print(f"❌ Ошибка в мониторинге горячих клавиш: {e}")
@@ -708,6 +725,16 @@ class FixedDesktopColorPicker(QWidget):
         # Выполняем в основном потоке Qt
         QTimer.singleShot(0, self.close)
     
+    def restart_global_hotkeys(self):
+        """Перезапускает глобальные горячие клавиши."""
+        if KEYBOARD_AVAILABLE:
+            self.hotkey_manager.stop()
+            time.sleep(0.1)
+            if self.hotkey_manager.start():
+                print("✅ Глобальные горячие клавиши перезапущены")
+            else:
+                print("❌ Не удалось перезапустить глобальные горячие клавиши")
+    
     def _handle_ctrl_press(self):
         """Обрабатывает нажатие Ctrl (локальное или глобальное)."""
         if not self.frozen:
@@ -746,6 +773,10 @@ class FixedDesktopColorPicker(QWidget):
         """Обработка нажатий мыши для перетаскивания окна и контекстного меню."""
         if event.button() == Qt.LeftButton:
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            # При первом клике перезапускаем горячие клавиши если они не работают
+            if KEYBOARD_AVAILABLE and not hasattr(self, '_hotkeys_initialized'):
+                QTimer.singleShot(100, self.restart_global_hotkeys)
+                self._hotkeys_initialized = True
             event.accept()
         elif event.button() == Qt.RightButton:
             self._show_context_menu(event.globalPosition().toPoint())
@@ -755,6 +786,18 @@ class FixedDesktopColorPicker(QWidget):
         """Обработка движения мыши для перетаскивания окна."""
         if event.buttons() == Qt.LeftButton:
             self.move(event.globalPosition().toPoint() - self.drag_position)
+    
+    def focusInEvent(self, event):
+        """Обработчик получения фокуса окном."""
+        super().focusInEvent(event)
+        self._is_window_active = True
+        # Перезапускаем глобальные горячие клавиши при получении фокуса
+        QTimer.singleShot(100, self.restart_global_hotkeys)
+    
+    def focusOutEvent(self, event):
+        """Обработчик потери фокуса окном."""
+        super().focusOutEvent(event)
+        self._is_window_active = False
     
     def _show_context_menu(self, pos):
         """Показывает контекстное меню."""
@@ -813,6 +856,12 @@ class FixedDesktopColorPicker(QWidget):
             menu.addAction(hide_action)
             
             menu.addSeparator()
+            
+            # Перезапустить глобальные горячие клавиши
+            if KEYBOARD_AVAILABLE:
+                restart_hotkeys_action = QAction("🔄 Перезапустить горячие клавиши", self)
+                restart_hotkeys_action.triggered.connect(self.restart_global_hotkeys)
+                menu.addAction(restart_hotkeys_action)
             
             # Настройки
             settings_action = QAction("⚙️ Настройки", self)

@@ -1,0 +1,197 @@
+#!/usr/bin/env python3
+"""
+Тестовый скрипт для проверки работы глобальных горячих клавиш
+"""
+
+import sys
+import time
+import threading
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
+from PySide6.QtCore import Qt, QTimer, Signal, QObject
+
+# Попытка импорта keyboard для глобальных горячих клавиш
+try:
+    import keyboard
+    KEYBOARD_AVAILABLE = True
+    print("✅ Библиотека 'keyboard' доступна")
+except ImportError:
+    KEYBOARD_AVAILABLE = False
+    print("❌ Библиотека 'keyboard' не установлена")
+
+
+class TestHotkeyManager(QObject):
+    """Тестовый менеджер глобальных горячих клавиш."""
+    
+    ctrl_pressed = Signal()
+    escape_pressed = Signal()
+    
+    def __init__(self):
+        super().__init__()
+        self._running = False
+        self._thread = None
+        
+    def start(self):
+        """Запускает мониторинг глобальных горячих клавиш."""
+        if not KEYBOARD_AVAILABLE:
+            return False
+            
+        if self._running:
+            return True
+            
+        try:
+            # Останавливаем предыдущий поток если он есть
+            if self._thread and self._thread.is_alive():
+                self._running = False
+                self._thread.join(timeout=1)
+            
+            self._running = True
+            self._thread = threading.Thread(
+                target=self._monitor_hotkeys, daemon=True
+            )
+            self._thread.start()
+            
+            # Ждем немного чтобы убедиться что поток запустился
+            time.sleep(0.2)
+            
+            return True
+        except Exception as e:
+            print(f"❌ Ошибка запуска глобальных горячих клавиш: {e}")
+            self._running = False
+            return False
+    
+    def stop(self):
+        """Останавливает мониторинг глобальных горячих клавиш."""
+        self._running = False
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=1)
+    
+    def _monitor_hotkeys(self):
+        """Мониторит глобальные горячие клавиши в отдельном потоке."""
+        try:
+            # Очищаем предыдущие хуки
+            keyboard.unhook_all()
+            
+            # Небольшая задержка для стабилизации
+            time.sleep(0.1)
+            
+            # Регистрируем горячие клавиши
+            keyboard.on_press_key('ctrl', lambda e: self._on_ctrl_pressed())
+            keyboard.on_press_key('esc', lambda e: self._on_escape_pressed())
+            
+            print("✅ Глобальные горячие клавиши зарегистрированы")
+            
+            # Держим поток активным
+            while self._running:
+                time.sleep(0.1)
+                
+        except Exception as e:
+            print(f"❌ Ошибка в мониторинге горячих клавиш: {e}")
+        finally:
+            try:
+                keyboard.unhook_all()
+            except Exception:
+                pass
+    
+    def _on_ctrl_pressed(self):
+        """Обработчик нажатия Ctrl."""
+        if self._running:
+            print("🎯 Ctrl нажат!")
+            self.ctrl_pressed.emit()
+    
+    def _on_escape_pressed(self):
+        """Обработчик нажатия Escape."""
+        if self._running:
+            print("🎯 Escape нажат!")
+            self.escape_pressed.emit()
+
+
+class TestWindow(QWidget):
+    """Тестовое окно для проверки горячих клавиш."""
+    
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Тест горячих клавиш")
+        self.setGeometry(100, 100, 300, 200)
+        
+        # Менеджер глобальных горячих клавиш
+        self.hotkey_manager = TestHotkeyManager()
+        self.hotkey_manager.ctrl_pressed.connect(self._on_ctrl_pressed)
+        self.hotkey_manager.escape_pressed.connect(self._on_escape_pressed)
+        
+        # Создание UI
+        layout = QVBoxLayout()
+        
+        # Статус
+        self.status_label = QLabel("Статус: Ожидание...")
+        layout.addWidget(self.status_label)
+        
+        # Счетчик нажатий Ctrl
+        self.ctrl_count = 0
+        self.ctrl_label = QLabel("Нажатий Ctrl: 0")
+        layout.addWidget(self.ctrl_label)
+        
+        # Кнопка перезапуска
+        restart_btn = QPushButton("Перезапустить горячие клавиши")
+        restart_btn.clicked.connect(self.restart_hotkeys)
+        layout.addWidget(restart_btn)
+        
+        # Кнопка закрытия
+        close_btn = QPushButton("Закрыть")
+        close_btn.clicked.connect(self.close)
+        layout.addWidget(close_btn)
+        
+        self.setLayout(layout)
+        
+        # Запускаем глобальные горячие клавиши
+        if self.hotkey_manager.start():
+            self.status_label.setText("Статус: Горячие клавиши активны")
+        else:
+            self.status_label.setText("Статус: Ошибка запуска горячих клавиш")
+    
+    def _on_ctrl_pressed(self):
+        """Обработчик нажатия Ctrl."""
+        self.ctrl_count += 1
+        self.ctrl_label.setText(f"Нажатий Ctrl: {self.ctrl_count}")
+        print(f"🎯 Ctrl нажат! Всего: {self.ctrl_count}")
+    
+    def _on_escape_pressed(self):
+        """Обработчик нажатия Escape."""
+        print("🎯 Escape нажат! Закрываем окно...")
+        self.close()
+    
+    def restart_hotkeys(self):
+        """Перезапускает глобальные горячие клавиши."""
+        if KEYBOARD_AVAILABLE:
+            self.hotkey_manager.stop()
+            time.sleep(0.1)
+            if self.hotkey_manager.start():
+                self.status_label.setText("Статус: Горячие клавиши перезапущены")
+                print("✅ Глобальные горячие клавиши перезапущены")
+            else:
+                self.status_label.setText("Статус: Ошибка перезапуска")
+                print("❌ Не удалось перезапустить глобальные горячие клавиши")
+    
+    def closeEvent(self, event):
+        """Обработчик закрытия окна."""
+        self.hotkey_manager.stop()
+        super().closeEvent(event)
+
+
+def main():
+    """Главная функция."""
+    app = QApplication(sys.argv)
+    
+    window = TestWindow()
+    window.show()
+    
+    print("🔧 Тестовое окно запущено")
+    print("📝 Инструкции:")
+    print("   - Нажмите Ctrl для тестирования")
+    print("   - Нажмите Escape для закрытия")
+    print("   - Попробуйте нажать Ctrl когда окно не активно")
+    
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
