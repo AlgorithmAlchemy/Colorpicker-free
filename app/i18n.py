@@ -59,11 +59,258 @@ LANGUAGE_NAMES = {
 TRANSLATIONS = {
     # Основные элементы интерфейса
     "window_title": {
-        "ru": "Выбор цвета",
-        "en": "Color Picker",
-        "de": "Farbauswahl",
-        "fr": "Sélecteur de couleur",
-        "es": "Selector de color"
+        "ru": "Desktop Color Picker",
+        "en": "Desktop Color Picker",
+        "de": "Desktop Farbauswahl",
+        "fr": "Sélecteur de couleur Desktop",
+        "es": "Selector de color Desktop"
+    },
+    
+    # Основные элементы интерфейса
+    "app_title": {
+        "ru": "Desktop Color Picker (Fixed)",
+        "en": "Desktop Color Picker (Fixed)",
+        "de": "Desktop Farbauswahl (Korrigiert)",
+        "fr": "Sélecteur de couleur Desktop (Corrigé)",
+        "es": "Selector de color Desktop (Corregido)"
+    },
+    
+    # Статусы и сообщения
+    "coordinates": {
+        "ru": "Координаты",
+        "en": "Coordinates",
+        "de": "Koordinaten",
+        "fr": "Coordonnées",
+        "es": "Coordenadas"
+    },
+    
+    "color": {
+        "ru": "Цвет",
+        "en": "Color",
+        "de": "Farbe",
+        "fr": "Couleur",
+        "es": "Color"
+    },
+    
+    "captured": {
+        "ru": "Захвачен",
+        "en": "Captured",
+        "de": "Erfasst",
+        "fr": "Capturé",
+        "es": "Capturado"
+    },
+    
+    "capture_error": {
+        "ru": "Ошибка захвата",
+        "en": "Capture error",
+        "de": "Erfassungsfehler",
+        "fr": "Erreur de capture",
+        "es": "Error de captura"
+    },
+    
+    "copied": {
+        "ru": "✓ Скопировано!",
+        "en": "✓ Copied!",
+        "de": "✓ Kopiert!",
+        "fr": "✓ Copié !",
+        "es": "✓ ¡Copiado!"
+    },
+    
+    # Горячие клавиши
+    "ctrl": {
+        "ru": "CTRL",
+        "en": "CTRL",
+        "de": "STRG",
+        "fr": "CTRL",
+        "es": "CTRL"
+    },
+    
+    "ctrl_unfreeze": {
+        "ru": "CTRL - Разморозить",
+        "en": "CTRL - Unfreeze",
+        "de": "STRG - Entfrieren",
+        "fr": "CTRL - Dégeler",
+        "es": "CTRL - Descongelar"
+    },
+    
+    # Статусы горячих клавиш
+    "hotkeys_win32": {
+        "ru": "🌐 Глобальные горячие клавиши: Активны (win32api)",
+        "en": "🌐 Global hotkeys: Active (win32api)",
+        "de": "🌐 Globale Tastenkombinationen: Aktiv (win32api)",
+        "fr": "🌐 Raccourcis globaux: Actifs (win32api)",
+        "es": "🌐 Atajos globales: Activos (win32api)"
+    },
+    
+    "hotkeys_keyboard": {
+        "ru": "🌐 Глобальные горячие клавиши: Активны (keyboard)",
+        "en": "🌐 Global hotkeys: Active (keyboard)",
+        "de": "🌐 Globale Tastenkombinationen: Aktiv (keyboard)",
+        "fr": "🌐 Raccourcis globaux: Actifs (keyboard)",
+        "es": "🌐 Atajos globales: Activos (keyboard)"
+    },
+    
+    "hotkeys_unavailable": {
+        "ru": "⚠️ Глобальные горячие клавиши: Недоступны",
+        "en": "⚠️ Global hotkeys: Unavailable",
+        "de": "⚠️ Globale Tastenkombinationen: Nicht verfügbar",
+        "fr": "⚠️ Raccourcis globaux: Indisponibles",
+        "es": "⚠️ Atajos globales: No disponibles"
+    },
+    
+    # Инструкции
+    "usage_instructions": {
+        "ru": "📋 Использование:",
+        "en": "📋 Usage:",
+        "de": "📋 Verwendung:",
+        "fr": "📋 Utilisation:",
+        "es": "📋 Uso:"
+    },
+    
+    "usage_coordinates": {
+        "ru": "   - Окно показывает координаты курсора и цвет под ним",
+        "en": "   - Window shows cursor coordinates and color under it",
+        "de": "   - Fenster zeigt Cursor-Koordinaten und Farbe darunter",
+        "fr": "   - La fenêtre affiche les coordonnées du curseur et la couleur en dessous",
+        "es": "   - La ventana muestra las coordenadas del cursor y el color debajo"
+    },
+    
+    "usage_ctrl": {
+        "ru": "   - Нажмите CTRL или кнопку для захвата цвета",
+        "en": "   - Press CTRL or button to capture color",
+        "de": "   - Drücken Sie STRG oder Taste zum Erfassen der Farbe",
+        "fr": "   - Appuyez sur CTRL ou le bouton pour capturer la couleur",
+        "es": "   - Presiona CTRL o el botón para capturar el color"
+    },
+    
+    "usage_right_click": {
+        "ru": "   - Правый клик для контекстного меню",
+        "en": "   - Right click for context menu",
+        "de": "   - Rechtsklick für Kontextmenü",
+        "fr": "   - Clic droit pour le menu contextuel",
+        "es": "   - Clic derecho para el menú contextual"
+    },
+    
+    "usage_esc": {
+        "ru": "   - ESC для выхода",
+        "en": "   - ESC to exit",
+        "de": "   - ESC zum Beenden",
+        "fr": "   - ESC pour quitter",
+        "es": "   - ESC para salir"
+    },
+    
+    "usage_drag": {
+        "ru": "   - Перетаскивайте окно мышью",
+        "en": "   - Drag window with mouse",
+        "de": "   - Fenster mit Maus ziehen",
+        "fr": "   - Faites glisser la fenêtre avec la souris",
+        "es": "   - Arrastra la ventana con el ratón"
+    },
+    
+    "usage_hotkeys": {
+        "ru": "   - 🌐 Глобальные горячие клавиши активны (работают в играх)",
+        "en": "   - 🌐 Global hotkeys active (work in games)",
+        "de": "   - 🌐 Globale Tastenkombinationen aktiv (funktionieren in Spielen)",
+        "fr": "   - 🌐 Raccourcis globaux actifs (fonctionnent dans les jeux)",
+        "es": "   - 🌐 Atajos globales activos (funcionan en juegos)"
+    },
+    
+    "usage_stable": {
+        "ru": "   - 💡 Эта версия исправлена и работает стабильно",
+        "en": "   - 💡 This version is fixed and works stably",
+        "de": "   - 💡 Diese Version ist korrigiert und funktioniert stabil",
+        "fr": "   - 💡 Cette version est corrigée et fonctionne de manière stable",
+        "es": "   - 💡 Esta versión está corregida y funciona de manera estable"
+    },
+    
+    # Контекстное меню
+    "transparency": {
+        "ru": "🔍 Прозрачность",
+        "en": "🔍 Transparency",
+        "de": "🔍 Transparenz",
+        "fr": "🔍 Transparence",
+        "es": "🔍 Transparencia"
+    },
+    
+    "reset_position": {
+        "ru": "📍 Сбросить позицию",
+        "en": "📍 Reset position",
+        "de": "📍 Position zurücksetzen",
+        "fr": "📍 Réinitialiser la position",
+        "es": "📍 Restablecer posición"
+    },
+    
+    "hide_window": {
+        "ru": "👁️ Скрыть окно",
+        "en": "👁️ Hide window",
+        "de": "👁️ Fenster ausblenden",
+        "fr": "👁️ Masquer la fenêtre",
+        "es": "👁️ Ocultar ventana"
+    },
+    
+    "show_window": {
+        "ru": "👁️ Показать окно",
+        "en": "👁️ Show window",
+        "de": "👁️ Fenster anzeigen",
+        "fr": "👁️ Afficher la fenêtre",
+        "es": "👁️ Mostrar ventana"
+    },
+    
+    "restart_hotkeys": {
+        "ru": "🔄 Перезапустить горячие клавиши",
+        "en": "🔄 Restart hotkeys",
+        "de": "🔄 Tastenkombinationen neu starten",
+        "fr": "🔄 Redémarrer les raccourcis",
+        "es": "🔄 Reiniciar atajos"
+    },
+    
+    "about_menu": {
+        "ru": "ℹ️ О программе",
+        "en": "ℹ️ About",
+        "de": "ℹ️ Über",
+        "fr": "ℹ️ À propos",
+        "es": "ℹ️ Acerca de"
+    },
+    
+    # Диалоги
+    "warning": {
+        "ru": "Предупреждение",
+        "en": "Warning",
+        "de": "Warnung",
+        "fr": "Avertissement",
+        "es": "Advertencia"
+    },
+    
+    "hotkeys_unavailable_msg": {
+        "ru": "Глобальные горячие клавиши недоступны",
+        "en": "Global hotkeys are unavailable",
+        "de": "Globale Tastenkombinationen sind nicht verfügbar",
+        "fr": "Les raccourcis globaux ne sont pas disponibles",
+        "es": "Los atajos globales no están disponibles"
+    },
+    
+    "settings_dialog": {
+        "ru": "Настройки",
+        "en": "Settings",
+        "de": "Einstellungen",
+        "fr": "Paramètres",
+        "es": "Configuración"
+    },
+    
+    "settings_app": {
+        "ru": "Настройки приложения",
+        "en": "Application settings",
+        "de": "Anwendungseinstellungen",
+        "fr": "Paramètres de l'application",
+        "es": "Configuración de la aplicación"
+    },
+    
+    "about_app": {
+        "ru": "Desktop Color Picker",
+        "en": "Desktop Color Picker",
+        "de": "Desktop Farbauswahl",
+        "fr": "Sélecteur de couleur Desktop",
+        "es": "Selector de color Desktop"
     },
     
     # Кнопки

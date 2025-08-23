@@ -20,6 +20,7 @@ from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAc
 try:
     from app.i18n import get_text, set_language, Language, get_language_name
     from app.core.settings_manager import get_setting, set_setting
+    from translation_templates import translate_all_widgets
     I18N_AVAILABLE = True
 except ImportError:
     I18N_AVAILABLE = False
@@ -590,7 +591,7 @@ class FixedDesktopColorPicker(QWidget):
         
         # Устанавливаем заголовок окна
         if I18N_AVAILABLE:
-            self.setWindowTitle(get_text("window_title"))
+            self.setWindowTitle(get_text("app_title"))
         else:
             self.setWindowTitle("Desktop Color Picker (Fixed)")
             
@@ -661,19 +662,31 @@ class FixedDesktopColorPicker(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         
         # Заголовок
-        title = QLabel("Desktop Color Picker (Fixed)")
+        if I18N_AVAILABLE:
+            title_text = get_text("app_title")
+        else:
+            title_text = "Desktop Color Picker (Fixed)"
+        title = QLabel(title_text)
         title.setAlignment(Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         title.setStyleSheet("font-weight: bold; font-size: 11px; margin: 1px;")
         layout.addWidget(title)
         
         # Статус глобальных горячих клавиш
-        if WIN32_AVAILABLE:
-            status_text = "🌐 Глобальные горячие клавиши: Активны (win32api)"
-        elif KEYBOARD_AVAILABLE:
-            status_text = "🌐 Глобальные горячие клавиши: Активны (keyboard)"
+        if I18N_AVAILABLE:
+            if WIN32_AVAILABLE:
+                status_text = get_text("hotkeys_win32")
+            elif KEYBOARD_AVAILABLE:
+                status_text = get_text("hotkeys_keyboard")
+            else:
+                status_text = get_text("hotkeys_unavailable")
         else:
-            status_text = "⚠️ Глобальные горячие клавиши: Недоступны"
+            if WIN32_AVAILABLE:
+                status_text = "🌐 Глобальные горячие клавиши: Активны (win32api)"
+            elif KEYBOARD_AVAILABLE:
+                status_text = "🌐 Глобальные горячие клавиши: Активны (keyboard)"
+            else:
+                status_text = "⚠️ Глобальные горячие клавиши: Недоступны"
         self.hotkey_status = QLabel(status_text)
         self.hotkey_status.setAlignment(Qt.AlignCenter)
         self.hotkey_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -683,7 +696,11 @@ class FixedDesktopColorPicker(QWidget):
         layout.addWidget(self.hotkey_status)
         
         # Координаты (кликабельный)
-        self.coords_label = ClickableLabel("Координаты: (0, 0)")
+        if I18N_AVAILABLE:
+            coords_text = f"{get_text('coordinates')}: (0, 0)"
+        else:
+            coords_text = "Координаты: (0, 0)"
+        self.coords_label = ClickableLabel(coords_text)
         self.coords_label.setAlignment(Qt.AlignCenter)
         self.coords_label.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Preferred
@@ -1232,7 +1249,11 @@ class FixedDesktopColorPicker(QWidget):
             menu.addAction(always_on_top_action)
             
             # Прозрачность окна
-            transparency_action = QAction("🔍 Прозрачность", self)
+            if I18N_AVAILABLE:
+                transparency_text = get_text("transparency")
+            else:
+                transparency_text = "🔍 Прозрачность"
+            transparency_action = QAction(transparency_text, self)
             transparency_action.triggered.connect(self._show_transparency_menu)
             menu.addAction(transparency_action)
             
@@ -1434,15 +1455,19 @@ class FixedDesktopColorPicker(QWidget):
             
         try:
             # Устанавливаем язык в системе интернационализации
-            set_language(Language(language_code))
+            language = Language(language_code)
+            set_language(language)
             
             # Сохраняем в настройках
             set_setting("language", language_code)
             
             # Обновляем заголовок окна
-            self.setWindowTitle(get_text("window_title"))
+            self.setWindowTitle(get_text("app_title"))
             
-            print(f"🌐 Язык изменен на: {get_language_name(Language(language_code))}")
+            # Переводим все виджеты интерфейса
+            translate_all_widgets(self, language)
+            
+            print(f"🌐 Язык изменен на: {get_language_name(language)}")
             
         except Exception as e:
             print(f"Ошибка установки языка: {e}")
