@@ -55,7 +55,7 @@ from .colorpicker import (
 )
 
 # Конфигурация
-from .config import (
+from .data.config import (
     use_alpha,
     use_light_theme,
     get_config,

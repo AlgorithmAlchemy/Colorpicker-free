@@ -484,6 +484,14 @@ class CopyNotification(QWidget):
         self.hotkey_monitor_timer.timeout.connect(self._monitor_hotkeys_periodically)
         self.hotkey_monitor_timer.start(5000)  # Проверяем каждые 5 секунд
     
+    def _monitor_hotkeys_periodically(self):
+        """Периодически проверяет и восстанавливает горячие клавиши."""
+        try:
+            # В CopyNotification этот метод не нужен, но оставляем для совместимости
+            pass
+        except Exception as e:
+            print(f"⚠️ Ошибка периодической проверки в уведомлении: {e}")
+    
     def show_at_position(self, pos, duration=700):
         """Показывает уведомление в указанной позиции."""
         # Позиционируем над местом клика
@@ -1455,6 +1463,9 @@ class FixedDesktopColorPicker(QWidget):
             return
             
         try:
+            # Сохраняем текущий размер окна
+            current_size = self.size()
+            
             # Устанавливаем язык в системе интернационализации
             language = Language(language_code)
             set_language(language)
@@ -1468,6 +1479,9 @@ class FixedDesktopColorPicker(QWidget):
             # Обновляем основные элементы интерфейса
             self._update_interface_language()
             
+            # Восстанавливаем размер окна
+            self.setFixedSize(current_size)
+            
             print(f"🌐 Язык изменен на: {get_language_name(language)}")
             
         except Exception as e:
@@ -1479,6 +1493,9 @@ class FixedDesktopColorPicker(QWidget):
             return
             
         try:
+            # Сохраняем текущий размер окна
+            current_size = self.size()
+            
             # Обновляем заголовок
             if hasattr(self, 'title'):
                 self.title.setText(get_text("app_title"))
@@ -1501,6 +1518,9 @@ class FixedDesktopColorPicker(QWidget):
             # Обновляем кнопку захвата
             if hasattr(self, 'capture_btn'):
                 self.capture_btn.setText(get_text("ctrl"))
+            
+            # Восстанавливаем размер окна
+            self.setFixedSize(current_size)
                 
         except Exception as e:
             print(f"Ошибка обновления интерфейса: {e}")

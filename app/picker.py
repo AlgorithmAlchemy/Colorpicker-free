@@ -11,7 +11,7 @@ from qtpy.QtWidgets import QApplication, QDialog, QGraphicsDropShadowEffect
 
 from .types import RGBColor, RGBAColor, HSVColor
 from .color_utils import hsv2rgb, rgb2hsv, rgb2hex, hex2rgb, safe_int, clamp_rgb
-from .config import ColorPickerConfig
+from .data.config import ColorPickerConfig
 from .constants import (
     SHADOW_BLUR_RADIUS, SHADOW_COLOR, WINDOW_TITLE,
     HUE_SELECTOR_X, SV_SELECTOR_OFFSET, HUE_BAR_HEIGHT, SV_AREA_SIZE
@@ -57,10 +57,10 @@ class ColorPicker(QDialog):
 
     def _create_ui_components(self) -> None:
         """Создает компоненты пользовательского интерфейса."""
-        from .ui_dark import Ui_ColorPicker as Ui_Dark
-        from .ui_dark_alpha import Ui_ColorPicker as Ui_Dark_Alpha
-        from .ui_light import Ui_ColorPicker as Ui_Light
-        from .ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
+        from .ui.ui.ui_dark import Ui_ColorPicker as Ui_Dark
+        from .ui.ui.ui_dark_alpha import Ui_ColorPicker as Ui_Dark_Alpha
+        from .ui.ui.ui_light import Ui_ColorPicker as Ui_Light
+        from .ui.ui.ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
 
         ui_class = self._select_ui_class()
         self.ui = ui_class()
@@ -68,10 +68,10 @@ class ColorPicker(QDialog):
 
     def _select_ui_class(self):
         """Выбирает подходящий класс UI на основе конфигурации."""
-        from .ui_dark import Ui_ColorPicker as Ui_Dark
-        from .ui_dark_alpha import Ui_ColorPicker as Ui_Dark_Alpha
-        from .ui_light import Ui_ColorPicker as Ui_Light
-        from .ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
+        from .ui.ui.ui_dark import Ui_ColorPicker as Ui_Dark
+        from .ui.ui.ui_dark_alpha import Ui_ColorPicker as Ui_Dark_Alpha
+        from .ui.ui.ui_light import Ui_ColorPicker as Ui_Light
+        from .ui.ui.ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
 
         if self._config.use_alpha:
             return Ui_Light_Alpha() if self._config.light_theme else Ui_Dark_Alpha()

@@ -18,7 +18,7 @@ from .picker import ColorPicker
 from .screen_picker import ScreenColorPicker
 from .types import RGBColor, RGBAColor
 from .color_utils import rgb2hex, hex2rgb
-from .config import get_config
+from .data.config import get_config
 
 
 class EnhancedColorPicker(QDialog):

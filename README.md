@@ -84,7 +84,7 @@ python run_improved.py
 - Истории выбранных цветов
 - Настроек окна (позиция, размер)
 
-Файл базы данных: `settings.db`
+Файл базы данных: `app/data/settings.db`
 
 ## 🔧 Структура проекта
 
@@ -94,6 +94,9 @@ python run_improved.py
 │   ├── core/
 │   │   ├── settings_manager.py    # Менеджер настроек с SQLite
 │   │   └── ...
+│   ├── data/
+│   │   ├── settings.db            # База данных настроек
+│   │   └── config.py              # Конфигурация приложения
 │   ├── ui/
 │   │   ├── context_menu.py        # Контекстное меню
 │   │   └── ...

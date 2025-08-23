@@ -8,7 +8,7 @@ import warnings
 from typing import Optional, Tuple
 
 from .facade import get_color as _get_color
-from .config import use_alpha as _use_alpha, use_light_theme as _use_light_theme
+from .data.config import use_alpha as _use_alpha, use_light_theme as _use_light_theme
 
 
 def getColor(lc: Optional[Tuple] = None) -> Tuple:
