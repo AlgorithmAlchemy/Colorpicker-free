@@ -306,15 +306,51 @@ class DesktopColorPicker(QWidget):
                 # Используем замороженные значения
                 x, y = self.frozen_coords
                 r, g, b = self.frozen_color
+                
+                # Обновляем цвет лейбла для замороженного состояния
+                hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                color_text = f"Цвет: {hex_color} RGB({r}, {g}, {b})"
+                self.color_label.setText(color_text)
+                
+                # Окрашиваем лейбл в соответствующий цвет
+                text_color = 'white' if (r + g + b) < 384 else 'black'
+                self.color_label.setStyleSheet(f"""
+                    QLabel {{
+                        color: {text_color};
+                        font-weight: bold;
+                        margin: 1px;
+                        padding: 4px;
+                        font-size: 10px;
+                        background-color: rgb({r}, {g}, {b});
+                        border: 2px solid #ff4444;
+                        border-radius: 4px;
+                    }}
+                """)
             
             # Обновляем координаты
             status_text = "" if self.frozen else ""
             self.coords_label.setText(f"{status_text}Координаты: ({x}, {y})")
             
-            # Обновляем цвет
-            hex_color = f"#{r:02x}{g:02x}{b:02x}"
-            color_text = f"{status_text}Цвет: {hex_color} RGB({r}, {g}, {b})"
-            self.color_label.setText(color_text)
+            # Обновляем цвет (только для незамороженного состояния)
+            if not self.frozen:
+                hex_color = f"#{r:02x}{g:02x}{b:02x}"
+                color_text = f"{status_text}Цвет: {hex_color} RGB({r}, {g}, {b})"
+                self.color_label.setText(color_text)
+                
+                # Окрашиваем лейбл в соответствующий цвет
+                text_color = 'white' if (r + g + b) < 384 else 'black'
+                self.color_label.setStyleSheet(f"""
+                    QLabel {{
+                        color: {text_color};
+                        font-weight: 500;
+                        margin: 1px;
+                        padding: 4px;
+                        font-size: 10px;
+                        background-color: rgb({r}, {g}, {b});
+                        border: 1px solid #555;
+                        border-radius: 4px;
+                    }}
+                """)
             
             # Обновляем цвет кнопки только если цвет действительно изменился
             if (r != self._last_color[0] or g != self._last_color[1] or
