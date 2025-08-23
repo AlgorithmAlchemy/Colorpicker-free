@@ -198,23 +198,38 @@ class DesktopColorPicker(QWidget):
         # Стили
         self.setStyleSheet("""
             QWidget {
-                background-color: #2b2b2b;
+                background-color: #1e1e1e;
                 color: white;
-                border: 2px solid #555;
-                border-radius: 10px;
+                border: 2px solid #3a3a3a;
+                border-radius: 15px;
+                font-family: 'Segoe UI', Arial, sans-serif;
             }
-            QPushButton {
-                background-color: #4a4a4a;
-                border: 1px solid #666;
-                border-radius: 5px;
-                padding: 8px;
+            QLabel {
+                color: #e0e0e0;
+                font-weight: 500;
                 margin: 2px;
             }
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #4a4a4a, stop:1 #3a3a3a);
+                border: 1px solid #555;
+                border-radius: 12px;
+                padding: 10px 16px;
+                margin: 4px;
+                font-weight: bold;
+                font-size: 11px;
+                color: white;
+            }
             QPushButton:hover {
-                background-color: #5a5a5a;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #5a5a5a, stop:1 #4a4a4a);
+                border: 1px solid #666;
+                transform: translateY(-1px);
             }
             QPushButton:pressed {
-                background-color: #3a3a3a;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #3a3a3a, stop:1 #2a2a2a);
+                border: 1px solid #444;
             }
         """)
         
@@ -273,15 +288,22 @@ class DesktopColorPicker(QWidget):
             # Изменяем цвет фона кнопки на захваченный цвет
             self.capture_btn.setStyleSheet(f"""
                 QPushButton {{
-                    background-color: rgb({r}, {g}, {b});
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 rgb({min(255, r + 30)}, {min(255, g + 30)}, {min(255, b + 30)}),
+                        stop:1 rgb({r}, {g}, {b}));
                     color: {'white' if (r + g + b) < 384 else 'black'};
-                    border: 1px solid #666;
-                    border-radius: 5px;
-                    padding: 8px;
-                    margin: 2px;
+                    border: 1px solid #555;
+                    border-radius: 12px;
+                    padding: 10px 16px;
+                    margin: 4px;
+                    font-weight: bold;
+                    font-size: 11px;
                 }}
                 QPushButton:hover {{
-                    background-color: rgb({min(255, r + 20)}, {min(255, g + 20)}, {min(255, b + 20)});
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 rgb({min(255, r + 50)}, {min(255, g + 50)}, {min(255, b + 50)}),
+                        stop:1 rgb({min(255, r + 20)}, {min(255, g + 20)}, {min(255, b + 20)}));
+                    border: 1px solid #666;
                 }}
             """)
             
