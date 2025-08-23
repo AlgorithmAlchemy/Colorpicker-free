@@ -119,10 +119,16 @@ class DesktopColorPicker(QWidget):
         # Создание UI
         self.setup_ui()
         
-        # Таймер для обновления координат
+        # Таймер для обновления координат (оптимизированный)
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_coordinates)
-        self.timer.start(16)  # Обновление каждые 16мс (~60 FPS)
+        self.timer.start(100)  # Обновление каждые 100мс (~10 FPS) - достаточно для координат
+        
+        # Переменные для оптимизации
+        self._last_pos = (0, 0)
+        self._last_color = (0, 0, 0)
+        self._last_update_time = 0
+        self._update_threshold = 50  # Обновлять только если позиция изменилась на 50+ пикселей
         
         # Позиционирование в правом верхнем углу
         self.position_window()
@@ -135,14 +141,14 @@ class DesktopColorPicker(QWidget):
         """Настройка интерфейса."""
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignHCenter)
-        layout.setSpacing(8)  # Увеличиваем расстояние между элементами
-        layout.setContentsMargins(15, 15, 15, 15)  # Отступы от краев
+        layout.setSpacing(2)  # Минимальное расстояние между элементами
+        layout.setContentsMargins(8, 8, 8, 8)  # Минимальные отступы от краев
         
         # Заголовок
         title = QLabel("Desktop Color Picker")
         title.setAlignment(Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        title.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px;")
+        title.setStyleSheet("font-weight: bold; font-size: 11px; margin: 1px;")
         layout.addWidget(title)
         
         # Статус глобальных горячих клавиш
@@ -155,7 +161,7 @@ class DesktopColorPicker(QWidget):
         self.hotkey_status.setAlignment(Qt.AlignCenter)
         self.hotkey_status.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.hotkey_status.setStyleSheet(
-            "font-size: 10px; color: #888; margin: 2px;"
+            "font-size: 9px; color: #888; margin: 1px;"
         )
         layout.addWidget(self.hotkey_status)
         
@@ -204,32 +210,32 @@ class DesktopColorPicker(QWidget):
             QWidget {
                 background-color: #1e1e1e;
                 color: white;
-                border: 2px solid #3a3a3a;
-                border-radius: 15px;
+                border: 1px solid #3a3a3a;
+                border-radius: 8px;
                 font-family: 'Segoe UI', Arial, sans-serif;
             }
             QLabel {
                 color: #e0e0e0;
                 font-weight: 500;
-                margin: 2px;
-                padding: 4px;
+                margin: 1px;
+                padding: 2px;
+                font-size: 10px;
             }
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 #4a4a4a, stop:1 #3a3a3a);
                 border: 1px solid #555;
-                border-radius: 12px;
-                padding: 10px 16px;
-                margin: 4px;
+                border-radius: 6px;
+                padding: 6px 12px;
+                margin: 2px;
                 font-weight: bold;
-                font-size: 11px;
+                font-size: 10px;
                 color: white;
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 #5a5a5a, stop:1 #4a4a4a);
                 border: 1px solid #666;
-                transform: translateY(-1px);
             }
             QPushButton:pressed {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -298,11 +304,11 @@ class DesktopColorPicker(QWidget):
                         stop:1 rgb({r}, {g}, {b}));
                     color: {'white' if (r + g + b) < 384 else 'black'};
                     border: 1px solid #555;
-                    border-radius: 12px;
-                    padding: 10px 16px;
-                    margin: 4px;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    margin: 2px;
                     font-weight: bold;
-                    font-size: 11px;
+                    font-size: 10px;
                 }}
                 QPushButton:hover {{
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
