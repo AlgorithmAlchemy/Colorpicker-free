@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Desktop Color Picker с пипеткой
+Исправленная версия Desktop Color Picker с контекстным меню и настройками
 
 Показывает координаты курсора и позволяет захватывать цвет с экрана.
-Используйте CTRL для захвата цвета.
+Используйте CTRL для захвата цвета, правый клик для контекстного меню.
 """
 
 import sys
@@ -11,20 +11,98 @@ import threading
 import time
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox,
-    QSizePolicy
+    QSizePolicy, QMenu
 )
-from PySide6.QtCore import Qt, QTimer, Signal, QObject
-import pyautogui
+from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint
+from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAction
 
 # Попытка импорта keyboard для глобальных горячих клавиш
 try:
     import keyboard
     KEYBOARD_AVAILABLE = True
-except ImportError:
+except ImportError:                                                                           
     KEYBOARD_AVAILABLE = False
     print("⚠️  Библиотека 'keyboard' не установлена. "
           "Глобальные горячие клавиши недоступны.")
     print("💡 Установите: pip install keyboard")
+
+
+def get_pixel_color_qt(x: int, y: int):
+    """
+    Получает цвет пикселя используя только Qt.
+    
+    Args:
+        x: X координата
+        y: Y координата
+        
+    Returns:
+        RGB цвет или None в случае ошибки
+    """
+    try:
+        app = QApplication.instance()
+        if not app:
+            return None
+
+        screen = app.primaryScreen()
+        if not screen:
+            return None
+
+        # Метод 1: Прямой захват пикселя
+        try:
+            pixmap = screen.grabWindow(0, x, y, 1, 1)
+            if not pixmap.isNull():
+                image = pixmap.toImage()
+                if not image.isNull():
+                    pixel_color = image.pixel(0, 0)
+                    qcolor = QColor(pixel_color)
+                    return (qcolor.red(), qcolor.green(), qcolor.blue())
+        except Exception:
+            pass
+
+        # Метод 2: Захват области вокруг пикселя
+        try:
+            area_size = 3
+            pixmap = screen.grabWindow(0, x - area_size//2, y - area_size//2, area_size, area_size)
+            if not pixmap.isNull():
+                image = pixmap.toImage()
+                if not image.isNull():
+                    # Берем центральный пиксель
+                    center = area_size // 2
+                    pixel_color = image.pixel(center, center)
+                    qcolor = QColor(pixel_color)
+                    return (qcolor.red(), qcolor.green(), qcolor.blue())
+        except Exception:
+            pass
+
+        # Метод 3: Захват всего экрана и обрезка
+        try:
+            pixmap = screen.grabWindow(0)
+            if not pixmap.isNull():
+                # Проверяем границы экрана
+                if 0 <= x < pixmap.width() and 0 <= y < pixmap.height():
+                    pixmap = pixmap.copy(x, y, 1, 1)
+                    image = pixmap.toImage()
+                    if not image.isNull():
+                        pixel_color = image.pixel(0, 0)
+                        qcolor = QColor(pixel_color)
+                        return (qcolor.red(), qcolor.green(), qcolor.blue())
+        except Exception:
+            pass
+
+        return None
+
+    except Exception as e:
+        print(f"Ошибка получения цвета пикселя ({x}, {y}): {e}")
+        return None
+
+
+def get_cursor_position():
+    """Получает позицию курсора используя Qt."""
+    try:
+        cursor_pos = QCursor.pos()
+        return cursor_pos.x(), cursor_pos.y()
+    except Exception:
+        return 0, 0
 
 
 class GlobalHotkeyManager(QObject):
@@ -67,13 +145,13 @@ class GlobalHotkeyManager(QObject):
     def _monitor_hotkeys(self):
         """Мониторит глобальные горячие клавиши в отдельном потоке."""
         try:
-            # Регистрируем горячие клавиши (оптимизированно)
-            keyboard.on_press_key('ctrl', self._on_ctrl_pressed)
-            keyboard.on_press_key('esc', self._on_escape_pressed)
+            # Регистрируем горячие клавиши
+            keyboard.on_press_key('ctrl', lambda e: self._on_ctrl_pressed())
+            keyboard.on_press_key('esc', lambda e: self._on_escape_pressed())
             
-            # Держим поток активным с более длительным сном
+            # Держим поток активным
             while self._running:
-                time.sleep(0.2)  # Увеличиваем интервал для экономии ресурсов
+                time.sleep(0.2)
                 
         except Exception as e:
             print(f"❌ Ошибка в мониторинге горячих клавиш: {e}")
@@ -218,26 +296,13 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
-class DesktopColorPicker(QWidget):
-    """Десктопный color picker с пипеткой."""
+class FixedDesktopColorPicker(QWidget):
+    """Исправленная версия десктопного color picker."""
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Desktop Color Picker")
+        self.setWindowTitle("Desktop Color Picker (Fixed)")
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        
-        # Импортируем контекстное меню и настройки
-        try:
-            from app.ui.context_menu import ContextMenu
-            from app.core.settings_manager import get_setting, set_setting, SettingsKeys
-            self.ContextMenu = ContextMenu
-            self.get_setting = get_setting
-            self.set_setting = set_setting
-            self.SettingsKeys = SettingsKeys
-            self.settings_available = True
-        except ImportError:
-            self.settings_available = False
-            print("⚠️ Модуль настроек недоступен")
         
         # Переменные
         self.captured_colors = []
@@ -255,22 +320,18 @@ class DesktopColorPicker(QWidget):
         # Создание UI
         self.setup_ui()
         
-        # Таймер для обновления координат (оптимизированный)
+        # Таймер для обновления координат
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_coordinates)
-        self.timer.start(100)  # Обновление каждые 100мс (~10 FPS)
+        self.timer.start(100)  # Обновление каждые 100мс
         
-        # Загружаем сохраненные настройки окна
-        self._load_window_settings()
-        
-        # Переменные для оптимизации (слайсы для экономии памяти)
-        self._last_pos = [0, 0]  # Список вместо кортежа для изменения на месте
-        self._last_color = [0, 0, 0]  # Список вместо кортежа
-        self._last_update_time = 0
+        # Переменные для оптимизации
+        self._last_pos = [0, 0]
+        self._last_color = [0, 0, 0]
         self._update_threshold = 50
         self._is_window_active = True
         
-        # Кэш для стилей (экономия памяти)
+        # Кэш для стилей
         self._style_cache = {}
         self._last_style_key = None
         
@@ -281,18 +342,15 @@ class DesktopColorPicker(QWidget):
         if not self.hotkey_manager.start():
             self._show_hotkey_warning()
         
-        # Применяем настройки
-        self._apply_settings()
-        
     def setup_ui(self):
         """Настройка интерфейса."""
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignHCenter)
-        layout.setSpacing(2)  # Минимальное расстояние между элементами
-        layout.setContentsMargins(8, 8, 8, 8)  # Минимальные отступы от краев
+        layout.setSpacing(2)
+        layout.setContentsMargins(8, 8, 8, 8)
         
         # Заголовок
-        title = QLabel("Desktop Color Picker")
+        title = QLabel("Desktop Color Picker (Fixed)")
         title.setAlignment(Qt.AlignCenter)
         title.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         title.setStyleSheet("font-weight: bold; font-size: 11px; margin: 1px;")
@@ -348,8 +406,6 @@ class DesktopColorPicker(QWidget):
         
         # Автоматически подстраиваем размер под содержимое
         self.adjustSize()
-        
-        # Адаптивное окно - размер под содержимое
         self.setFixedSize(self.sizeHint())
         
         # Стили
@@ -420,61 +476,6 @@ class DesktopColorPicker(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         
-    def _load_window_settings(self):
-        """Загружает настройки окна."""
-        if not self.settings_available:
-            return
-            
-        try:
-            from app.core.settings_manager import load_window_position, load_window_size
-            x, y = load_window_position()
-            width, height = load_window_size()
-            
-            # Проверяем, что окно не выходит за пределы экрана
-            screen = QApplication.primaryScreen().geometry()
-            if x < 0 or y < 0 or x + width > screen.width() or y + height > screen.height():
-                # Если позиция некорректная, используем правый верхний угол
-                x = screen.width() - width - 20
-                y = 20
-            
-            self.move(x, y)
-            self.resize(width, height)
-        except Exception as e:
-            print(f"Ошибка загрузки настроек окна: {e}")
-            self.position_window()
-    
-    def _save_window_settings(self):
-        """Сохраняет настройки окна."""
-        if not self.settings_available:
-            return
-            
-        try:
-            from app.core.settings_manager import save_window_position, save_window_size
-            save_window_position(self.x(), self.y())
-            save_window_size(self.width(), self.height())
-        except Exception as e:
-            print(f"Ошибка сохранения настроек окна: {e}")
-    
-    def _apply_settings(self):
-        """Применяет загруженные настройки."""
-        if not self.settings_available:
-            return
-            
-        try:
-            # Применяем настройку "поверх всех окон"
-            always_on_top = self.get_setting(self.SettingsKeys.ALWAYS_ON_TOP, False)
-            if always_on_top:
-                self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-            else:
-                self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
-            
-            # Применяем другие настройки
-            auto_copy = self.get_setting(self.SettingsKeys.AUTO_COPY, True)
-            show_notifications = self.get_setting(self.SettingsKeys.SHOW_NOTIFICATIONS, True)
-            
-        except Exception as e:
-            print(f"Ошибка применения настроек: {e}")
-    
     def position_window(self):
         """Позиционирует окно в правом верхнем углу экрана."""
         screen = QApplication.primaryScreen().geometry()
@@ -483,7 +484,7 @@ class DesktopColorPicker(QWidget):
         self.move(x, y)
         
     def update_coordinates(self):
-        """Обновляет координаты курсора и цвет под ним (оптимизированная версия)."""
+        """Обновляет координаты курсора и цвет под ним."""
         # Защита от частых обновлений во время захвата
         if hasattr(self, '_capturing') and self._capturing:
             return
@@ -495,8 +496,7 @@ class DesktopColorPicker(QWidget):
         try:
             if not self.frozen:
                 # Получаем позицию курсора
-                cursor_pos = pyautogui.position()
-                x, y = cursor_pos.x, cursor_pos.y
+                x, y = get_cursor_position()
                 
                 # Проверяем, нужно ли обновлять (оптимизация)
                 distance = abs(x - self._last_pos[0]) + abs(y - self._last_pos[1])
@@ -504,23 +504,13 @@ class DesktopColorPicker(QWidget):
                     return  # Пропускаем обновление если курсор не сдвинулся значительно
                 
                 # Получаем цвет под курсором только если позиция изменилась
-                # Пробуем сначала pyautogui, потом Qt метод
-                try:
-                    pixel_color = pyautogui.pixel(x, y)
-                    r, g, b = pixel_color
-                except Exception:
-                    # Если pyautogui не работает, используем Qt метод
-                    try:
-                        from app.screen_picker import get_pixel_color
-                        color = get_pixel_color(x, y)
-                        if color:
-                            r, g, b = color
-                        else:
-                            r, g, b = 0, 0, 0
-                    except Exception:
-                        r, g, b = 0, 0, 0
+                color = get_pixel_color_qt(x, y)
+                if color:
+                    r, g, b = color
+                else:
+                    r, g, b = 0, 0, 0
                 
-                # Кэшируем значения (изменяем на месте для экономии памяти)
+                # Кэшируем значения
                 self._last_pos[0] = x
                 self._last_pos[1] = y
                 self._last_color[0] = r
@@ -594,7 +584,7 @@ class DesktopColorPicker(QWidget):
             pass
     
     def _update_button_color(self, r, g, b):
-        """Обновляет цвет кнопки захвата (оптимизированная версия с кэшированием)."""
+        """Обновляет цвет кнопки захвата."""
         try:
             # Создаем ключ для кэша
             style_key = f"{r},{g},{b}"
@@ -609,7 +599,7 @@ class DesktopColorPicker(QWidget):
                 self._last_style_key = style_key
                 return
             
-            # Вычисляем цвета (оптимизированно)
+            # Вычисляем цвета
             r_light = min(255, r + 30)
             g_light = min(255, g + 30)
             b_light = min(255, b + 30)
@@ -671,25 +661,14 @@ class DesktopColorPicker(QWidget):
                 r, g, b = self.frozen_color
             else:
                 # Получаем текущую позицию курсора
-                cursor_pos = pyautogui.position()
-                x, y = cursor_pos.x, cursor_pos.y
+                x, y = get_cursor_position()
                 
                 # Получаем цвет под курсором
-                # Пробуем сначала pyautogui, потом Qt метод
-                try:
-                    pixel_color = pyautogui.pixel(x, y)
-                    r, g, b = pixel_color
-                except Exception:
-                    # Если pyautogui не работает, используем Qt метод
-                    try:
-                        from app.screen_picker import get_pixel_color
-                        color = get_pixel_color(x, y)
-                        if color:
-                            r, g, b = color
-                        else:
-                            r, g, b = 0, 0, 0
-                    except Exception:
-                        r, g, b = 0, 0, 0
+                color = get_pixel_color_qt(x, y)
+                if color:
+                    r, g, b = color
+                else:
+                    r, g, b = 0, 0, 0
             
             hex_color = f"#{r:02x}{g:02x}{b:02x}"
             
@@ -699,15 +678,6 @@ class DesktopColorPicker(QWidget):
                 'color': (r, g, b),
                 'hex': hex_color
             })
-            
-            # Сохраняем в историю если доступно
-            if self.settings_available:
-                try:
-                    from app.core.settings_manager import get_settings_manager
-                    settings_manager = get_settings_manager()
-                    settings_manager.add_color_to_history(hex_color, (r, g, b), (x, y))
-                except Exception as e:
-                    print(f"Ошибка сохранения в историю: {e}")
             
             print(f"Захвачен цвет: {hex_color} RGB({r}, {g}, {b}) в позиции ({x}, {y})")
             
@@ -743,10 +713,13 @@ class DesktopColorPicker(QWidget):
         if not self.frozen:
             # Замораживаем текущие координаты и цвет
             try:
-                cursor_pos = pyautogui.position()
-                self.frozen_coords = (cursor_pos.x, cursor_pos.y)
-                pixel_color = pyautogui.pixel(cursor_pos.x, cursor_pos.y)
-                self.frozen_color = pixel_color
+                x, y = get_cursor_position()
+                self.frozen_coords = (x, y)
+                color = get_pixel_color_qt(x, y)
+                if color:
+                    self.frozen_color = color
+                else:
+                    self.frozen_color = (0, 0, 0)
                 self.frozen = True
                 self.capture_btn.setText("CTRL - Разморозить")
                 coords = f"({self.frozen_coords[0]}, {self.frozen_coords[1]})"
@@ -785,41 +758,96 @@ class DesktopColorPicker(QWidget):
     
     def _show_context_menu(self, pos):
         """Показывает контекстное меню."""
-        if not self.settings_available:
-            return
-            
         try:
-            context_menu = self.ContextMenu(self)
+            menu = QMenu(self)
+            menu.setStyleSheet("""
+                QMenu {
+                    background-color: #2d2d2d;
+                    border: 1px solid #555;
+                    border-radius: 6px;
+                    padding: 4px;
+                    color: white;
+                    font-size: 12px;
+                }
+                QMenu::item {
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    margin: 1px;
+                }
+                QMenu::item:selected {
+                    background-color: #4a4a4a;
+                }
+                QMenu::separator {
+                    height: 1px;
+                    background-color: #555;
+                    margin: 4px 8px;
+                }
+            """)
             
-            # Подключаем обработчики
-            for action in context_menu.actions():
-                if action.text() == "📸 Захватить цвет":
-                    action.triggered.disconnect()
-                    action.triggered.connect(self.capture_color)
-                elif action.text() == "📌 Закрепить поверх окон":
-                    action.triggered.disconnect()
-                    action.triggered.connect(self._toggle_always_on_top)
-                elif action.text() == "❌ Выход":
-                    action.triggered.disconnect()
-                    action.triggered.connect(self.close)
+            # Закрепить поверх всех окон
+            always_on_top_action = QAction("📌 Закрепить поверх всех окон", self)
+            always_on_top_action.setCheckable(True)
+            always_on_top_action.setChecked(self.windowFlags() & Qt.WindowStaysOnTopHint)
+            always_on_top_action.triggered.connect(self._toggle_always_on_top)
+            menu.addAction(always_on_top_action)
             
-            context_menu.exec(pos)
+            menu.addSeparator()
+            
+            # О программе
+            about_action = QAction("ℹ️ О программе", self)
+            about_action.triggered.connect(self._show_about)
+            menu.addAction(about_action)
+            
+            # Выход
+            exit_action = QAction("❌ Выход", self)
+            exit_action.triggered.connect(self.close)
+            menu.addAction(exit_action)
+            
+            menu.exec(pos)
         except Exception as e:
             print(f"Ошибка показа контекстного меню: {e}")
     
     def _toggle_always_on_top(self, checked):
         """Переключает режим 'поверх всех окон'."""
-        if checked:
-            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-        else:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
-        self.show()  # Нужно перепоказать окно после изменения флагов
+        try:
+            # Сохраняем текущую позицию окна
+            current_pos = self.pos()
+            
+            if checked:
+                # Включаем режим "поверх всех окон"
+                self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+                print("📌 Окно закреплено поверх всех окон")
+            else:
+                # Отключаем режим "поверх всех окон"
+                self.setWindowFlags(Qt.FramelessWindowHint)
+                print("📌 Окно больше не поверх всех окон")
+            
+            # Перепоказываем окно и восстанавливаем позицию
+            self.show()
+            self.move(current_pos)
+            
+        except Exception as e:
+            print(f"Ошибка переключения режима 'поверх всех окон': {e}")
+    
+    def _show_about(self):
+        """Показывает диалог 'О программе'."""
+        try:
+            msg = QMessageBox(self)
+            msg.setWindowTitle("О программе")
+            msg.setText("Desktop Color Picker")
+            msg.setInformativeText(
+                "Версия: 1.0\n"
+                "Автор: AlgorithmAlchemy\n"
+                "https://github.com/AlgorithmAlchemy\n\n"
+                "Современный цветовой пикер для Windows"
+            )
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        except Exception as e:
+            print(f"Ошибка показа диалога 'О программе': {e}")
     
     def closeEvent(self, event):
         """Обработчик закрытия окна."""
-        # Сохраняем настройки окна
-        self._save_window_settings()
-        
         # Останавливаем глобальные горячие клавиши
         self.hotkey_manager.stop()
         
@@ -853,102 +881,30 @@ class DesktopColorPicker(QWidget):
         super().focusOutEvent(event)
 
 
-def check_dependencies():
-    """Проверяет наличие необходимых зависимостей."""
-    dependencies_ok = True
-    
-    try:
-        import PySide6
-        print(f"✅ PySide6 найден: {PySide6.__version__}")
-    except ImportError as e:
-        print(f"❌ Отсутствует зависимость: {e}")
-        dependencies_ok = False
-        
-    try:
-        import pyautogui
-        print(f"✅ pyautogui найден: {pyautogui.__version__}")
-    except ImportError as e:
-        print(f"❌ Отсутствует зависимость: {e}")
-        dependencies_ok = False
-    
-    # Проверяем keyboard для глобальных горячих клавиш
-    if KEYBOARD_AVAILABLE:
-        print("✅ keyboard найден")
-    else:
-        print("⚠️  keyboard не найден (опциональная зависимость)")
-        print("💡 Для глобальных горячих клавиш установите: pip install keyboard")
-    
-    # NumPy опциональный - приложение может работать без него
-    try:
-        import numpy
-        print(f"✅ numpy найден: {numpy.__version__}")
-    except ImportError:
-        print("⚠️  numpy не найден (опциональная зависимость)")
-        print("💡 Для лучшей производительности установите: pip install numpy")
-    
-    if not dependencies_ok:
-        print("💡 Установите зависимости:")
-        print("   pip install -r requirements.txt")
-    
-    return dependencies_ok
-
-def install_dependencies():
-    """Устанавливает зависимости."""
-    print("🔧 Установка зависимостей...")
-    try:
-        # Устанавливаем основные зависимости
-        subprocess.run([
-            sys.executable, "-m", "pip", "install", 
-            "PySide6", "pyautogui", "keyboard"
-        ], check=True)
-        
-        print("✅ Основные зависимости установлены")
-        print("💡 NumPy можно установить позже для лучшей производительности")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Ошибка установки: {e}")
-        print("💡 Попробуйте установить вручную:")
-        print("   pip install PySide6 pyautogui keyboard")
-        return False
-
 def main():
     """Основная функция."""
-    print("🎨 Desktop Color Picker")
-    print("=" * 30)
-    
-    # Проверяем зависимости
-    if not check_dependencies():
-        print("\n🔄 Попытка автоматической установки...")
-        if not install_dependencies():
-            print("❌ Не удалось установить зависимости")
-            return 1
+    print("🎨 Исправленный Desktop Color Picker")
+    print("=" * 40)
     
     # Создаем приложение
     app = QApplication(sys.argv)
     
-    # Проверяем доступность pyautogui
-    try:
-        import pyautogui
-        pyautogui.FAILSAFE = True  # Безопасность
-    except ImportError:
-        print("❌ Ошибка: pyautogui не установлен!")
-        print("💡 Установите: pip install pyautogui")
-        return 1
-    
     # Создаем и показываем окно
-    picker = DesktopColorPicker()
+    picker = FixedDesktopColorPicker()
     picker.show()
     
-    print("🎨 Desktop Color Picker запущен!")
+    print("🎨 Исправленный Desktop Color Picker запущен!")
     print("📋 Использование:")
     print("   - Окно показывает координаты курсора и цвет под ним")
     print("   - Нажмите CTRL или кнопку для захвата цвета")
+    print("   - Правый клик для контекстного меню")
     print("   - ESC для выхода")
     print("   - Перетаскивайте окно мышью")
     if KEYBOARD_AVAILABLE:
         print("   - 🌐 Глобальные горячие клавиши активны (работают в играх)")
     else:
         print("   - ⚠️  Глобальные горячие клавиши недоступны")
+    print("   - 💡 Эта версия исправлена и работает стабильно")
     
     return app.exec()
 

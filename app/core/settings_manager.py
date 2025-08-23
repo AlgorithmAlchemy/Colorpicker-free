@@ -103,12 +103,12 @@ class SettingsManager:
                     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
                 """, (key, str(value), setting_type))
                 conn.commit()
-                return True
-                
+            return True
+
         except Exception as e:
             print(f"Ошибка сохранения настройки {key}: {e}")
             return False
-    
+
     def get_setting(self, key: str, default: Any = None) -> Any:
         """Получает настройку.
         
@@ -143,7 +143,7 @@ class SettingsManager:
                     return json.loads(value)
                 else:
                     return value
-                    
+
         except Exception as e:
             print(f"Ошибка получения настройки {key}: {e}")
             return default
@@ -170,7 +170,7 @@ class SettingsManager:
     
     def get_all_settings(self) -> Dict[str, Any]:
         """Получает все настройки.
-        
+            
         Returns:
             Словарь всех настроек
         """
@@ -355,7 +355,7 @@ class SettingsManager:
                 cursor.execute("DELETE FROM window_settings")
                 conn.commit()
                 return True
-                
+
         except Exception as e:
             print(f"Ошибка сброса настроек: {e}")
             return False

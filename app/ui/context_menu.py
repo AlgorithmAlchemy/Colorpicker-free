@@ -5,13 +5,13 @@
 """
 
 from typing import Optional, Callable
-from qtpy.QtWidgets import (
-    QMenu, QAction, QWidget, QCheckBox, QVBoxLayout, 
+from PySide6.QtWidgets import (
+    QMenu, QWidget, QCheckBox, QVBoxLayout, 
     QHBoxLayout, QLabel, QSpinBox, QComboBox, QDialog,
     QPushButton, QGroupBox, QTabWidget, QSlider, QFrame
 )
-from qtpy.QtCore import Qt, Signal, QObject
-from qtpy.QtGui import QIcon, QFont
+from PySide6.QtCore import Qt, Signal, QObject
+from PySide6.QtGui import QIcon, QFont, QAction
 
 from ..core.settings_manager import (
     get_settings_manager, SettingsKeys, get_setting, set_setting
@@ -196,23 +196,96 @@ class ContextMenu(QMenu):
     
     def _show_about(self):
         """Показывает информацию о программе."""
-        from qtpy.QtWidgets import QMessageBox
-        msg = QMessageBox(self.parent())
-        msg.setWindowTitle("О программе")
-        msg.setText("Desktop Color Picker")
-        msg.setInformativeText(
-            "Современный цветовой пикер для Windows\n\n"
-            "Версия: 1.0\n"
-            "Автор: Tom F.\n\n"
-            "Возможности:\n"
-            "• Захват цвета с экрана\n"
-            "• История цветов\n"
-            "• Настраиваемые горячие клавиши\n"
-            "• Темная и светлая темы\n"
-            "• Закрепление поверх окон"
-        )
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec()
+        print("🔍 _show_about вызван!")
+        try:
+            from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+            from PySide6.QtCore import Qt
+            
+            # Создаем кастомный диалог
+            dialog = QDialog(self.parent())
+            dialog.setWindowTitle("О программе")
+            dialog.setFixedSize(300, 120)
+            dialog.setModal(True)
+            dialog.setWindowFlags(Qt.FramelessWindowHint)
+            
+            layout = QVBoxLayout()
+            layout.setContentsMargins(10, 10, 10, 10)
+            layout.setSpacing(5)
+            
+            # Заголовок
+            title_label = QLabel("Desktop Color Picker")
+            title_label.setStyleSheet("font-size: 14px; font-weight: bold; margin: 2px; color: white;")
+            title_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(title_label)
+            
+            # Описание
+            desc_label = QLabel("Современный цветовой пикер для Windows")
+            desc_label.setAlignment(Qt.AlignCenter)
+            desc_label.setStyleSheet("font-size: 10px; margin: 2px; color: white;")
+            layout.addWidget(desc_label)
+            
+            # Версия
+            version_label = QLabel("Версия: 1.0")
+            version_label.setAlignment(Qt.AlignCenter)
+            version_label.setStyleSheet("font-size: 10px; margin: 2px; color: white;")
+            layout.addWidget(version_label)
+            
+            # Автор с кликабельной ссылкой
+            author_label = QLabel('Автор: <a href="https://github.com/AlgorithmAlchemy" style="color: #4a9eff;">AlgorithmAlchemy</a>')
+            author_label.setOpenExternalLinks(True)
+            author_label.setAlignment(Qt.AlignCenter)
+            author_label.setStyleSheet("font-size: 10px; margin: 2px; color: white;")
+            layout.addWidget(author_label)
+            
+            # Кнопка OK
+            button_layout = QHBoxLayout()
+            button_layout.addStretch()
+            
+            ok_button = QPushButton("OK")
+            ok_button.setFixedSize(60, 25)
+            ok_button.clicked.connect(dialog.accept)
+            button_layout.addWidget(ok_button)
+            
+            layout.addLayout(button_layout)
+            dialog.setLayout(layout)
+            
+            # Стили для диалога
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: #2d2d2d;
+                    color: white;
+                    border: 1px solid #555;
+                    border-radius: 6px;
+                }
+                QLabel {
+                    color: white;
+                    font-size: 10px;
+                }
+                QPushButton {
+                    background-color: #4a4a4a;
+                    border: 1px solid #555;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    color: white;
+                    font-size: 10px;
+                }
+                QPushButton:hover {
+                    background-color: #5a5a5a;
+                }
+            """)
+            
+            dialog.exec()
+            
+        except Exception as e:
+            print(f"Ошибка открытия диалога 'О программе': {e}")
+            # Fallback на простой QMessageBox
+            from PySide6.QtWidgets import QMessageBox
+            msg = QMessageBox(self.parent())
+            msg.setWindowTitle("О программе")
+            msg.setText("Desktop Color Picker")
+            msg.setInformativeText("Версия: 1.0\nАвтор: AlgorithmAlchemy\nhttps://github.com/AlgorithmAlchemy")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
     
     def _on_exit(self):
         """Обработчик выхода."""
