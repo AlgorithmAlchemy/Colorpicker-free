@@ -550,7 +550,7 @@ class UIManager:
 
     def _apply_auto_theme(self, widget: QWidget):
         """Применяет автоматическую тему."""
-        # Определяем тему на основе системных настроек
+        # Тема на основе системных настроек
         app = QApplication.instance()
         if app and app.style().objectName().lower() in ['dark', 'fusion']:
             self._apply_dark_theme(widget)

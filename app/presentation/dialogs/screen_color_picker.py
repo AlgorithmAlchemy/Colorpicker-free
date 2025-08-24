@@ -234,7 +234,7 @@ class ScreenOverlay(QWidget):
 
     def _setup_overlay(self):
         """Настраивает оверлей."""
-        # Делаем окно полноэкранным и прозрачным
+        # Окно полноэкранное и прозрачное
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowState(Qt.WindowFullScreen)
@@ -247,7 +247,7 @@ class ScreenOverlay(QWidget):
         if app:
             screens = app.screens()
             if screens:
-                # Используем размеры первого экрана
+                # Размеры первого экрана
                 screen_rect = screens[0].geometry()
                 self.setGeometry(screen_rect)
 
@@ -296,7 +296,7 @@ class ScreenOverlay(QWidget):
             if not screen:
                 return None
 
-            # Используем улучшенный метод захвата
+            # Улучшенный метод захвата
             pixmap = screen.grabWindow(0, position.x(), position.y(), 1, 1)
             if pixmap.isNull():
                 # Попробуем альтернативный метод

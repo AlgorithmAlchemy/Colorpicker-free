@@ -21,7 +21,7 @@ class SettingsManager:
             db_path: Путь к файлу базы данных. Если None, используется локальный файл.
         """
         if db_path is None:
-            # Используем локальный файл в папке приложения
+            # Локальный файл в папке приложения
             app_dir = Path(__file__).parent.parent.parent
             db_path = app_dir / "app" / "data" / "settings.db"
         

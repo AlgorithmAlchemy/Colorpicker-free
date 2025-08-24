@@ -1012,7 +1012,7 @@ class FixedDesktopColorPicker(QWidget):
                 self._last_color[1] = g
                 self._last_color[2] = b
             else:
-                # Используем замороженные значения
+                # Замороженные значения
                 x, y = self.frozen_coords
                 r, g, b = self.frozen_color
                 
@@ -1161,7 +1161,7 @@ class FixedDesktopColorPicker(QWidget):
         
         try:
             if self.frozen:
-                # Используем замороженные значения
+                # Замороженные значения
                 x, y = self.frozen_coords
                 r, g, b = self.frozen_color
             else:
@@ -2036,7 +2036,7 @@ class FixedDesktopColorPicker(QWidget):
             return
             
         try:
-            # Сохраняем текущий размер окна
+            # Текущий размер окна
             current_size = self.size()
             
             # Язык в системе интернационализации
@@ -2066,10 +2066,10 @@ class FixedDesktopColorPicker(QWidget):
             return
             
         try:
-            # Сохраняем текущий размер окна
+            # Текущий размер окна
             current_size = self.size()
             
-            # Обновляем заголовок
+            # Заголовок
             if hasattr(self, 'title'):
                 self.title.setText(get_text("app_title"))
             
@@ -2230,7 +2230,7 @@ class FixedDesktopColorPicker(QWidget):
             os._exit(0)
         except Exception as e:
             print(f"Ошибка принудительного завершения: {e}")
-            # завершаем без исключений
+            # Без исключений
             import sys
             sys.exit(0)
     

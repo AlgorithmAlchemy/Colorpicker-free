@@ -311,7 +311,7 @@ class ColorEngine:
             return ColorSpace.HEX
         elif isinstance(color, (tuple, list)):
             if len(color) == 3:
-                # Определяем по значениям
+                # По значениям
                 if all(0 <= v <= 100 for v in color):
                     return ColorSpace.HSV
                 else:

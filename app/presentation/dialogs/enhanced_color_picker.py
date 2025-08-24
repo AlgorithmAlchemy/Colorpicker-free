@@ -248,7 +248,7 @@ class EnhancedColorPicker(QDialog):
         r, g, b = self._current_color
         hex_color = rgb2hex(self._current_color)
 
-        # Обновляем превью
+        # Превью
         self._color_preview.setStyleSheet(
             f"border: 1px solid gray; background-color: rgb({r},{g},{b});"
         )
