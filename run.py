@@ -1683,6 +1683,48 @@ class FixedDesktopColorPicker(QWidget):
             print(f"Ошибка настройки системного трея: {e}")
             self.tray_icon = None
     
+    def _update_tray_menu(self):
+        """Обновляет меню системного трея при смене языка."""
+        try:
+            if not self.tray_icon:
+                return
+                
+            # Создаем новое контекстное меню трея
+            tray_menu = QMenu()
+            
+            # Показать/скрыть окно
+            if I18N_AVAILABLE:
+                show_action = QAction(get_text("tray_show_tooltip"), self)
+            else:
+                show_action = QAction("Показать окно", self)
+            show_action.triggered.connect(self.show_from_tray)
+            tray_menu.addAction(show_action)
+            
+            # Разделитель
+            tray_menu.addSeparator()
+            
+            # Выход
+            if I18N_AVAILABLE:
+                exit_action = QAction(get_text("tray_exit_tooltip"), self)
+            else:
+                exit_action = QAction("Выход", self)
+            exit_action.triggered.connect(self.close)
+            tray_menu.addAction(exit_action)
+            
+            # Устанавливаем новое меню
+            self.tray_icon.setContextMenu(tray_menu)
+            
+            # Обновляем подсказку
+            if I18N_AVAILABLE:
+                self.tray_icon.setToolTip(get_text("app_title"))
+            else:
+                self.tray_icon.setToolTip("Desktop Color Picker")
+                
+            print("✅ Меню системного трея обновлено")
+            
+        except Exception as e:
+            print(f"Ошибка обновления меню трея: {e}")
+    
     def _on_tray_activated(self, reason):
         """Обработчик активации иконки в трее."""
         if reason == QSystemTrayIcon.DoubleClick:
@@ -2058,6 +2100,9 @@ class FixedDesktopColorPicker(QWidget):
             if hasattr(self, 'notification') and self.notification:
                 self.notification.update_text()
             
+            # Обновляем системный трей
+            self._update_tray_menu()
+            
             # Восстанавливаем размер окна
             self.setFixedSize(current_size)
                 
@@ -2088,14 +2133,40 @@ class FixedDesktopColorPicker(QWidget):
         """Показывает диалог 'О программе'."""
         try:
             msg = QMessageBox(self)
-            msg.setWindowTitle("О программе")
-            msg.setText("Desktop Color Picker")
-            msg.setInformativeText(
-                "Версия: 1.0\n"
-                "Автор: AlgorithmAlchemy\n"
-                "https://github.com/AlgorithmAlchemy\n\n"
-                "Современный цветовой пикер для Windows"
-            )
+            
+            # Заголовок диалога
+            if I18N_AVAILABLE:
+                msg.setWindowTitle(get_text("about_title"))
+            else:
+                msg.setWindowTitle("О программе")
+            
+            # Название программы
+            if I18N_AVAILABLE:
+                msg.setText(get_text("app_title"))
+            else:
+                msg.setText("Desktop Color Picker")
+            
+            # Информация о программе
+            if I18N_AVAILABLE:
+                version_text = get_text("version").format(version="2.0.0")
+                author_text = get_text("author").format(author="AlgorithmAlchemy")
+                description_text = get_text("modern_color_picker")
+                
+                informative_text = (
+                    f"{version_text}\n"
+                    f"{author_text}\n"
+                    "https://github.com/AlgorithmAlchemy\n\n"
+                    f"{description_text}"
+                )
+            else:
+                informative_text = (
+                    "Версия: 2.0.0\n"
+                    "Автор: AlgorithmAlchemy\n"
+                    "https://github.com/AlgorithmAlchemy\n\n"
+                    "Современный цветовой пикер для Windows"
+                )
+            
+            msg.setInformativeText(informative_text)
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         except Exception as e:
