@@ -18,7 +18,7 @@ class Language(Enum):
 # Названия языков
 LANGUAGE_NAMES = {
     Language.RUSSIAN: "Русский",
-    Language.ENGLISH: "English", 
+    Language.ENGLISH: "English",
     Language.GERMAN: "Deutsch",
     Language.FRENCH: "Français",
     Language.SPANISH: "Español"
@@ -37,7 +37,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Sélecteur de couleur Desktop",
         "es": "Selector de color Desktop"
     },
-    
+
     # Статусы
     "coordinates": {
         "ru": "Координаты",
@@ -46,7 +46,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Coordonnées",
         "es": "Coordenadas"
     },
-    
+
     "color": {
         "ru": "Цвет",
         "en": "Color",
@@ -54,7 +54,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur",
         "es": "Color"
     },
-    
+
     "close": {
         "ru": "Закрыть",
         "en": "Close",
@@ -62,7 +62,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Fermer",
         "es": "Cerrar"
     },
-    
+
     "captured": {
         "ru": "Захвачен",
         "en": "Captured",
@@ -70,9 +70,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Capturé",
         "es": "Capturado"
     },
-    
 
-    
     "copied": {
         "ru": "✓ Скопировано!",
         "en": "✓ Copied!",
@@ -80,7 +78,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "✓ Copié !",
         "es": "✓ ¡Copiado!"
     },
-    
+
     # Горячие клавиши
     "ctrl": {
         "ru": "CTRL",
@@ -89,7 +87,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "CTRL",
         "es": "CTRL"
     },
-    
+
     "ctrl_unfreeze": {
         "ru": "CTRL - Разморозить",
         "en": "CTRL - Unfreeze",
@@ -97,7 +95,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "CTRL - Dégeler",
         "es": "CTRL - Descongelar"
     },
-    
+
     # Статусы горячих клавиш
     "hotkeys_win32": {
         "ru": "🌐 Глобальные горячие клавиши: Активны (win32api)",
@@ -106,7 +104,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "🌐 Raccourcis globaux: Actifs (win32api)",
         "es": "🌐 Atajos globales: Activos (win32api)"
     },
-    
+
     "hotkeys_keyboard": {
         "ru": "🌐 Глобальные горячие клавиши: Активны (keyboard)",
         "en": "🌐 Global hotkeys: Active (keyboard)",
@@ -114,7 +112,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "🌐 Raccourcis globaux: Actifs (keyboard)",
         "es": "🌐 Atajos globales: Activos (keyboard)"
     },
-    
+
     "hotkeys_unavailable": {
         "ru": "WARNING Глобальные горячие клавиши: Недоступны",
         "en": "WARNING Global hotkeys: Unavailable",
@@ -122,7 +120,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "WARNING Raccourcis globaux: Indisponibles",
         "es": "WARNING Atajos globales: No disponibles"
     },
-    
+
     # Контекстное меню
     "transparency": {
         "ru": "Прозрачность",
@@ -131,7 +129,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Transparence",
         "es": "Transparencia"
     },
-    
+
     "reset_position": {
         "ru": "Сбросить позицию",
         "en": "Reset position",
@@ -139,7 +137,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Réinitialiser la position",
         "es": "Restablecer posición"
     },
-    
+
     "hide_window": {
         "ru": "Скрыть окно",
         "en": "Hide window",
@@ -147,7 +145,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Masquer la fenêtre",
         "es": "Ocultar ventana"
     },
-    
+
     "show_window": {
         "ru": "Показать окно",
         "en": "Show window",
@@ -155,7 +153,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Afficher la fenêtre",
         "es": "Mostrar ventana"
     },
-    
+
     "restart_hotkeys": {
         "ru": "Перезапустить горячие клавиши",
         "en": "Restart hotkeys",
@@ -163,7 +161,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Redémarrer les raccourcis",
         "es": "Reiniciar atajos"
     },
-    
+
     "about_menu": {
         "ru": "ℹ О программе",
         "en": "ℹ About",
@@ -171,7 +169,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "ℹ À propos",
         "es": "ℹ Acerca de"
     },
-    
+
     # Диалоги
     "warning": {
         "ru": "Предупреждение",
@@ -180,7 +178,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Avertissement",
         "es": "Advertencia"
     },
-    
+
     "settings_dialog": {
         "ru": "Настройки",
         "en": "Settings",
@@ -188,7 +186,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Paramètres",
         "es": "Configuración"
     },
-    
+
     "settings_app": {
         "ru": "Настройки приложения",
         "en": "Application settings",
@@ -196,7 +194,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Paramètres de l'application",
         "es": "Configuración de la aplicación"
     },
-    
+
     "about_app": {
         "ru": "Desktop Color Picker",
         "en": "Desktop Color Picker",
@@ -204,7 +202,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Sélecteur de couleur Desktop",
         "es": "Selector de color Desktop"
     },
-    
+
     # Кнопки
     "ok": {
         "ru": "ОК",
@@ -213,7 +211,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "OK",
         "es": "OK"
     },
-    
+
     "cancel": {
         "ru": "Отмена",
         "en": "Cancel",
@@ -221,7 +219,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Annuler",
         "es": "Cancelar"
     },
-    
+
     "copy": {
         "ru": "Копировать",
         "en": "Copy",
@@ -229,7 +227,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Copier",
         "es": "Copiar"
     },
-    
+
     # Контекстное меню
     "always_on_top": {
         "ru": "Закрепить поверх окон",
@@ -238,7 +236,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Toujours au premier plan",
         "es": "Siempre visible"
     },
-    
+
     "force_restore": {
         "ru": "Принудительно восстановить окно",
         "en": "Force restore window",
@@ -246,7 +244,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Restaurer la fenêtre de force",
         "es": "Restaurar ventana forzadamente"
     },
-    
+
     "settings": {
         "ru": "Настройки",
         "en": "Settings",
@@ -254,7 +252,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Paramètres",
         "es": "Configuración"
     },
-    
+
     "language": {
         "ru": "Язык",
         "en": "Language",
@@ -262,7 +260,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Langue",
         "es": "Idioma"
     },
-    
+
     "about": {
         "ru": "О программе",
         "en": "About",
@@ -270,7 +268,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "À propos",
         "es": "Acerca de"
     },
-    
+
     "exit": {
         "ru": "Выход",
         "en": "Exit",
@@ -278,7 +276,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Quitter",
         "es": "Salir"
     },
-    
+
     # Системный трей
     "tray_hidden_message": {
         "ru": "Приложение скрыто в трей. Дважды кликните по иконке для показа.",
@@ -287,7 +285,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Application masquée dans la barre d'état. Double-cliquez sur l'icône pour afficher.",
         "es": "Aplicación oculta en la bandeja. Haga doble clic en el icono para mostrar."
     },
-    
+
     "tray_show_tooltip": {
         "ru": "Показать окно",
         "en": "Show window",
@@ -295,7 +293,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Afficher la fenêtre",
         "es": "Mostrar ventana"
     },
-    
+
     "tray_exit_tooltip": {
         "ru": "Выход",
         "en": "Exit",
@@ -303,7 +301,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Quitter",
         "es": "Salir"
     },
-    
+
     # Сообщения и уведомления
     "color_copied": {
         "ru": "Цвет скопирован в буфер обмена",
@@ -312,7 +310,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur copiée dans le presse-papiers",
         "es": "Color copiado al portapapeles"
     },
-    
+
     "error_copying": {
         "ru": "Ошибка при копировании цвета",
         "en": "Error copying color",
@@ -320,7 +318,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Erreur lors de la copie de la couleur",
         "es": "Error al copiar el color"
     },
-    
+
     "invalid_color": {
         "ru": "Неверный формат цвета",
         "en": "Invalid color format",
@@ -328,7 +326,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Format de couleur invalide",
         "es": "Formato de color inválido"
     },
-    
+
     # Цветовые каналы
     "red": {
         "ru": "Красный",
@@ -337,7 +335,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Rouge",
         "es": "Rojo"
     },
-    
+
     "green": {
         "ru": "Зеленый",
         "en": "Green",
@@ -345,7 +343,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Vert",
         "es": "Verde"
     },
-    
+
     "blue": {
         "ru": "Синий",
         "en": "Blue",
@@ -353,7 +351,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Bleu",
         "es": "Azul"
     },
-    
+
     "alpha": {
         "ru": "Прозрачность",
         "en": "Alpha",
@@ -361,7 +359,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Alpha",
         "es": "Alfa"
     },
-    
+
     "hue": {
         "ru": "Оттенок",
         "en": "Hue",
@@ -369,7 +367,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Teinte",
         "es": "Tono"
     },
-    
+
     "saturation": {
         "ru": "Насыщенность",
         "en": "Saturation",
@@ -377,7 +375,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Saturation",
         "es": "Saturación"
     },
-    
+
     "value": {
         "ru": "Яркость",
         "en": "Value",
@@ -385,7 +383,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Valeur",
         "es": "Valor"
     },
-    
+
     # Форматы цветов
     "rgb_format": {
         "ru": "RGB",
@@ -394,7 +392,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "RGB",
         "es": "RGB"
     },
-    
+
     "rgba_format": {
         "ru": "RGBA",
         "en": "RGBA",
@@ -402,7 +400,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "RGBA",
         "es": "RGBA"
     },
-    
+
     "hex_format": {
         "ru": "HEX",
         "en": "HEX",
@@ -410,7 +408,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "HEX",
         "es": "HEX"
     },
-    
+
     "hsv_format": {
         "ru": "HSV",
         "en": "HSV",
@@ -418,7 +416,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "HSV",
         "es": "HSV"
     },
-    
+
     "hsva_format": {
         "ru": "HSVA",
         "en": "HSVA",
@@ -426,7 +424,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "HSVA",
         "es": "HSVA"
     },
-    
+
     # Инструкции
     "usage_instructions": {
         "ru": "📋 Использование:",
@@ -435,7 +433,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "📋 Utilisation:",
         "es": "📋 Uso:"
     },
-    
+
     "usage_coordinates": {
         "ru": "   - Окно показывает координаты курсора и цвет под ним",
         "en": "   - Window shows cursor coordinates and color under it",
@@ -443,7 +441,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "   - La fenêtre affiche les coordonnées du curseur et la couleur en dessous",
         "es": "   - La ventana muestra las coordenadas del cursor y el color debajo"
     },
-    
+
     "usage_ctrl": {
         "ru": "   - Нажмите CTRL или кнопку для захвата цвета",
         "en": "   - Press CTRL or button to capture color",
@@ -451,7 +449,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "   - Appuyez sur CTRL ou le bouton pour capturer la couleur",
         "es": "   - Presiona CTRL o el botón para capturar el color"
     },
-    
+
     "usage_right_click": {
         "ru": "   - Правый клик для контекстного меню",
         "en": "   - Right click for context menu",
@@ -459,7 +457,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "   - Clic droit pour le menu contextuel",
         "es": "   - Clic derecho para el menú contextual"
     },
-    
+
     "usage_esc": {
         "ru": "   - ESC для выхода",
         "en": "   - ESC to exit",
@@ -467,7 +465,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "   - ESC pour quitter",
         "es": "   - ESC para salir"
     },
-    
+
     "usage_drag": {
         "ru": "   - Перетаскивайте окно мышью",
         "en": "   - Drag window with mouse",
@@ -475,7 +473,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "   - Faites glisser la fenêtre avec la souris",
         "es": "   - Arrastra la ventana con el ratón"
     },
-    
+
     "usage_hotkeys": {
         "ru": "   - 🌐 Глобальные горячие клавиши активны (работают в играх)",
         "en": "   - 🌐 Global hotkeys active (work in games)",
@@ -483,7 +481,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "   - 🌐 Raccourcis globaux actifs (fonctionnent dans les jeux)",
         "es": "   - 🌐 Atajos globales activos (funcionan en juegos)"
     },
-    
+
     "usage_stable": {
         "ru": "   - TIP Эта версия исправлена и работает стабильно",
         "en": "   - TIP This version is fixed and works stably",
@@ -491,7 +489,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "   - TIP Cette version est corrigée et fonctionne de manière stable",
         "es": "   - TIP Esta versión está corregida y funciona de manera estable"
     },
-    
+
     # Дополнительные элементы интерфейса
     "position": {
         "ru": "Позиция",
@@ -500,7 +498,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Position",
         "es": "Posición"
     },
-    
+
     "ready": {
         "ru": "Готов к работе",
         "en": "Ready to work",
@@ -508,7 +506,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Prêt à travailler",
         "es": "Listo para trabajar"
     },
-    
+
     "select_color": {
         "ru": "Выбрать цвет",
         "en": "Select color",
@@ -516,7 +514,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Sélectionner la couleur",
         "es": "Seleccionar color"
     },
-    
+
     "color_history": {
         "ru": "История выбранных цветов:",
         "en": "Selected colors history:",
@@ -524,7 +522,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Historique des couleurs sélectionnées:",
         "es": "Historial de colores seleccionados:"
     },
-    
+
     "clear_history": {
         "ru": "🗑 Очистить историю",
         "en": "🗑 Clear history",
@@ -532,7 +530,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "🗑 Effacer l'historique",
         "es": "🗑 Limpiar historial"
     },
-    
+
     "use_color": {
         "ru": "Использовать",
         "en": "Use",
@@ -540,7 +538,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Utiliser",
         "es": "Usar"
     },
-    
+
     "save_state": {
         "ru": "💾 Сохранить состояние (Ctrl+S)",
         "en": "💾 Save state (Ctrl+S)",
@@ -548,7 +546,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "💾 Sauvegarder l'état (Ctrl+S)",
         "es": "💾 Guardar estado (Ctrl+S)"
     },
-    
+
     "saved": {
         "ru": "OK Сохранено!",
         "en": "OK Saved!",
@@ -556,7 +554,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "OK Sauvegardé !",
         "es": "OK ¡Guardado!"
     },
-    
+
     "quick_save": {
         "ru": "FAST Цвет быстро сохранен",
         "en": "FAST Color quickly saved",
@@ -564,7 +562,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "FAST Couleur rapidement sauvegardée",
         "es": "FAST Color guardado rápidamente"
     },
-    
+
     "state_loaded": {
         "ru": "📂 Состояние загружено",
         "en": "📂 State loaded",
@@ -572,7 +570,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "📂 État chargé",
         "es": "📂 Estado cargado"
     },
-    
+
     "history_cleared": {
         "ru": "История очищена",
         "en": "History cleared",
@@ -580,7 +578,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Historique effacé",
         "es": "Historial limpiado"
     },
-    
+
     "color_selected_from_screen": {
         "ru": "Цвет выбран с экрана: RGB{color}",
         "en": "Color selected from screen: RGB{color}",
@@ -588,7 +586,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur sélectionnée à l'écran: RGB{color}",
         "es": "Color seleccionado de la pantalla: RGB{color}"
     },
-    
+
     "color_used_from_history": {
         "ru": "Использован цвет из истории: RGB{color}",
         "en": "Color used from history: RGB{color}",
@@ -596,7 +594,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur utilisée depuis l'historique: RGB{color}",
         "es": "Color usado del historial: RGB{color}"
     },
-    
+
     # Сообщения об ошибках
     "error_getting_pixel_color": {
         "ru": "Ошибка получения цвета пикселя ({x}, {y}): {e}",
@@ -605,7 +603,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Erreur lors de la récupération de la couleur du pixel ({x}, {y}): {e}",
         "es": "Error al obtener el color del píxel ({x}, {y}): {e}"
     },
-    
+
     "error_capture_color": {
         "ru": "Ошибка захвата цвета: {e}",
         "en": "Error capturing color: {e}",
@@ -613,7 +611,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Erreur lors de la capture de la couleur: {e}",
         "es": "Error al capturar el color: {e}"
     },
-    
+
     "capture_error": {
         "ru": "Ошибка захвата",
         "en": "Capture error",
@@ -621,7 +619,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Erreur de capture",
         "es": "Error de captura"
     },
-    
+
     "error_saving_state": {
         "ru": "ERROR Ошибка сохранения: {e}",
         "en": "ERROR Error saving: {e}",
@@ -629,7 +627,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "ERROR Erreur lors de la sauvegarde: {e}",
         "es": "ERROR Error al guardar: {e}"
     },
-    
+
     "error_loading_state": {
         "ru": "WARNING Ошибка загрузки состояния: {e}",
         "en": "WARNING Error loading state: {e}",
@@ -637,7 +635,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "WARNING Erreur lors du chargement de l'état: {e}",
         "es": "WARNING Error al cargar el estado: {e}"
     },
-    
+
     # Статусы
     "frozen": {
         "ru": "Заморожено: {coords} - {color}",
@@ -646,7 +644,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Gelé: {coords} - {color}",
         "es": "Congelado: {coords} - {color}"
     },
-    
+
     "unfrozen": {
         "ru": "Разморожено",
         "en": "Unfrozen",
@@ -654,7 +652,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Dégelé",
         "es": "Descongelado"
     },
-    
+
     "captured_color": {
         "ru": "Захвачен: {hex_color}",
         "en": "Captured: {hex_color}",
@@ -662,7 +660,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Capturé: {hex_color}",
         "es": "Capturado: {hex_color}"
     },
-    
+
     # Диалоги и уведомления
     "warning_title": {
         "ru": "Предупреждение",
@@ -671,7 +669,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Avertissement",
         "es": "Advertencia"
     },
-    
+
     "global_hotkeys_unavailable": {
         "ru": "Глобальные горячие клавиши недоступны",
         "en": "Global hotkeys unavailable",
@@ -679,7 +677,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Raccourcis globaux indisponibles",
         "es": "Atajos globales no disponibles"
     },
-    
+
     "install_keyboard_library": {
         "ru": "Для работы горячих клавиш в играх и других приложениях установите библиотеку 'keyboard':",
         "en": "To work hotkeys in games and other applications, install the 'keyboard' library:",
@@ -687,7 +685,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Pour que les raccourcis fonctionnent dans les jeux et autres applications, installez la bibliothèque 'keyboard':",
         "es": "Para que los atajos funcionen en juegos y otras aplicaciones, instale la biblioteca 'keyboard':"
     },
-    
+
     "hotkeys_only_when_active": {
         "ru": "Без неё горячие клавиши работают только когда окно активно.",
         "en": "Without it, hotkeys work only when the window is active.",
@@ -695,7 +693,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Sans cela, les raccourcis ne fonctionnent que lorsque la fenêtre est active.",
         "es": "Sin ella, los atajos solo funcionan cuando la ventana está activa."
     },
-    
+
     # Инструкции
     "instructions": {
         "ru": "Инструкции:",
@@ -704,7 +702,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Instructions:",
         "es": "Instrucciones:"
     },
-    
+
     "click_to_select_color": {
         "ru": "Кликните для выбора цвета\nCtrl - сохранить\nEsc - отмена",
         "en": "Click to select color\nCtrl - save\nEsc - cancel",
@@ -712,7 +710,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Cliquez pour sélectionner la couleur\nCtrl - sauvegarder\nEsc - annuler",
         "es": "Haga clic para seleccionar color\nCtrl - guardar\nEsc - cancelar"
     },
-    
+
     # О программе
     "about_title": {
         "ru": "О программе",
@@ -721,7 +719,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "À propos",
         "es": "Acerca de"
     },
-    
+
     "version": {
         "ru": "Версия: {version}",
         "en": "Version: {version}",
@@ -729,7 +727,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Version: {version}",
         "es": "Versión: {version}"
     },
-    
+
     "author": {
         "ru": "Автор: {author}",
         "en": "Author: {author}",
@@ -737,7 +735,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Auteur: {author}",
         "es": "Autor: {author}"
     },
-    
+
     "modern_color_picker": {
         "ru": "Цветовой пикер для Windows",
         "en": "Color picker for Windows",
@@ -745,7 +743,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Sélecteur de couleur pour Windows",
         "es": "Selector de color para Windows"
     },
-    
+
     # Настройки
     "settings_title": {
         "ru": "Настройки",
@@ -754,7 +752,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Paramètres",
         "es": "Configuración"
     },
-    
+
     "application_settings": {
         "ru": "Настройки приложения",
         "en": "Application settings",
@@ -762,7 +760,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Paramètres de l'application",
         "es": "Configuración de la aplicación"
     },
-    
+
     "planned_features": {
         "ru": "Планируемые функции:",
         "en": "Planned features:",
@@ -770,7 +768,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Fonctionnalités prévues:",
         "es": "Características planificadas:"
     },
-    
+
     # Сообщения
     "color_captured": {
         "ru": "Захвачен цвет: {hex_color} RGB({r}, {g}, {b}) в позиции ({x}, {y})",
@@ -779,7 +777,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur capturée: {hex_color} RGB({r}, {g}, {b}) à la position ({x}, {y})",
         "es": "Color capturado: {hex_color} RGB({r}, {g}, {b}) en posición ({x}, {y})"
     },
-    
+
     "selected_color": {
         "ru": "Выбранный цвет: RGB{color}",
         "en": "Selected color: RGB{color}",
@@ -787,7 +785,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur sélectionnée: RGB{color}",
         "es": "Color seleccionado: RGB{color}"
     },
-    
+
     "selection_cancelled": {
         "ru": "Выбор отменен",
         "en": "Selection cancelled",
@@ -795,7 +793,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Sélection annulée",
         "es": "Selección cancelada"
     },
-    
+
     "color_picker_opening": {
         "ru": "Открывается цветовой пикер...",
         "en": "Opening color picker...",
@@ -803,7 +801,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Ouverture du sélecteur de couleur...",
         "es": "Abriendo selector de color..."
     },
-    
+
     "select_color_and_press_ok": {
         "ru": "Выберите цвет и нажмите OK, или Cancel для отмены",
         "en": "Select color and press OK, or Cancel to cancel",
@@ -811,7 +809,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Sélectionnez la couleur et appuyez sur OK, ou Annuler pour annuler",
         "es": "Seleccione el color y presione OK, o Cancelar para cancelar"
     },
-    
+
     "selected_color_with_alpha": {
         "ru": "Выбранный цвет: RGB({r}, {g}, {b}) с прозрачностью {a}%",
         "en": "Selected color: RGB({r}, {g}, {b}) with transparency {a}%",
@@ -819,7 +817,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur sélectionnée: RGB({r}, {g}, {b}) avec transparence {a}%",
         "es": "Color seleccionado: RGB({r}, {g}, {b}) con transparencia {a}%"
     },
-    
+
     "selected_color_rgb": {
         "ru": "Выбранный цвет: RGB({r}, {g}, {b})",
         "en": "Selected color: RGB({r}, {g}, {b})",
@@ -827,7 +825,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Couleur sélectionnée: RGB({r}, {g}, {b})",
         "es": "Color seleccionado: RGB({r}, {g}, {b})"
     },
-    
+
     "error": {
         "ru": "Ошибка: {e}",
         "en": "Error: {e}",
@@ -835,7 +833,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Erreur: {e}",
         "es": "Error: {e}"
     },
-    
+
     # Справка
     "help_tabs": {
         "ru": "Вкладки:\n• Цветовой пикер - обычный выбор цвета\n• Экранный пикер - выбор цвета с экрана\n• История - сохраненные цвета",
@@ -844,7 +842,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Onglets:\n• Sélecteur de couleur - sélection de couleur normale\n• Sélecteur d'écran - sélection de couleur à l'écran\n• Historique - couleurs sauvegardées",
         "es": "Pestañas:\n• Selector de color - selección de color regular\n• Selector de pantalla - selección de color de la pantalla\n• Historial - colores guardados"
     },
-    
+
     "help_hotkeys": {
         "ru": "Горячие клавиши:\n• Ctrl+S - сохранить состояние\n• Ctrl - быстро сохранить цвет\n• F1 - эта справка\n• Esc - отмена (в screen picker)",
         "en": "Hotkeys:\n• Ctrl+S - save state\n• Ctrl - quickly save color\n• F1 - this help\n• Esc - cancel (in screen picker)",
@@ -852,7 +850,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fr": "Raccourcis:\n• Ctrl+S - sauvegarder l'état\n• Ctrl - sauvegarder rapidement la couleur\n• F1 - cette aide\n• Esc - annuler (dans le sélecteur d'écran)",
         "es": "Atajos:\n• Ctrl+S - guardar estado\n• Ctrl - guardar color rápidamente\n• F1 - esta ayuda\n• Esc - cancelar (en selector de pantalla)"
     },
-    
+
     "help_screen_picker": {
         "ru": "Screen Picker:\n• Клик - выбрать цвет\n• Ctrl - сохранить цвет под курсором\n• Esc - отмена",
         "en": "Screen Picker:\n• Click - select color\n• Ctrl - save color under cursor\n• Esc - cancel",

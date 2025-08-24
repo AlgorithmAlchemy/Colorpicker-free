@@ -32,7 +32,7 @@ def get_color(initial_color: Optional[Tuple] = None) -> Tuple:
     # Получение текущей конфигурации
     config = get_config()
 
-        # Новый экземпляр если не существует или настройки изменились
+    # Новый экземпляр если не существует или настройки изменились
     if _instance is None or config.use_alpha != _instance.use_alpha:
         _instance = SimpleColorPicker(
             use_alpha=config.use_alpha

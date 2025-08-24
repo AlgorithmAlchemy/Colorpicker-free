@@ -192,16 +192,16 @@ class ColorPicker(QDialog):
         ok_button = self.ui.buttonBox.button(self.ui.buttonBox.Ok)
         if ok_button:
             ok_button.setText(get_text("ok"))
-        
+
         cancel_button = self.ui.buttonBox.button(self.ui.buttonBox.Cancel)
         if cancel_button:
             cancel_button.setText(get_text("cancel"))
-    
+
     def update_language(self):
         """Обновляет интерфейс при смене языка."""
         self.setWindowTitle(get_text("window_title"))
         self._update_button_texts()
-    
+
     def closeEvent(self, event):
         """Обработчик закрытия окна."""
         unregister_widget(self)

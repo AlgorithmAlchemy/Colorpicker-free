@@ -22,6 +22,7 @@ from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAc
 try:
     from app.i18n import get_text, set_language, Language, get_language_name, get_supported_languages
     from app.core.settings_manager import get_setting, set_setting
+
     I18N_AVAILABLE = True
 except ImportError:
     I18N_AVAILABLE = False
@@ -32,6 +33,7 @@ try:
     import win32api
     import win32con
     import win32gui
+
     # RegisterHotKey действительно доступен
     if hasattr(win32api, 'RegisterHotKey'):
         WIN32_AVAILABLE = True
@@ -46,8 +48,9 @@ except ImportError:
 # Попытка импорта keyboard для глобальных горячих клавиш (резервный)
 try:
     import keyboard
+
     KEYBOARD_AVAILABLE = True
-except ImportError:                                                                           
+except ImportError:
     KEYBOARD_AVAILABLE = False
 
 # Выводим информацию о доступности
@@ -62,17 +65,17 @@ elif KEYBOARD_AVAILABLE:
 
 class SingleInstanceApp:
     """Класс для обеспечения единственного экземпляра приложения."""
-    
+
     def __init__(self, app_name="DesktopColorPicker"):
         self.app_name = app_name
         self.lock_file = None
-        
+
     def is_already_running(self):
         """Проверяет, запущено ли уже приложение."""
         try:
             # Путь к файлу блокировки
             lock_path = os.path.join(tempfile.gettempdir(), f"{self.app_name}.lock")
-            
+
             # Существует ли файл блокировки
             if os.path.exists(lock_path):
                 # Читаем PID из файла
@@ -93,19 +96,19 @@ class SingleInstanceApp:
                 except:
                     # Не удалось прочитать файл, удаляем его
                     os.unlink(lock_path)
-            
+
             # Новый файл блокировки
             with open(lock_path, 'w') as f:
                 f.write(str(os.getpid()))
-            
+
             self.lock_file = lock_path
             print(f"OK Файл блокировки создан: {lock_path}")
             return False  # Приложение не запущено
-            
+
         except Exception as e:
             print(f"ERROR Ошибка проверки единственного экземпляра: {e}")
             return False  # В случае ошибки позволяем запуск
-    
+
     def cleanup(self):
         """Очищает блокировку при завершении."""
         try:
@@ -151,7 +154,7 @@ def get_pixel_color_qt(x: int, y: int):
         # Метод 2: Захват области вокруг пикселя
         try:
             area_size = 3
-            pixmap = screen.grabWindow(0, x - area_size//2, y - area_size//2, area_size, area_size)
+            pixmap = screen.grabWindow(0, x - area_size // 2, y - area_size // 2, area_size, area_size)
             if not pixmap.isNull():
                 image = pixmap.toImage()
                 if not image.isNull():
@@ -196,51 +199,51 @@ def get_cursor_position():
 
 class Win32HotkeyManager(QObject):
     """Менеджер глобальных горячих клавиш через win32api."""
-    
+
     ctrl_pressed = Signal()
     escape_pressed = Signal()
-    
+
     def __init__(self):
         super().__init__()
         self._running = False
         self._thread = None
         self._hwnd = None
-        
+
     def start(self):
         """Запускает мониторинг глобальных горячих клавиш."""
         if not WIN32_AVAILABLE:
             return False
-            
+
         if self._running:
             return True
-            
+
         try:
             # Предыдущий поток если он есть
             if self._thread and self._thread.is_alive():
                 self._running = False
                 self._thread.join(timeout=1)
-            
+
             self._running = True
             self._thread = threading.Thread(
                 target=self._monitor_hotkeys, daemon=True
             )
             self._thread.start()
-            
+
             # Ждем немного чтобы убедиться что поток запустился
             time.sleep(0.2)
-            
+
             return True
         except Exception as e:
             print(f"ERROR Ошибка запуска глобальных горячих клавиш (win32): {e}")
             self._running = False
             return False
-    
+
     def stop(self):
         """Останавливает мониторинг глобальных горячих клавиш."""
         self._running = False
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=1)
-    
+
     def _monitor_hotkeys(self):
         """Мониторит глобальные горячие клавиши через win32api."""
         try:
@@ -249,22 +252,22 @@ class Win32HotkeyManager(QObject):
             wc.lpfnWndProc = self._window_proc
             wc.lpszClassName = "HotkeyWindow"
             wc.hInstance = win32api.GetModuleHandle(None)
-            
+
             # Регистрируем класс окна
             win32gui.RegisterClass(wc)
-            
+
             # окно
             self._hwnd = win32gui.CreateWindow(
                 wc.lpszClassName, "Hotkey Window",
                 0, 0, 0, 0, 0, 0, 0, wc.hInstance, None
             )
-            
+
             # Регистрируем горячие клавиши
             win32api.RegisterHotKey(self._hwnd, 1, win32con.MOD_CONTROL, ord('C'))
             win32api.RegisterHotKey(self._hwnd, 2, 0, win32con.VK_ESCAPE)
-            
+
             print("OK Глобальные горячие клавиши зарегистрированы (win32api)")
-            
+
             # сообщения
             while self._running:
                 try:
@@ -275,7 +278,7 @@ class Win32HotkeyManager(QObject):
                     win32gui.DispatchMessage(msg)
                 except Exception:
                     time.sleep(0.01)
-                    
+
         except Exception as e:
             print(f"ERROR Ошибка в мониторинге горячих клавиш (win32api): {e}")
         finally:
@@ -284,7 +287,7 @@ class Win32HotkeyManager(QObject):
                     win32gui.DestroyWindow(self._hwnd)
             except Exception:
                 pass
-    
+
     def _window_proc(self, hwnd, msg, wparam, lparam):
         """Обработчик сообщений окна."""
         if msg == win32con.WM_HOTKEY:
@@ -294,13 +297,13 @@ class Win32HotkeyManager(QObject):
                 self._on_escape_pressed()
             return 0
         return win32gui.DefWindowProc(hwnd, msg, wparam, lparam)
-    
+
     def _on_ctrl_pressed(self):
         """Обработчик нажатия Ctrl."""
         if self._running:
             print("TARGET Ctrl нажат! (win32api)")
             self.ctrl_pressed.emit()
-    
+
     def _on_escape_pressed(self):
         """Обработчик нажатия Escape."""
         if self._running:
@@ -310,78 +313,78 @@ class Win32HotkeyManager(QObject):
 
 class KeyboardHotkeyManager(QObject):
     """Менеджер глобальных горячих клавиш через keyboard (резервный)."""
-    
+
     ctrl_pressed = Signal()
     escape_pressed = Signal()
-    
+
     def __init__(self):
         super().__init__()
         self._running = False
         self._thread = None
         self._initialized = False
-        
+
     def start(self):
         """Запускает мониторинг глобальных горячих клавиш."""
         if not KEYBOARD_AVAILABLE:
             return False
-            
+
         if self._running:
             return True
-            
+
         try:
             # Предыдущий поток если он есть
             if self._thread and self._thread.is_alive():
                 self._running = False
                 self._thread.join(timeout=1)
-            
+
             self._running = True
             self._thread = threading.Thread(
                 target=self._monitor_hotkeys, daemon=True
             )
             self._thread.start()
-            
+
             # Ждем инициализации
             time.sleep(0.5)
-            
+
             return True
         except Exception as e:
             print(f"ERROR Ошибка запуска глобальных горячих клавиш (keyboard): {e}")
             self._running = False
             return False
-    
+
     def stop(self):
         """Останавливает мониторинг глобальных горячих клавиш."""
         self._running = False
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=1)
-    
+
     def _force_init_keyboard(self):
         """Принудительная инициализация keyboard."""
         try:
             print("TOOL Начинаем принудительную инициализацию keyboard...")
-            
+
             # Все хуки
             keyboard.unhook_all()
             time.sleep(0.2)
-            
+
             # Принудительно запускаем listener
             if hasattr(keyboard, '_listener'):
                 keyboard._listener.start_if_necessary()
                 time.sleep(0.2)
-            
+
             # Симулируем несколько событий для активации
             for i in range(5):
                 try:
                     # состояние клавиш
                     keyboard.is_pressed('ctrl')
                     time.sleep(0.1)
-                    print(f"TOOL Активация keyboard: шаг {i+1}/5")
+                    print(f"TOOL Активация keyboard: шаг {i + 1}/5")
                 except Exception as e:
-                    print(f"WARNING Ошибка активации шаг {i+1}: {e}")
-            
+                    print(f"WARNING Ошибка активации шаг {i + 1}: {e}")
+
             # Дополнительная задержка
             time.sleep(0.5)
-            
+
             # Финальная проверка
             try:
                 if hasattr(keyboard, '_listener'):
@@ -396,37 +399,37 @@ class KeyboardHotkeyManager(QObject):
                     print("WARNING Keyboard listener не существует после инициализации")
             except Exception as e:
                 print(f"WARNING Ошибка проверки keyboard после инициализации: {e}")
-            
+
         except Exception as e:
             print(f"WARNING Ошибка принудительной инициализации: {e}")
-    
+
     def _monitor_hotkeys(self):
         """Мониторит глобальные горячие клавиши в отдельном потоке."""
         try:
             # Принудительная инициализация
             self._force_init_keyboard()
-            
+
             # Регистрируем горячие клавиши с более надежными обработчиками
             def on_ctrl_press(e):
                 if self._running:
                     print("TARGET Ctrl нажат! (keyboard)")
                     self.ctrl_pressed.emit()
-            
+
             def on_escape_press(e):
                 if self._running:
                     print("TARGET Escape нажат! (keyboard)")
                     self.escape_pressed.emit()
-            
+
             keyboard.on_press_key('ctrl', on_ctrl_press)
             keyboard.on_press_key('esc', on_escape_press)
-            
+
             print("OK Глобальные горячие клавиши зарегистрированы (keyboard)")
-            
+
             # Держим поток активным с периодической проверкой
             last_check = time.time()
             while self._running:
                 time.sleep(0.1)
-                
+
                 # состояние каждые 2 секунды
                 current_time = time.time()
                 if current_time - last_check > 2.0:
@@ -445,7 +448,7 @@ class KeyboardHotkeyManager(QObject):
                                 self._force_init_keyboard()
                     except Exception as e:
                         print(f"WARNING Ошибка проверки keyboard: {e}")
-                
+
         except Exception as e:
             print(f"ERROR Ошибка в мониторинге горячих клавиш (keyboard): {e}")
         finally:
@@ -453,13 +456,13 @@ class KeyboardHotkeyManager(QObject):
                 keyboard.unhook_all()
             except Exception:
                 pass
-    
+
     def _on_ctrl_pressed(self):
         """Обработчик нажатия Ctrl."""
         if self._running:
             print("TARGET Ctrl нажат! (keyboard)")
             self.ctrl_pressed.emit()
-    
+
     def _on_escape_pressed(self):
         """Обработчик нажатия Escape."""
         if self._running:
@@ -469,10 +472,10 @@ class KeyboardHotkeyManager(QObject):
 
 class GlobalHotkeyManager(QObject):
     """Универсальный менеджер глобальных горячих клавиш."""
-    
+
     ctrl_pressed = Signal()
     escape_pressed = Signal()
-    
+
     def __init__(self):
         super().__init__()
         # Выбираем лучший доступный менеджер
@@ -485,17 +488,17 @@ class GlobalHotkeyManager(QObject):
         else:
             self._manager = None
             print("ERROR Нет доступных методов для глобальных горячих клавиш")
-        
+
         if self._manager:
             self._manager.ctrl_pressed.connect(self.ctrl_pressed.emit)
             self._manager.escape_pressed.connect(self.escape_pressed.emit)
-    
+
     def start(self):
         """Запускает мониторинг глобальных горячих клавиш."""
         if self._manager:
             return self._manager.start()
         return False
-    
+
     def stop(self):
         """Останавливает мониторинг глобальных горячих клавиш."""
         if self._manager:
@@ -504,12 +507,12 @@ class GlobalHotkeyManager(QObject):
 
 class CopyNotification(QWidget):
     """Всплывающее уведомление о копировании."""
-    
+
     def __init__(self, parent=None):
         super().__init__(parent, Qt.ToolTip | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_ShowWithoutActivating)
-        
+
         # лейбл для текста
         if I18N_AVAILABLE:
             copied_text = get_text("copied")
@@ -529,22 +532,22 @@ class CopyNotification(QWidget):
 
             }
         """)
-        
+
         # Размещаем лейбл
         layout = QVBoxLayout(self)
         layout.addWidget(self.label)
         layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # Таймер для автоматического скрытия
         self.hide_timer = QTimer(self)
         self.hide_timer.timeout.connect(self._fade_out)
         self.hide_timer.setSingleShot(True)
-        
+
         # Таймер для постоянного мониторинга горячих клавиш
         self.hotkey_monitor_timer = QTimer(self)
         self.hotkey_monitor_timer.timeout.connect(self._monitor_hotkeys_periodically)
         self.hotkey_monitor_timer.start(5000)  # каждые 5 секунд
-    
+
     def _monitor_hotkeys_periodically(self):
         """Периодически проверяет и восстанавливает горячие клавиши."""
         try:
@@ -552,25 +555,25 @@ class CopyNotification(QWidget):
             pass
         except Exception as e:
             print(f"WARNING Ошибка периодической проверки в уведомлении: {e}")
-    
+
     def show_at_position(self, pos, duration=700):
         """Показывает уведомление в указанной позиции."""
         # Позиционируем над местом клика
         self.move(pos.x() - self.width() // 2, pos.y() - self.height() - 20)
-        
+
         # Начинаем с прозрачности 0 и масштаба 0.8
         self.setWindowOpacity(0.0)
         self.setStyleSheet(self.label.styleSheet() + "transform: scale(0.8);")
         self.show()
-        
+
         # Анимация появления с масштабированием
         self.fade_in_timer = QTimer(self)
         self.fade_in_timer.timeout.connect(self._fade_in)
         self.fade_in_timer.start(16)  # 60 FPS
-        
+
         # Таймер для скрытия
         self.hide_timer.start(duration)
-    
+
     def _fade_in(self):
         """Анимация появления с масштабированием."""
         current_opacity = self.windowOpacity()
@@ -578,20 +581,20 @@ class CopyNotification(QWidget):
             # Увеличиваем прозрачность и масштаб одновременно
             new_opacity = min(1.0, current_opacity + 0.15)
             scale = 0.8 + (new_opacity * 0.2)  # От 0.8 до 1.0
-            
+
             self.setWindowOpacity(new_opacity)
             self.setStyleSheet(self.label.styleSheet() + f"transform: scale({scale:.2f});")
         else:
             # Финальное состояние
             self.setStyleSheet(self.label.styleSheet() + "transform: scale(1.0);")
             self.fade_in_timer.stop()
-    
+
     def _fade_out(self):
         """Анимация исчезновения."""
         self.fade_out_timer = QTimer(self)
         self.fade_out_timer.timeout.connect(self._fade_out_step)
         self.fade_out_timer.start(16)  # 60 FPS
-    
+
     def _fade_out_step(self):
         """Шаг анимации исчезновения с масштабированием."""
         current_opacity = self.windowOpacity()
@@ -599,13 +602,13 @@ class CopyNotification(QWidget):
             # Уменьшаем прозрачность и масштаб одновременно
             new_opacity = max(0.0, current_opacity - 0.2)
             scale = 1.0 - ((1.0 - new_opacity) * 0.3)  # От 1.0 до 0.7
-            
+
             self.setWindowOpacity(new_opacity)
             self.setStyleSheet(self.label.styleSheet() + f"transform: scale({scale:.2f});")
         else:
             self.fade_out_timer.stop()
             self.hide()
-    
+
     def update_text(self):
         """Обновляет текст уведомления при смене языка."""
         try:
@@ -620,53 +623,53 @@ class CopyNotification(QWidget):
 
 class ClickableLabel(QLabel):
     """Кликабельный лейбл с копированием в буфер обмена."""
-    
+
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
         self.setCursor(Qt.PointingHandCursor)  # Курсор-рука при наведении
         self.notification = None  # Создадим позже
-    
+
     def _ensure_notification(self):
         """Создает уведомление при необходимости."""
         if self.notification is None:
             self.notification = CopyNotification(self.window())
-    
+
     def mousePressEvent(self, event):
         """Обработчик клика мыши."""
         if event.button() == Qt.LeftButton:
             # Копируем текст в буфер обмена
             clipboard = QApplication.clipboard()
             clipboard.setText(self.text())
-            
+
             # Временно меняем цвет для обратной связи
             original_style = self.styleSheet()
             self.setStyleSheet(original_style + "; background-color: #00C851;")
-            
+
             # Уведомление о копировании
             self._ensure_notification()
             global_pos = self.mapToGlobal(event.pos())
             self.notification.show_at_position(global_pos)
-            
+
             # Исходный стиль через 200мс
             QTimer.singleShot(200, lambda: self.setStyleSheet(original_style))
-        
+
         super().mousePressEvent(event)
 
 
 class FixedDesktopColorPicker(QWidget):
     """Исправленная версия десктопного color picker."""
-    
+
     def __init__(self, single_instance=None):
         super().__init__()
-        
+
         # Ссылка на блокировку единственного экземпляра
         self.single_instance = single_instance
-        
+
         # Атрибуты ДО установки флагов окна
         self._should_be_visible = True  # Флаг для отслеживания видимости
         self._games_mode = False  # Режим для игр
         self._is_window_active = True
-        
+
         # Инициализация языка
         if I18N_AVAILABLE:
             try:
@@ -675,27 +678,27 @@ class FixedDesktopColorPicker(QWidget):
                 print(f"🌐 Язык инициализирован: {get_language_name(Language(saved_language))}")
             except Exception as e:
                 print(f"WARNING Ошибка инициализации языка: {e}")
-        
+
         # Заголовок окна
         if I18N_AVAILABLE:
             self.setWindowTitle(get_text("app_title"))
         else:
             self.setWindowTitle("Desktop Color Picker (Fixed)")
-            
+
         # Флаги для работы в полноэкранных играх
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint | 
-            Qt.FramelessWindowHint | 
+            Qt.WindowStaysOnTopHint |
+            Qt.FramelessWindowHint |
             Qt.Tool |  # Делает окно инструментом (не в панели задач)
             Qt.WindowSystemMenuHint |  # Системное меню
             Qt.WindowCloseButtonHint  # Кнопка закрытия
         )
-        
+
         # Дополнительные настройки для принудительного отображения поверх игр
         self.setAttribute(Qt.WA_AlwaysShowToolTips, True)
         self.setAttribute(Qt.WA_ShowWithoutActivating, False)  # Показывать с активацией
         self.setWindowState(Qt.WindowActive)  # Принудительно активное состояние
-        
+
         # Переменные
         self.captured_colors = []
         self.is_capturing = False
@@ -703,56 +706,54 @@ class FixedDesktopColorPicker(QWidget):
         self.frozen = False  # Режим заморозки координат и цвета
         self.frozen_coords = (0, 0)  # Замороженные координаты
         self.frozen_color = (0, 0, 0)  # Замороженный цвет
-        
+
         # Менеджер глобальных горячих клавиш
         self.hotkey_manager = GlobalHotkeyManager()
         self.hotkey_manager.ctrl_pressed.connect(self._on_global_ctrl_pressed)
         self.hotkey_manager.escape_pressed.connect(self._on_global_escape_pressed)
-        
+
         # UI
         self.setup_ui()
-        
+
         # Системный трей
         self.setup_system_tray()
-        
+
         # Таймер для обновления координат
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_coordinates)
         self.timer.start(16)  # Обновление каждые 16мс (~60 FPS)
-        
+
         # Таймер для проверки видимости окна в играх
         self.visibility_timer = QTimer()
         self.visibility_timer.timeout.connect(self._safe_check_window_visibility)
         self.visibility_timer.start(2000)  # Проверка каждые 2 секунды
-        
 
-        
         # Обработчик потери фокуса приложения
         QApplication.instance().focusChanged.connect(self._on_application_focus_changed)
-        
+
         # Переменные для оптимизации
         self._last_pos = [0, 0]
         self._last_color = [0, 0, 0]
         self._update_threshold = 1  # При любом движении курсора
-        
+
         # Кэш для стилей
         self._style_cache = {}
         self._last_style_key = None
-        
+
         # Позиционирование в правом верхнем углу
         self.position_window()
-        
+
         # Глобальные горячие клавиши
         if not self.hotkey_manager.start():
             self._show_hotkey_warning()
-        
+
         # Принудительная инициализация keyboard если доступен
         if KEYBOARD_AVAILABLE:
             try:
                 # Принудительно запускаем listener
                 if hasattr(keyboard, '_listener'):
                     keyboard._listener.start_if_necessary()
-                
+
                 # Симулируем несколько событий для активации
                 for _ in range(3):
                     try:
@@ -760,18 +761,18 @@ class FixedDesktopColorPicker(QWidget):
                         time.sleep(0.1)
                     except Exception:
                         pass
-                
+
                 print("TOOL Принудительная инициализация keyboard выполнена")
             except Exception as e:
                 print(f"WARNING Ошибка инициализации keyboard: {e}")
-        
+
     def setup_ui(self):
         """Настройка интерфейса."""
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignHCenter)
         layout.setSpacing(2)
         layout.setContentsMargins(8, 8, 8, 8)
-        
+
         # Заголовок
         if I18N_AVAILABLE:
             title_text = get_text("app_title")
@@ -792,7 +793,7 @@ class FixedDesktopColorPicker(QWidget):
             border: 1px solid rgba(255,255,255,0.1);
         """)
         layout.addWidget(title)
-        
+
         # Статус глобальных горячих клавиш
         if I18N_AVAILABLE:
             if WIN32_AVAILABLE:
@@ -823,7 +824,7 @@ class FixedDesktopColorPicker(QWidget):
             font-weight: 500;
         """)
         layout.addWidget(self.hotkey_status)
-        
+
         # Координаты (кликабельный)
         if I18N_AVAILABLE:
             coords_text = f"{get_text('coordinates')}: (0, 0)"
@@ -835,7 +836,7 @@ class FixedDesktopColorPicker(QWidget):
             QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         layout.addWidget(self.coords_label)
-        
+
         # Цвет (кликабельный)
         if I18N_AVAILABLE:
             color_text = f"{get_text('color')}: #000000"
@@ -847,11 +848,11 @@ class FixedDesktopColorPicker(QWidget):
             QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         layout.addWidget(self.color_label)
-        
+
         # Горизонтальный layout для кнопок
         button_layout = QHBoxLayout()
         button_layout.setSpacing(4)
-        
+
         # Кнопка захвата
         if I18N_AVAILABLE:
             ctrl_text = get_text('ctrl')
@@ -863,7 +864,7 @@ class FixedDesktopColorPicker(QWidget):
             QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         button_layout.addWidget(self.capture_btn)
-        
+
         # Кнопка закрытия
         if I18N_AVAILABLE:
             close_text = get_text('close')
@@ -875,16 +876,16 @@ class FixedDesktopColorPicker(QWidget):
             QSizePolicy.Expanding, QSizePolicy.Preferred
         )
         button_layout.addWidget(self.close_btn)
-        
+
         # Горизонтальный layout кнопок в основной layout
         layout.addLayout(button_layout)
-        
+
         self.setLayout(layout)
-        
+
         # Подстраиваем размер под содержимое
         self.adjustSize()
         self.setFixedSize(self.sizeHint())
-        
+
         # Современные стили с градиентами и тенями
         self.setStyleSheet("""
             QWidget {
@@ -956,7 +957,7 @@ class FixedDesktopColorPicker(QWidget):
                 border: 2px solid #0078d4;
             }
         """)
-        
+
     def _show_hotkey_warning(self):
         """Показывает предупреждение о недоступности глобальных горячих клавиш."""
         if not KEYBOARD_AVAILABLE:
@@ -972,39 +973,39 @@ class FixedDesktopColorPicker(QWidget):
             )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
-        
+
     def position_window(self):
         """Позиционирует окно в правом верхнем углу экрана."""
         screen = QApplication.primaryScreen().geometry()
         x = screen.width() - self.width() - 20
         y = 20
         self.move(x, y)
-        
+
     def update_coordinates(self):
         """Обновляет координаты курсора и цвет под ним."""
         # Защита от частых обновлений во время захвата
         if hasattr(self, '_capturing') and self._capturing:
             return
-        
+
         # Оптимизация: не обновляем если окно не активно
         if not self._is_window_active and not self.frozen:
             return
-            
+
         try:
             if not self.frozen:
                 # Позиция курсора
                 x, y = get_cursor_position()
-                
+
                 # Всегда для максимальной отзывчивости
                 # Убрали проверку distance для мгновенного отклика
-                
+
                 # Цвет под курсором только если позиция изменилась
                 color = get_pixel_color_qt(x, y)
                 if color:
                     r, g, b = color
                 else:
                     r, g, b = 0, 0, 0
-                
+
                 # Кэшируем значения
                 self._last_pos[0] = x
                 self._last_pos[1] = y
@@ -1015,7 +1016,7 @@ class FixedDesktopColorPicker(QWidget):
                 # Замороженные значения
                 x, y = self.frozen_coords
                 r, g, b = self.frozen_color
-                
+
                 # Цвет лейбла для замороженного состояния
                 hex_color = f"#{r:02x}{g:02x}{b:02x}"
                 if I18N_AVAILABLE:
@@ -1023,7 +1024,7 @@ class FixedDesktopColorPicker(QWidget):
                 else:
                     color_text = f"Цвет: {hex_color} RGB({r}, {g}, {b})"
                 self.color_label.setText(color_text)
-                
+
                 # Окрашиваем лейбл в соответствующий цвет
                 text_color = 'white' if (r + g + b) < 384 else 'black'
                 self.color_label.setStyleSheet(f"""
@@ -1042,7 +1043,7 @@ class FixedDesktopColorPicker(QWidget):
                         background-color: rgb({r}, {g}, {b});
                     }}
                 """)
-            
+
             # Координаты
             status_text = "" if self.frozen else ""
             if I18N_AVAILABLE:
@@ -1050,7 +1051,7 @@ class FixedDesktopColorPicker(QWidget):
             else:
                 coords_text = f"{status_text}Координаты: ({x}, {y})"
             self.coords_label.setText(coords_text)
-            
+
             # Цвет (только для незамороженного состояния)
             if not self.frozen:
                 hex_color = f"#{r:02x}{g:02x}{b:02x}"
@@ -1059,7 +1060,7 @@ class FixedDesktopColorPicker(QWidget):
                 else:
                     color_text = f"{status_text}Цвет: {hex_color} RGB({r}, {g}, {b})"
                 self.color_label.setText(color_text)
-                
+
                 # Окрашиваем лейбл в соответствующий цвет
                 text_color = 'white' if (r + g + b) < 384 else 'black'
                 self.color_label.setStyleSheet(f"""
@@ -1078,32 +1079,32 @@ class FixedDesktopColorPicker(QWidget):
                         background-color: rgb({r}, {g}, {b});
                     }}
                 """)
-            
+
             # Цвет кнопки только если цвет действительно изменился
             if (r != self._last_color[0] or g != self._last_color[1] or
                     b != self._last_color[2] or self.frozen):
                 self._update_button_color(r, g, b)
-            
+
         except Exception:
             # Не выводим ошибки в консоль при каждом обновлении
             pass
-    
+
     def _update_button_color(self, r, g, b):
         """Обновляет цвет кнопки захвата."""
         try:
             # ключ для кэша
             style_key = f"{r},{g},{b}"
-            
+
             # кэш
             if style_key == self._last_style_key:
                 return  # Стиль уже применен
-            
+
             # кэш стилей
             if style_key in self._style_cache:
                 self.capture_btn.setStyleSheet(self._style_cache[style_key])
                 self._last_style_key = style_key
                 return
-            
+
             # Вычисляем цвета
             r_light = min(255, r + 30)
             g_light = min(255, g + 30)
@@ -1115,7 +1116,7 @@ class FixedDesktopColorPicker(QWidget):
             g_hover_light = min(255, g + 20)
             b_hover_light = min(255, b + 20)
             text_color = 'white' if (r + g + b) < 384 else 'black'
-            
+
             # стиль
             style = f"""QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -1135,30 +1136,30 @@ class FixedDesktopColorPicker(QWidget):
                     stop:1 rgb({r_hover_light}, {g_hover_light}, {b_hover_light}));
                 border: 1px solid #666;
             }}"""
-            
+
             # Кэшируем и применяем
             self._style_cache[style_key] = style
             self.capture_btn.setStyleSheet(style)
             self._last_style_key = style_key
-            
+
             # Ограничиваем размер кэша
             if len(self._style_cache) > 50:
                 # Старые записи
                 old_keys = list(self._style_cache.keys())[:10]
                 for key in old_keys:
                     del self._style_cache[key]
-                    
+
         except Exception:
             pass
-            
+
     def capture_color(self):
         """Захватывает текущий цвет."""
         # Защита от повторных вызовов
         if hasattr(self, '_capturing') and self._capturing:
             return
-        
+
         self._capturing = True
-        
+
         try:
             if self.frozen:
                 # Замороженные значения
@@ -1167,80 +1168,80 @@ class FixedDesktopColorPicker(QWidget):
             else:
                 # Текущая позицию курсора
                 x, y = get_cursor_position()
-                
+
                 # Цвет под курсором
                 color = get_pixel_color_qt(x, y)
                 if color:
                     r, g, b = color
                 else:
                     r, g, b = 0, 0, 0
-            
+
             hex_color = f"#{r:02x}{g:02x}{b:02x}"
-            
+
             # В список захваченных цветов
             self.captured_colors.append({
                 'coords': (x, y),
                 'color': (r, g, b),
                 'hex': hex_color
             })
-            
+
             print(f"Захвачен цвет: {hex_color} RGB({r}, {g}, {b}) в позиции ({x}, {y})")
-            
+
             # Уведомление
             self.capture_btn.setText(f"Захвачен: {hex_color}")
-            
+
             # Сбрасываем текст кнопки через 1 секунду
             QTimer.singleShot(1000, self.reset_capture_button)
-            
+
         except Exception as e:
             print(f"Ошибка захвата цвета: {e}")
             self.capture_btn.setText("Ошибка захвата")
             QTimer.singleShot(1000, self.reset_capture_button)
         finally:
             self._capturing = False
-    
+
     def reset_capture_button(self):
         """Сбрасывает текст кнопки захвата."""
         self.capture_btn.setText("CTRL")
-    
+
     def _on_global_ctrl_pressed(self):
         """Обработчик глобального нажатия Ctrl."""
         print("TARGET Глобальный Ctrl нажат! Вызываем _handle_ctrl_press...")
         # В основном потоке Qt
         QTimer.singleShot(0, self._handle_ctrl_press)
-    
+
     def _on_global_escape_pressed(self):
         """Обработчик глобального нажатия Escape."""
         # В основном потоке Qt
         QTimer.singleShot(0, self.close)
-    
+
     def restart_global_hotkeys(self):
         """Перезапускает глобальные горячие клавиши."""
         try:
             print("🔄 Перезапуск глобальных горячих клавиш...")
-            
+
             if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
                 # Предыдущий менеджер
                 if hasattr(self, 'hotkey_manager') and self.hotkey_manager:
                     self.hotkey_manager.stop()
                     time.sleep(0.2)
-                
+
                 # Новый менеджер
                 self.hotkey_manager = GlobalHotkeyManager()
                 self.hotkey_manager.ctrl_pressed.connect(self._on_global_ctrl_pressed)
                 self.hotkey_manager.escape_pressed.connect(self._on_global_escape_pressed)
-                
+
                 # Менеджер
                 if self.hotkey_manager.start():
                     print("OK Глобальные горячие клавиши перезапущены")
-                    
+
                     # Принудительная инициализация keyboard
                     if KEYBOARD_AVAILABLE:
                         try:
                             # Принудительно запускаем listener
                             if hasattr(keyboard, '_listener'):
                                 keyboard._listener.start_if_necessary()
-                            
+
                             # Симулируем несколько событий для активации
                             for _ in range(3):
                                 try:
@@ -1248,18 +1249,18 @@ class FixedDesktopColorPicker(QWidget):
                                     time.sleep(0.1)
                                 except Exception:
                                     pass
-                            
+
                             print("TOOL Принудительная инициализация keyboard выполнена")
                         except Exception as e:
                             print(f"WARNING Ошибка инициализации keyboard: {e}")
-                    
+
                     # Дополнительная проверку через 1 секунду
                     QTimer.singleShot(1000, self._verify_hotkeys_working)
                 else:
                     print("ERROR Не удалось перезапустить глобальные горячие клавиши")
         except Exception as e:
             print(f"ERROR Ошибка перезапуска глобальных горячих клавиш: {e}")
-    
+
     def _verify_hotkeys_working(self):
         """Проверяет что горячие клавиши действительно работают после перезапуска."""
         try:
@@ -1269,7 +1270,7 @@ class FixedDesktopColorPicker(QWidget):
                 QTimer.singleShot(2000, self.restart_global_hotkeys)
         except Exception as e:
             print(f"WARNING Ошибка проверки после перезапуска: {e}")
-    
+
     def _handle_ctrl_press(self):
         """Обрабатывает нажатие Ctrl (локальное или глобальное)."""
         print("TOOL _handle_ctrl_press вызван! frozen =", self.frozen)
@@ -1295,7 +1296,7 @@ class FixedDesktopColorPicker(QWidget):
             self.frozen = False
             self.capture_btn.setText("CTRL")
             print("Разморожено")
-            
+
     def keyPressEvent(self, event):
         """Обработка нажатий клавиш (локальные горячие клавиши)."""
         if event.key() == Qt.Key_Control:
@@ -1304,7 +1305,7 @@ class FixedDesktopColorPicker(QWidget):
             self.close()
         else:
             super().keyPressEvent(event)
-            
+
     def mousePressEvent(self, event):
         """Обработка нажатий мыши для перетаскивания окна и контекстного меню."""
         if event.button() == Qt.LeftButton:
@@ -1319,32 +1320,32 @@ class FixedDesktopColorPicker(QWidget):
         elif event.button() == Qt.RightButton:
             self._show_context_menu(event.globalPosition().toPoint())
             event.accept()
-            
+
     def mouseMoveEvent(self, event):
         """Обработка движения мыши для перетаскивания окна."""
         if event.buttons() == Qt.LeftButton:
             self.move(event.globalPosition().toPoint() - self.drag_position)
-    
+
     def focusInEvent(self, event):
         """Обработчик получения фокуса окном."""
         super().focusInEvent(event)
         self._is_window_active = True
         # Глобальные горячие клавиши при получении фокуса
         QTimer.singleShot(100, self.restart_global_hotkeys)
-    
+
     def focusOutEvent(self, event):
         """Обработчик потери фокуса окном."""
         super().focusOutEvent(event)
         self._is_window_active = False
         # Проверка горячих клавиш после потери фокуса
         QTimer.singleShot(500, self._check_and_restore_hotkeys)
-    
+
     def showEvent(self, event):
         """Обработчик показа окна."""
         super().showEvent(event)
         self._should_be_visible = True
         # print("INFO Окно показано")
-    
+
     def hideEvent(self, event):
         """Обработчик скрытия окна."""
         super().hideEvent(event)
@@ -1352,7 +1353,7 @@ class FixedDesktopColorPicker(QWidget):
         # print("INFO Окно скрыто")
         # Если окно скрыто не по нашей воле, восстанавливаем его
         QTimer.singleShot(100, self._on_window_hidden)
-    
+
     def changeEvent(self, event):
         """Обработчик изменения состояния окна."""
         super().changeEvent(event)
@@ -1363,7 +1364,7 @@ class FixedDesktopColorPicker(QWidget):
             if not self.isVisible() and self._should_be_visible:
                 # Небольшая задержку, чтобы не срабатывать при нашем изменении флагов
                 QTimer.singleShot(200, self._check_and_restore_if_needed)
-    
+
     def _check_and_restore_hotkeys(self):
         """Проверяет и восстанавливает горячие клавиши если они не работают."""
         try:
@@ -1375,7 +1376,7 @@ class FixedDesktopColorPicker(QWidget):
                     self.restart_global_hotkeys()
         except Exception as e:
             print(f"WARNING Ошибка проверки горячих клавиш: {e}")
-    
+
     def _test_hotkeys_working(self):
         """Тестирует работу горячих клавиш."""
         try:
@@ -1398,7 +1399,7 @@ class FixedDesktopColorPicker(QWidget):
         except Exception as e:
             print(f"INFO Ошибка проверки keyboard: {e}")
             return False
-    
+
     def _monitor_hotkeys_periodically(self):
         """Периодически проверяет и восстанавливает горячие клавиши."""
         try:
@@ -1409,7 +1410,7 @@ class FixedDesktopColorPicker(QWidget):
                     self.restart_global_hotkeys()
         except Exception as e:
             print(f"WARNING Ошибка периодической проверки: {e}")
-    
+
     def _show_context_menu(self, pos):
         """Показывает контекстное меню."""
         try:
@@ -1438,7 +1439,7 @@ class FixedDesktopColorPicker(QWidget):
                     margin: 4px 8px;
                 }
             """)
-            
+
             # Закрепить поверх всех окон
             is_on_top = bool(self.windowFlags() & Qt.WindowStaysOnTopHint)
             status_icon = "☑" if is_on_top else "☐"
@@ -1451,14 +1452,14 @@ class FixedDesktopColorPicker(QWidget):
             always_on_top_action = QAction(always_on_top_text, self)
             always_on_top_action.triggered.connect(self._toggle_always_on_top)
             menu.addAction(always_on_top_action)
-            
+
             # Прозрачность окна
             transparency_action = QAction(transparency_text, self)
             transparency_action.triggered.connect(self._show_transparency_menu)
             menu.addAction(transparency_action)
-            
+
             menu.addSeparator()
-            
+
             # Сбросить позицию окна
             if I18N_AVAILABLE:
                 reset_pos_text = f"📍 {get_text('reset_position')}"
@@ -1469,14 +1470,12 @@ class FixedDesktopColorPicker(QWidget):
             reset_pos_action = QAction(reset_pos_text, self)
             reset_pos_action.triggered.connect(self.position_window)
             menu.addAction(reset_pos_action)
-            
+
             # Принудительно восстановить окно (для игр)
             force_restore_action = QAction(force_restore_text, self)
             force_restore_action.triggered.connect(self.force_show_window)
             menu.addAction(force_restore_action)
-            
 
-            
             # Скрыть/показать окно
             if I18N_AVAILABLE:
                 hide_text = f"👁 {get_text('hide_window')}"
@@ -1491,9 +1490,9 @@ class FixedDesktopColorPicker(QWidget):
                 hide_action = QAction(show_text, self)
                 hide_action.triggered.connect(self.show_from_tray)
             menu.addAction(hide_action)
-            
+
             menu.addSeparator()
-            
+
             # Перезапустить глобальные горячие клавиши
             if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
                 if I18N_AVAILABLE:
@@ -1503,7 +1502,7 @@ class FixedDesktopColorPicker(QWidget):
                 restart_hotkeys_action = QAction(restart_hotkeys_text, self)
                 restart_hotkeys_action.triggered.connect(self.restart_global_hotkeys)
                 menu.addAction(restart_hotkeys_action)
-            
+
             # Настройки
             if I18N_AVAILABLE:
                 settings_text = f"⚙ {get_text('settings')}"
@@ -1512,14 +1511,14 @@ class FixedDesktopColorPicker(QWidget):
             settings_action = QAction(settings_text, self)
             settings_action.triggered.connect(self._show_settings)
             menu.addAction(settings_action)
-            
+
             # Язык
             if I18N_AVAILABLE:
                 language_text = f"🌐 {get_text('language')}"
                 language_action = QAction(language_text, self)
                 language_action.triggered.connect(self._show_language_menu)
                 menu.addAction(language_action)
-            
+
             # О программе
             if I18N_AVAILABLE:
                 about_text = f"ℹ {get_text('about')}"
@@ -1528,9 +1527,9 @@ class FixedDesktopColorPicker(QWidget):
             about_action = QAction(about_text, self)
             about_action.triggered.connect(self._show_about)
             menu.addAction(about_action)
-            
+
             menu.addSeparator()
-            
+
             # Выход
             if I18N_AVAILABLE:
                 exit_text = f"🚪 {get_text('exit')}"
@@ -1539,7 +1538,7 @@ class FixedDesktopColorPicker(QWidget):
             exit_action = QAction(exit_text, self)
             exit_action.triggered.connect(self.close)
             menu.addAction(exit_action)
-            
+
             # print("INFO Контекстное меню создано, показываем...")
             menu.exec(pos)
             # print("INFO Контекстное меню закрыто")
@@ -1547,20 +1546,20 @@ class FixedDesktopColorPicker(QWidget):
             print(f"Ошибка показа контекстного меню: {e}")
             import traceback
             traceback.print_exc()
-    
+
     def _toggle_always_on_top(self):
         """Переключает режим 'поверх всех окон'."""
         try:
             # Текущая позицию окна
             current_pos = self.pos()
-            
+
             # текущее состояние
             is_currently_on_top = bool(self.windowFlags() & Qt.WindowStaysOnTopHint)
-            
+
             if is_currently_on_top:
                 # Отключаем режим "поверх всех окон"
                 self.setWindowFlags(
-                    Qt.FramelessWindowHint | 
+                    Qt.FramelessWindowHint |
                     Qt.Tool |
                     Qt.WindowSystemMenuHint |
                     Qt.WindowCloseButtonHint
@@ -1569,33 +1568,33 @@ class FixedDesktopColorPicker(QWidget):
             else:
                 # Включаем режим "поверх всех окон" с принудительной активацией
                 self.setWindowFlags(
-                    Qt.WindowStaysOnTopHint | 
-                    Qt.FramelessWindowHint | 
+                    Qt.WindowStaysOnTopHint |
+                    Qt.FramelessWindowHint |
                     Qt.Tool |
                     Qt.WindowSystemMenuHint |
                     Qt.WindowCloseButtonHint |
                     Qt.X11BypassWindowManagerHint  # Обходит оконный менеджер
                 )
-                
+
                 print("📌 Окно закреплено поверх всех окон")
-            
+
             # Принудительно показываем окно в любом случае
             self.show()
             self.raise_()
             self.activateWindow()
-            
+
             # Позиция
             self.move(current_pos)
-            
+
             # Дополнительная проверка через небольшую задержку
             QTimer.singleShot(100, self._ensure_window_visible)
-            
+
         except Exception as e:
             print(f"Ошибка переключения режима 'поверх всех окон': {e}")
             # В случае ошибки принудительно показываем окно
             self.show()
             self.raise_()
-    
+
     def setup_system_tray(self):
         """Настраивает системный трей."""
         try:
@@ -1604,18 +1603,18 @@ class FixedDesktopColorPicker(QWidget):
                 print("WARNING Системный трей недоступен")
                 self.tray_icon = None
                 return
-            
+
             # иконку трея
             self.tray_icon = QSystemTrayIcon(self)
-            
+
             # простую иконку (красный квадрат с буквой C)
             from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QIcon
             from PySide6.QtCore import QSize
-            
+
             # иконку 16x16 пикселей
             pixmap = QPixmap(16, 16)
             pixmap.fill(QColor(255, 0, 0))  # Красный фон
-            
+
             # Рисуем букву C
             painter = QPainter(pixmap)
             painter.setPen(QColor(255, 255, 255))  # Белый текст
@@ -1625,20 +1624,20 @@ class FixedDesktopColorPicker(QWidget):
             painter.setFont(font)
             painter.drawText(pixmap.rect(), Qt.AlignCenter, "C")
             painter.end()
-            
+
             # QIcon из pixmap
             icon = QIcon(pixmap)
             self.tray_icon.setIcon(icon)
-            
+
             # Подсказка
             if I18N_AVAILABLE:
                 self.tray_icon.setToolTip(get_text("app_title"))
             else:
                 self.tray_icon.setToolTip("Desktop Color Picker")
-            
+
             # контекстное меню трея
             tray_menu = QMenu()
-            
+
             # Показать/скрыть окно
             if I18N_AVAILABLE:
                 show_action = QAction(get_text("tray_show_tooltip"), self)
@@ -1646,10 +1645,10 @@ class FixedDesktopColorPicker(QWidget):
                 show_action = QAction("Показать окно", self)
             show_action.triggered.connect(self.show_from_tray)
             tray_menu.addAction(show_action)
-            
+
             # Разделитель
             tray_menu.addSeparator()
-            
+
             # Выход
             if I18N_AVAILABLE:
                 exit_action = QAction(get_text("tray_exit_tooltip"), self)
@@ -1657,16 +1656,16 @@ class FixedDesktopColorPicker(QWidget):
                 exit_action = QAction("Выход", self)
             exit_action.triggered.connect(self.close)
             tray_menu.addAction(exit_action)
-            
+
             # Меню
             self.tray_icon.setContextMenu(tray_menu)
-            
+
             # Обработчик клика
             self.tray_icon.activated.connect(self._on_tray_activated)
-            
+
             # Иконка в трее
             self.tray_icon.show()
-            
+
             # иконка действительно показана
             if self.tray_icon.isVisible():
                 print("OK Системный трей настроен и иконка видна")
@@ -1674,24 +1673,24 @@ class FixedDesktopColorPicker(QWidget):
             else:
                 print("WARNING Системный трей настроен, но иконка не видна")
                 print("TOOL Попробуйте проверить область уведомлений Windows")
-            
+
         except Exception as e:
             print(f"Ошибка настройки системного трея: {e}")
             self.tray_icon = None
-            
+
         except Exception as e:
             print(f"Ошибка настройки системного трея: {e}")
             self.tray_icon = None
-    
+
     def _update_tray_menu(self):
         """Обновляет меню системного трея при смене языка."""
         try:
             if not self.tray_icon:
                 return
-                
+
             # новое контекстное меню трея
             tray_menu = QMenu()
-            
+
             # Показать/скрыть окно
             if I18N_AVAILABLE:
                 show_action = QAction(get_text("tray_show_tooltip"), self)
@@ -1699,10 +1698,10 @@ class FixedDesktopColorPicker(QWidget):
                 show_action = QAction("Показать окно", self)
             show_action.triggered.connect(self.show_from_tray)
             tray_menu.addAction(show_action)
-            
+
             # Разделитель
             tray_menu.addSeparator()
-            
+
             # Выход
             if I18N_AVAILABLE:
                 exit_action = QAction(get_text("tray_exit_tooltip"), self)
@@ -1710,26 +1709,26 @@ class FixedDesktopColorPicker(QWidget):
                 exit_action = QAction("Выход", self)
             exit_action.triggered.connect(self.close)
             tray_menu.addAction(exit_action)
-            
+
             # Новое меню
             self.tray_icon.setContextMenu(tray_menu)
-            
+
             # Подсказка
             if I18N_AVAILABLE:
                 self.tray_icon.setToolTip(get_text("app_title"))
             else:
                 self.tray_icon.setToolTip("Desktop Color Picker")
-                
+
             print("OK Меню системного трея обновлено")
-            
+
         except Exception as e:
             print(f"Ошибка обновления меню трея: {e}")
-    
+
     def _on_tray_activated(self, reason):
         """Обработчик активации иконки в трее."""
         if reason == QSystemTrayIcon.DoubleClick:
             self.show_from_tray()
-    
+
     def show_from_tray(self):
         """Показывает окно из трея."""
         try:
@@ -1739,7 +1738,7 @@ class FixedDesktopColorPicker(QWidget):
             print("TOOL Окно показано из трея")
         except Exception as e:
             print(f"Ошибка показа окна из трея: {e}")
-    
+
     def hide_to_tray(self):
         """Скрывает окно в трей."""
         try:
@@ -1748,13 +1747,13 @@ class FixedDesktopColorPicker(QWidget):
                 print("WARNING Системный трей недоступен, просто скрываем окно")
                 self.hide()
                 return
-            
+
             # окно
             self.hide()
-            
+
             # Принудительно показываем иконку в трее
             self.tray_icon.show()
-            
+
             # Уведомление в трее
             if I18N_AVAILABLE:
                 title = get_text("app_title")
@@ -1762,22 +1761,22 @@ class FixedDesktopColorPicker(QWidget):
             else:
                 title = "Desktop Color Picker"
                 message = "Приложение скрыто в трей. Дважды кликните по иконке для показа."
-            
+
             self.tray_icon.showMessage(
                 title,
                 message,
                 QSystemTrayIcon.Information,
                 3000  # 3 секунды
             )
-            
+
             print("TOOL Окно скрыто в трей")
             print(f"TOOL Иконка трея видна: {self.tray_icon.isVisible()}")
-            
+
         except Exception as e:
             print(f"Ошибка скрытия в трей: {e}")
             # В случае ошибки просто скрываем окно
             self.hide()
-    
+
     def _ensure_window_visible(self):
         """Дополнительная проверка видимости окна после изменения флагов."""
         try:
@@ -1788,38 +1787,38 @@ class FixedDesktopColorPicker(QWidget):
                 self.activateWindow()
         except Exception as e:
             print(f"Ошибка проверки видимости окна: {e}")
-    
+
     def force_show_window(self):
         """Принудительно показывает окно в полноэкранных играх и приложениях типа Discord."""
         try:
             # Текущая позицию
             current_pos = self.pos()
-            
+
             # Более агрессивные флаги для работы в Discord, FPS мониторах и других приложениях
             self.setWindowFlags(
-                Qt.WindowStaysOnTopHint | 
-                Qt.FramelessWindowHint | 
+                Qt.WindowStaysOnTopHint |
+                Qt.FramelessWindowHint |
                 Qt.Tool |
                 Qt.WindowSystemMenuHint |
                 Qt.WindowCloseButtonHint |
                 Qt.X11BypassWindowManagerHint  # Обходит оконный менеджер
             )
-            
+
             # Дополнительные атрибуты для принудительного отображения
             self.setAttribute(Qt.WA_AlwaysShowToolTips, True)
             self.setAttribute(Qt.WA_ShowWithoutActivating, False)
             self.setAttribute(Qt.WA_TranslucentBackground, False)
             self.setAttribute(Qt.WA_NoSystemBackground, False)
-            
+
             # Принудительно показываем окно
             self.show()
             self.raise_()
             self.activateWindow()
-            
+
             # Дополнительная попытка поднять окно
             QTimer.singleShot(100, lambda: self.raise_())
             QTimer.singleShot(200, lambda: self.activateWindow())
-            
+
             # Попытка использовать Windows API для принудительного отображения
             if WIN32_AVAILABLE:
                 try:
@@ -1829,22 +1828,20 @@ class FixedDesktopColorPicker(QWidget):
                     if hwnd:
                         # Принудительно поднимаем окно через Windows API
                         win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | 
-                                            win32con.SWP_SHOWWINDOW)
+                                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                              win32con.SWP_SHOWWINDOW)
                         print("TOOL Использован Windows API для принудительного отображения")
                 except Exception as api_error:
                     print(f"Windows API недоступен: {api_error}")
-            
+
             # Позиция
             self.move(current_pos)
-            
+
             print("TOOL Окно принудительно восстановлено с расширенными флагами")
-            
+
         except Exception as e:
             print(f"Ошибка принудительного показа окна: {e}")
-    
 
-    
     def _on_window_hidden(self):
         """Обработчик скрытия окна - восстанавливает его."""
         try:
@@ -1857,7 +1854,7 @@ class FixedDesktopColorPicker(QWidget):
                     QTimer.singleShot(100, self._restore_window_safely)
         except Exception as e:
             print(f"Ошибка обработки скрытия окна: {e}")
-    
+
     def _restore_window_safely(self):
         """Безопасное восстановление окна с предотвращением бесконечного цикла."""
         try:
@@ -1868,12 +1865,12 @@ class FixedDesktopColorPicker(QWidget):
         except Exception as e:
             print(f"Ошибка безопасного восстановления: {e}")
             self._reset_restoring_flag()
-    
+
     def _reset_restoring_flag(self):
         """Сбрасывает флаг восстановления."""
         if hasattr(self, '_is_restoring'):
             self._is_restoring = False
-    
+
     def _check_window_visibility(self):
         """Периодически проверяет видимость окна и восстанавливает его если нужно."""
         try:
@@ -1885,7 +1882,7 @@ class FixedDesktopColorPicker(QWidget):
                     self.force_show_window()
         except Exception as e:
             print(f"Ошибка проверки видимости окна: {e}")
-    
+
     def _on_application_focus_changed(self, old_widget, new_widget):
         """Обработчик изменения фокуса приложения."""
         try:
@@ -1897,7 +1894,7 @@ class FixedDesktopColorPicker(QWidget):
                     QTimer.singleShot(500, self.force_show_window)
         except Exception as e:
             print(f"Ошибка обработки изменения фокуса: {e}")
-    
+
     def _check_and_restore_if_needed(self):
         """Проверяет и восстанавливает окно если оно скрылось не по нашей воле."""
         try:
@@ -1906,7 +1903,7 @@ class FixedDesktopColorPicker(QWidget):
                 self.force_show_window()
         except Exception as e:
             print(f"Ошибка проверки и восстановления окна: {e}")
-    
+
     def _safe_check_window_visibility(self):
         """Безопасная обертка для проверки видимости окна."""
         try:
@@ -1915,9 +1912,7 @@ class FixedDesktopColorPicker(QWidget):
             print("INFO Проверка видимости прервана пользователем")
         except Exception as e:
             print(f"INFO Ошибка в безопасной проверке видимости: {e}")
-    
 
-    
     def _show_transparency_menu(self):
         """Показывает меню настройки прозрачности."""
         try:
@@ -1940,7 +1935,7 @@ class FixedDesktopColorPicker(QWidget):
                     background-color: #4a4a4a;
                 }
             """)
-            
+
             # Варианты прозрачности
             opacity_values = [
                 ("100% (Непрозрачно)", 1.0),
@@ -1954,22 +1949,22 @@ class FixedDesktopColorPicker(QWidget):
                 ("20%", 0.2),
                 ("10%", 0.1)
             ]
-            
+
             current_opacity = self.windowOpacity()
-            
+
             for text, opacity in opacity_values:
                 action = QAction(text, self)
                 action.setCheckable(True)
                 action.setChecked(abs(current_opacity - opacity) < 0.01)
                 action.triggered.connect(lambda checked, o=opacity: self._set_opacity(o))
                 transparency_menu.addAction(action)
-            
+
             # меню под курсором
             transparency_menu.exec(self.mapToGlobal(self.rect().center()))
-            
+
         except Exception as e:
             print(f"Ошибка показа меню прозрачности: {e}")
-    
+
     def _set_opacity(self, opacity):
         """Устанавливает прозрачность окна."""
         try:
@@ -1977,12 +1972,12 @@ class FixedDesktopColorPicker(QWidget):
             print(f"INFO Прозрачность установлена: {int(opacity * 100)}%")
         except Exception as e:
             print(f"Ошибка установки прозрачности: {e}")
-    
+
     def _show_language_menu(self):
         """Показывает меню выбора языка."""
         if not I18N_AVAILABLE:
             return
-            
+
         try:
             language_menu = QMenu(get_text("language"), self)
             language_menu.setStyleSheet("""
@@ -2003,12 +1998,12 @@ class FixedDesktopColorPicker(QWidget):
                     background-color: #4a4a4a;
                 }
             """)
-            
+
             current_language = get_setting("language", "ru")
-            
+
             # Все поддерживаемые языки
             languages = get_supported_languages()
-            
+
             for lang in languages:
                 flag = {
                     Language.RUSSIAN: "🇷🇺",
@@ -2017,67 +2012,67 @@ class FixedDesktopColorPicker(QWidget):
                     Language.FRENCH: "🇫🇷",
                     Language.SPANISH: "🇪🇸"
                 }.get(lang, "")
-                
+
                 lang_name = get_language_name(lang)
                 action = QAction(f"{flag} {lang_name}", language_menu)
                 action.setCheckable(True)
                 action.setChecked(current_language == lang.value)
                 action.triggered.connect(lambda checked, l=lang: self._set_language(l.value))
                 language_menu.addAction(action)
-            
+
             language_menu.exec(self.mapToGlobal(self.rect().center()))
-            
+
         except Exception as e:
             print(f"Ошибка показа меню языка: {e}")
-    
+
     def _set_language(self, language_code: str):
         """Устанавливает язык."""
         if not I18N_AVAILABLE:
             return
-            
+
         try:
             # Текущий размер окна
             current_size = self.size()
-            
+
             # Язык в системе интернационализации
             language = Language(language_code)
             set_language(language)
-            
+
             # В настройках
             set_setting("language", language_code)
-            
+
             # Заголовок окна
             self.setWindowTitle(get_text("app_title"))
-            
+
             # Основные элементы интерфейса
             self._update_interface_language()
-            
+
             # Размер окна
             self.setFixedSize(current_size)
-            
+
             print(f"🌐 Язык изменен на: {get_language_name(language)}")
-            
+
         except Exception as e:
             print(f"Ошибка установки языка: {e}")
-    
+
     def _update_interface_language(self):
         """Обновляет язык основных элементов интерфейса."""
         if not I18N_AVAILABLE:
             return
-            
+
         try:
             # Текущий размер окна
             current_size = self.size()
-            
+
             # Заголовок
             if hasattr(self, 'title'):
                 self.title.setText(get_text("app_title"))
-            
+
             # Координаты
             if hasattr(self, 'coords_label'):
                 coords_text = f"{get_text('coordinates')}: (0, 0)"
                 self.coords_label.setText(coords_text)
-            
+
             # Статус горячих клавиш
             if hasattr(self, 'hotkey_status'):
                 if WIN32_AVAILABLE:
@@ -2087,28 +2082,28 @@ class FixedDesktopColorPicker(QWidget):
                 else:
                     status_text = get_text("hotkeys_unavailable")
                 self.hotkey_status.setText(status_text)
-            
+
             # Кнопка захвата
             if hasattr(self, 'capture_btn'):
                 self.capture_btn.setText(get_text("ctrl"))
-            
+
             # Кнопка закрытия
             if hasattr(self, 'close_btn'):
                 self.close_btn.setText(get_text("close"))
-            
+
             # Уведомление о копировании
             if hasattr(self, 'notification') and self.notification:
                 self.notification.update_text()
-            
+
             # Системный трей
             self._update_tray_menu()
-            
+
             # Размер окна
             self.setFixedSize(current_size)
-                
+
         except Exception as e:
             print(f"Ошибка обновления интерфейса: {e}")
-    
+
     def _show_settings(self):
         """Показывает диалог настроек."""
         try:
@@ -2128,30 +2123,30 @@ class FixedDesktopColorPicker(QWidget):
             msg.exec()
         except Exception as e:
             print(f"Ошибка показа настроек: {e}")
-    
+
     def _show_about(self):
         """Показывает диалог 'О программе'."""
         try:
             msg = QMessageBox(self)
-            
+
             # Заголовок диалога
             if I18N_AVAILABLE:
                 msg.setWindowTitle(get_text("about_title"))
             else:
                 msg.setWindowTitle("О программе")
-            
+
             # Название программы
             if I18N_AVAILABLE:
                 msg.setText(get_text("app_title"))
             else:
                 msg.setText("Desktop Color Picker")
-            
+
             # Информация о программе
             if I18N_AVAILABLE:
                 version_text = get_text("version").format(version="2.0.0")
                 author_text = get_text("author").format(author="AlgorithmAlchemy")
                 description_text = get_text("modern_color_picker")
-                
+
                 informative_text = (
                     f"{version_text}\n"
                     f"{author_text}\n"
@@ -2165,37 +2160,37 @@ class FixedDesktopColorPicker(QWidget):
                     "https://github.com/AlgorithmAlchemy\n\n"
                     "Цветовой пикер для Windows"
                 )
-            
+
             msg.setInformativeText(informative_text)
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
         except Exception as e:
             print(f"Ошибка показа диалога 'О программе': {e}")
-    
+
     def closeEvent(self, event):
         """Обработчик закрытия окна."""
         try:
             print("TOOL Закрытие программы...")
-            
+
             # Таймеры
             if hasattr(self, 'visibility_timer'):
                 self.visibility_timer.stop()
             if hasattr(self, 'timer'):
                 self.timer.stop()
-            
+
             # Глобальные горячие клавиши
             if hasattr(self, 'hotkey_manager'):
                 self.hotkey_manager.stop()
-            
+
             # Иконка из системного трея
             if hasattr(self, 'tray_icon') and self.tray_icon:
                 self.tray_icon.hide()
                 self.tray_icon = None
-            
+
             # Блокировка единственного экземпляра
             if hasattr(self, 'single_instance'):
                 self.single_instance.cleanup()
-            
+
             # Принудительно останавливаем keyboard listener
             if KEYBOARD_AVAILABLE:
                 try:
@@ -2204,28 +2199,28 @@ class FixedDesktopColorPicker(QWidget):
                         keyboard._listener.stop()
                 except Exception as e:
                     print(f"Ошибка остановки keyboard: {e}")
-            
+
             # Ресурсы
             self._cleanup_resources()
-            
+
             print("TOOL Программа закрыта")
-            
+
             # Принудительно завершаем процесс
             QTimer.singleShot(100, self._force_exit)
-            
+
             super().closeEvent(event)
-            
+
         except Exception as e:
             print(f"Ошибка при закрытии: {e}")
             super().closeEvent(event)
-    
+
     def _force_exit(self):
         """Принудительно завершает процесс."""
         try:
             print("TOOL Принудительное завершение процесса...")
             import os
             import signal
-            
+
             # Текущий процесс
             os._exit(0)
         except Exception as e:
@@ -2233,7 +2228,7 @@ class FixedDesktopColorPicker(QWidget):
             # Без исключений
             import sys
             sys.exit(0)
-    
+
     def _cleanup_resources(self):
         """Очищает ресурсы для экономии памяти."""
         try:
@@ -2241,28 +2236,26 @@ class FixedDesktopColorPicker(QWidget):
             if hasattr(self, '_style_cache'):
                 self._style_cache.clear()
             self._last_style_key = None
-            
+
             # Все таймеры
             if hasattr(self, 'timer'):
                 self.timer.stop()
             if hasattr(self, 'visibility_timer'):
                 self.visibility_timer.stop()
-            
+
             # Ссылки
             self._last_pos = None
             self._last_color = None
-            
+
             # Принудительно отключаем keyboard
             if KEYBOARD_AVAILABLE:
                 try:
                     keyboard.unhook_all()
                 except:
                     pass
-                    
+
         except Exception as e:
             print(f"Ошибка очистки ресурсов: {e}")
-    
-
 
 
 def main():
@@ -2274,10 +2267,10 @@ def main():
         print("TOOL Проверьте системный трей - иконка должна быть там")
         print("TIP Если иконки нет, закройте все процессы и попробуйте снова")
         return
-    
+
     print("COLOR Исправленный Desktop Color Picker")
     print("=" * 40)
-    
+
     # Обработчик сигналов для Ctrl+C
     import signal
     def signal_handler(sig, frame):
@@ -2289,17 +2282,17 @@ def main():
         except:
             import sys
             sys.exit(0)
-    
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
+
     # приложение
     app = QApplication(sys.argv)
-    
+
     # и показываем окно
     picker = FixedDesktopColorPicker(single_instance)
     picker.show()
-    
+
     print("COLOR Исправленный Desktop Color Picker запущен!")
     print("📋 Использование:")
     print("   - Окно показывает координаты курсора и цвет под ним")
@@ -2312,7 +2305,7 @@ def main():
     else:
         print("   - WARNING  Глобальные горячие клавиши недоступны")
     print("   - TIP Эта версия исправлена и работает стабильно")
-    
+
     return app.exec()
 
 

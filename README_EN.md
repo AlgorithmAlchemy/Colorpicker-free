@@ -16,15 +16,18 @@ A modern color picker for Windows with advanced features.
 ## 🚀 Installation
 
 ### Requirements
+
 - Python 3.7+
 - Windows 10/11
 
 ### Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### Main dependencies
+
 ```bash
 pip install PySide6 pyautogui keyboard
 ```
@@ -32,6 +35,7 @@ pip install PySide6 pyautogui keyboard
 ## 📖 Usage
 
 ### Launch
+
 ```bash
 # Main version
 python run.py
@@ -41,12 +45,15 @@ python run_improved.py
 ```
 
 ### Hotkeys
+
 - **Ctrl** - capture color under cursor
 - **Esc** - exit application
 - **Right click** - open context menu
 
 ### Context menu
+
 Right-click on window opens menu with options:
+
 - 📸 Capture color
 - 📌 Always on top
 - 📋 Auto-copy
@@ -61,6 +68,7 @@ Right-click on window opens menu with options:
 ## ⚙️ Settings
 
 ### Main settings
+
 - **Theme** - choose between dark and light theme
 - **Alpha channel** - transparency support
 - **Always on top** - window always remains visible
@@ -68,11 +76,13 @@ Right-click on window opens menu with options:
 - **Notifications** - show action notifications
 
 ### Screen settings
+
 - **Screen color picker** - enable/disable feature
 - **Crosshair** - show crosshair when picking color
 - **Magnifier** - zoom area around cursor
 
 ### History settings
+
 - **Save history** - enable/disable
 - **Max records** - limit number of saved colors
 - **Auto-save** - automatic saving of selected colors
@@ -80,6 +90,7 @@ Right-click on window opens menu with options:
 ## 🗄️ Database
 
 The application uses SQLite to store:
+
 - User settings
 - Selected color history
 - Window settings (position, size)
@@ -110,20 +121,26 @@ Database file: `app/data/settings.db`
 ## 🐛 Troubleshooting
 
 ### Issue: "works only on desktop"
+
 **Solution**: The application now uses two color capture methods:
+
 1. PyAutoGUI (primary)
 2. Qt Screen Grab (backup)
 
 If one method doesn't work, the other is automatically used.
 
 ### Issue: global hotkeys don't work
+
 **Solution**: Install keyboard library:
+
 ```bash
 pip install keyboard
 ```
 
 ### Issue: module import errors
+
 **Solution**: Make sure all dependencies are installed:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -131,6 +148,7 @@ pip install -r requirements.txt
 ## 📝 Changelog
 
 ### Version 1.0 (current)
+
 - ✅ Context menu with settings
 - ✅ SQLite database for settings
 - ✅ Color history
@@ -156,4 +174,5 @@ Tom F.
 
 ---
 
-**Note**: For global hotkeys to work in games and other applications, the `keyboard` library is required. Without it, hotkeys only work when the window is active.
+**Note**: For global hotkeys to work in games and other applications, the `keyboard` library is required. Without it,
+hotkeys only work when the window is active.

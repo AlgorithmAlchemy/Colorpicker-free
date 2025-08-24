@@ -20,7 +20,7 @@ from .color_utils import (
 
 __all__ = [
     'ColorConverter',
-    'ColorValidator', 
+    'ColorValidator',
     'ColorParser',
     'hsv2rgb',
     'rgb2hsv',

@@ -18,7 +18,7 @@ from .resources.img import *
 
 __all__ = [
     'Ui_Dark',
-    'Ui_Dark_Alpha', 
+    'Ui_Dark_Alpha',
     'Ui_Light',
     'Ui_Light_Alpha',
     'register_widget',

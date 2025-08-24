@@ -124,4 +124,5 @@ __all__ = [
 ]
 
 # Функции для обратной совместимости
-from .shared.compat import getColor as getColor_compat, useAlpha as useAlpha_compat, useLightTheme as useLightTheme_compat
+from .shared.compat import getColor as getColor_compat, useAlpha as useAlpha_compat, \
+    useLightTheme as useLightTheme_compat

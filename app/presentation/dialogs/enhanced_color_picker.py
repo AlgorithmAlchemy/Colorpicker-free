@@ -373,8 +373,6 @@ class EnhancedColorPicker(QDialog):
         except Exception as e:
             self._show_status(f"WARNING Ошибка загрузки состояния: {e}", 3000)
 
-
-
     def _show_status(self, message: str, duration: int = 3000):
         """Показывает сообщение в статус баре."""
         self._status_label.setText(message)

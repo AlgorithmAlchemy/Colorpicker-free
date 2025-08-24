@@ -303,7 +303,7 @@ class ScreenOverlay(QWidget):
                 pixmap = screen.grabWindow(0)
                 if pixmap.isNull():
                     return None
-                
+
                 # Обрезаем до нужного пикселя
                 pixmap = pixmap.copy(position.x(), position.y(), 1, 1)
 
@@ -457,7 +457,7 @@ def get_pixel_color_advanced(x: int, y: int) -> Optional[RGBColor]:
         # Метод 2: Захват области вокруг пикселя
         try:
             area_size = 3
-            pixmap = screen.grabWindow(0, x - area_size//2, y - area_size//2, area_size, area_size)
+            pixmap = screen.grabWindow(0, x - area_size // 2, y - area_size // 2, area_size, area_size)
             if not pixmap.isNull():
                 image = pixmap.toImage()
                 if not image.isNull():
@@ -490,14 +490,14 @@ def get_pixel_color_advanced(x: int, y: int) -> Optional[RGBColor]:
             import win32ui
             import win32con
             import win32api
-            
+
             # DC экрана
             hdc = win32gui.GetDC(0)
             if hdc:
                 # Цвет пикселя
                 color = win32gui.GetPixel(hdc, x, y)
                 win32gui.ReleaseDC(0, hdc)
-                
+
                 if color != -1:  # -1 означает ошибку
                     r = color & 0xFF
                     g = (color >> 8) & 0xFF
@@ -534,21 +534,21 @@ def get_pixel_color_with_retry(x: int, y: int, max_retries: int = 3) -> Optional
             color = get_pixel_color(x, y)
             if color:
                 return color
-            
+
             # Если не получилось, пробуем расширенный метод
             color = get_pixel_color_advanced(x, y)
             if color:
                 return color
-            
+
             # Небольшая задержка перед следующей попыткой
             if attempt < max_retries - 1:
                 time.sleep(0.1)
-                
+
         except Exception as e:
             print(f"Попытка {attempt + 1} получения цвета пикселя ({x}, {y}) не удалась: {e}")
             if attempt < max_retries - 1:
                 time.sleep(0.1)
-    
+
     return None
 
 
@@ -556,8 +556,10 @@ if __name__ == "__main__":
     # Тестирование модуля
     app = QApplication(sys.argv)
 
+
     def test_callback(color):
         print(f"Выбран цвет: RGB{color}")
+
 
     picker = create_screen_color_picker(test_callback)
     picker.show()

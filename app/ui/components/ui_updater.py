@@ -13,38 +13,38 @@ from ...i18n import get_text
 
 class UIUpdater(QObject):
     """Класс для обновления интерфейса при смене языка."""
-    
+
     # Сигнал для обновления интерфейса
     language_changed = Signal()
-    
+
     def __init__(self):
         super().__init__()
         self._current_widgets = []
-    
+
     def register_widget(self, widget: QWidget):
         """Регистрирует виджет для обновления."""
         if widget not in self._current_widgets:
             self._current_widgets.append(widget)
-    
+
     def unregister_widget(self, widget: QWidget):
         """Удаляет виджет из списка обновления."""
         if widget in self._current_widgets:
             self._current_widgets.remove(widget)
-    
+
     def update_all_widgets(self):
         """Обновляет все зарегистрированные виджеты."""
         for widget in self._current_widgets:
             if widget and widget.isVisible():
                 self.update_widget(widget)
-        
+
         # Сигнал для обновления
         self.language_changed.emit()
-    
+
     def update_widget(self, widget: QWidget):
         """Обновляет конкретный виджет."""
         if hasattr(widget, 'update_language'):
             widget.update_language()
-        
+
         # Дочерние виджеты
         for child in widget.findChildren(QWidget):
             if hasattr(child, 'update_language'):

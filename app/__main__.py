@@ -15,6 +15,7 @@ from typing import Optional
 # Автоматическая установка зависимостей при первом запуске
 try:
     from .utils.auto_install import ensure_requirements_installed, check_qt_backend
+
     ensure_requirements_installed()
 except ImportError:
     print("WARNING Модуль автоустановки недоступен, пропускаем проверку зависимостей")
@@ -94,7 +95,7 @@ def main() -> int:
         # Инициализация языка из настроек
         saved_language = get_setting("language", "ru")
         set_language(Language(saved_language))
-        
+
         # Сброс экземпляра для применения новых настроек
         reset_instance()
 

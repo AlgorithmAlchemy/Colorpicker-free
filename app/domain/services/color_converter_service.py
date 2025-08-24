@@ -102,10 +102,10 @@ class ColorConverterService:
         """
         if isinstance(hex_color, str):
             hex_color = HexColor(hex_color)
-        
+
         normalized_hex = hex_color.normalized_value
         rgb = tuple(int(normalized_hex[i:i + 2], 16) for i in (0, 2, 4))
-        
+
         return RGBColor(*rgb)
 
     @staticmethod
@@ -133,7 +133,7 @@ class ColorConverterService:
             r, g, b = r_or_color.r, r_or_color.g, r_or_color.b
         else:
             r = r_or_color
-            
+
         hex_value = '%02x%02x%02x' % (int(r), int(g), int(b))
         return HexColor(hex_value)
 
@@ -178,6 +178,6 @@ class ColorConverterService:
             h, s, v = h_or_color.h, h_or_color.s, h_or_color.v
         else:
             h = h_or_color
-            
+
         rgb = ColorConverterService.hsv_to_rgb(h, s, v)
         return ColorConverterService.rgb_to_hex(rgb)

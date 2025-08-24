@@ -35,7 +35,7 @@ def ensure_requirements_installed() -> None:
         # Находим корень проекта (на 2 уровня выше от app/utils/)
         project_root = Path(__file__).resolve().parents[2]
         requirements_path = project_root / "requirements.txt"
-        
+
         if not requirements_path.exists():
             logger.info("Файл requirements.txt не найден, пропускаем автоустановку")
             return
@@ -62,20 +62,20 @@ def ensure_requirements_installed() -> None:
             "-r",
             str(requirements_path),
         ]
-        
+
         logger.info("Установка зависимостей из requirements.txt (может занять время)...")
         print("TOOL Установка зависимостей...")
-        
+
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True)
             marker_path.write_text(current_hash, encoding="utf-8")
             logger.info("Зависимости установлены/актуальны")
             print("OK Зависимости установлены")
-            
+
         except subprocess.CalledProcessError as e:
             logger.error("Не удалось установить зависимости: %s", e)
             print(f"WARNING Ошибка установки: {e}")
-            
+
             # Пробуем с установкой в пользовательский каталог
             try:
                 print("🔄 Повторная попытка с флагом --user...")
@@ -83,14 +83,14 @@ def ensure_requirements_installed() -> None:
                 marker_path.write_text(current_hash, encoding="utf-8")
                 logger.info("Зависимости установлены с флагом --user")
                 print("OK Зависимости установлены с флагом --user")
-                
+
             except subprocess.CalledProcessError as e2:
                 logger.error("Повторная установка (--user) не удалась: %s", e2)
                 print(f"ERROR Повторная установка не удалась: {e2}")
                 print("TIP Попробуйте установить зависимости вручную:")
                 print(f"   pip install -r {requirements_path}")
                 # Не падаем — приложение может работать частично
-                
+
     except Exception as e:  # pragma: no cover
         # Никогда не роняем приложение из‑за автоустановки зависимостей
         logger.error("Ошибка автоустановки зависимостей: %s", e)
