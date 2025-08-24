@@ -15,9 +15,9 @@ from qtpy.QtWidgets import (
     QPushButton, QFrame, QShortcut
 )
 
-from .types import RGBColor
-from .color_utils import rgb2hex
-from .exceptions import UIError
+from ...shared.types import RGBColor
+from ...shared.utils.color_utils import rgb2hex
+from ...shared.exceptions import UIError
 
 
 class ScreenColorPicker(QWidget):

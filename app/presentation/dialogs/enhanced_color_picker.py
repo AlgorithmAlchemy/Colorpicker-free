@@ -4,9 +4,7 @@
 Интегрирует все возможности: обычный пикер + screen picker + сохранение состояния.
 """
 
-import json
-import os
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
@@ -14,11 +12,12 @@ from qtpy.QtWidgets import (
     QPushButton, QTabWidget, QWidget, QShortcut, QLabel, QFrame
 )
 
-from .picker import ColorPicker
-from .screen_picker import ScreenColorPicker
-from .types import RGBColor, RGBAColor
-from .color_utils import rgb2hex, hex2rgb
-from .data.config import get_config
+from .color_picker import ColorPicker
+from .screen_color_picker import ScreenColorPicker
+from ...shared.types import RGBColor, RGBAColor
+from ...shared.utils.color_utils import rgb2hex, hex2rgb
+from ...data.config import get_config
+from ...application.services.color_state_service import ColorStateService
 
 
 class EnhancedColorPicker(QDialog):
@@ -35,7 +34,7 @@ class EnhancedColorPicker(QDialog):
         self._light_theme = light_theme
         self._use_alpha = use_alpha
         self._current_color: RGBColor = (0, 0, 0)
-        self._state_file = self._get_state_file_path()
+        self._state_service = ColorStateService()
 
         self._setup_ui()
         self._setup_shortcuts()
@@ -337,19 +336,12 @@ class EnhancedColorPicker(QDialog):
     def save_state(self):
         """Сохраняет текущее состояние приложения."""
         try:
-            state = {
-                'current_color': self._current_color,
-                'light_theme': self._light_theme,
-                'use_alpha': self._use_alpha,
-                'color_history': getattr(self, '_color_history', []),
-                'timestamp': __import__('time').time()
-            }
-
-            # Создаем директорию если не существует
-            os.makedirs(os.path.dirname(self._state_file), exist_ok=True)
-
-            with open(self._state_file, 'w', encoding='utf-8') as f:
-                json.dump(state, f, indent=2, ensure_ascii=False)
+            self._state_service.save_state(
+                current_color=self._current_color,
+                color_history=getattr(self, '_color_history', []),
+                light_theme=self._light_theme,
+                use_alpha=self._use_alpha
+            )
 
             self._show_status("💾 Состояние сохранено", 2000)
 
@@ -369,26 +361,19 @@ class EnhancedColorPicker(QDialog):
     def _load_state(self):
         """Загружает сохраненное состояние."""
         try:
-            if os.path.exists(self._state_file):
-                with open(self._state_file, 'r', encoding='utf-8') as f:
-                    state = json.load(f)
+            # Восстанавливаем состояние
+            self._current_color = self._state_service.get_current_color()
+            self._color_history = self._state_service.get_color_history()
 
-                # Восстанавливаем состояние
-                self._current_color = tuple(state.get('current_color', (0, 0, 0)))
-                self._color_history = state.get('color_history', [])
+            self._update_current_color_display()
+            self._update_history_display()
 
-                self._update_current_color_display()
-                self._update_history_display()
-
-                self._show_status("📂 Состояние загружено", 2000)
+            self._show_status("📂 Состояние загружено", 2000)
 
         except Exception as e:
             self._show_status(f"⚠️ Ошибка загрузки состояния: {e}", 3000)
 
-    def _get_state_file_path(self) -> str:
-        """Получает путь к файлу состояния."""
-        config_dir = os.path.join(os.path.expanduser('~'), '.app')
-        return os.path.join(config_dir, 'picker_state.json')
+
 
     def _show_status(self, message: str, duration: int = 3000):
         """Показывает сообщение в статус баре."""

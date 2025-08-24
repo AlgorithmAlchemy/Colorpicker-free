@@ -7,7 +7,7 @@
 from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
-from ..exceptions import ConfigurationError
+from ..shared.exceptions import ConfigurationError
 
 
 class Theme(Enum):

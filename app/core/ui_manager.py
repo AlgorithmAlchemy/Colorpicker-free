@@ -20,8 +20,8 @@ from qtpy.QtWidgets import (
     QApplication, QDialog, QGraphicsDropShadowEffect
 )
 
-from ..types import RGBColor, RGBAColor, HSVColor
-from ..exceptions import UIError
+from ..shared.types import RGBColor, RGBAColor, HSVColor
+from ..shared.exceptions import UIError
 
 
 class UITheme(Enum):

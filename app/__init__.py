@@ -26,14 +26,14 @@ __author__ = 'nlfmt'
 __maintainer__ = 'nlfmt'
 
 # Основные классы и функции
-from .simple_picker import get_simple_color, SimpleColorPicker
+from .presentation.dialogs.simple_color_picker import get_simple_color, SimpleColorPicker
 from .facade import get_color, reset_instance
-from .enhanced_picker import EnhancedColorPicker, get_enhanced_color
-from .screen_picker import ScreenColorPicker, pick_screen_color
-from .colorpicker import ColorPicker, getColor, useAlpha, useLightTheme
+from .presentation.dialogs.enhanced_color_picker import EnhancedColorPicker, get_enhanced_color
+from .presentation.dialogs.screen_color_picker import ScreenColorPicker, pick_screen_color
+from .presentation.dialogs.legacy_color_picker import ColorPicker, getColor, useAlpha, useLightTheme
 
 # Утилиты для работы с цветами
-from .color_utils import (
+from .shared.utils.color_utils import (
     hsv2rgb,
     rgb2hsv,
     rgb2hex,
@@ -44,8 +44,8 @@ from .color_utils import (
     safe_int
 )
 
-# Функции из colorpicker.py для обратной совместимости
-from .colorpicker import (
+# Функции из legacy_color_picker.py для обратной совместимости
+from .presentation.dialogs.legacy_color_picker import (
     hsv2rgb as hsv2rgb_legacy,
     rgb2hsv as rgb2hsv_legacy,
     rgb2hex as rgb2hex_legacy,
@@ -64,7 +64,7 @@ from .data.config import (
 )
 
 # Типы данных
-from .types import (
+from .shared.types import (
     RGBColor,
     RGBAColor,
     HSVColor,
@@ -124,4 +124,4 @@ __all__ = [
 ]
 
 # Функции для обратной совместимости
-from .compat import getColor as getColor_compat, useAlpha as useAlpha_compat, useLightTheme as useLightTheme_compat
+from .shared.compat import getColor as getColor_compat, useAlpha as useAlpha_compat, useLightTheme as useLightTheme_compat

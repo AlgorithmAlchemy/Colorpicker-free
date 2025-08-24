@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from enum import Enum
 import math
 
-from ..types import RGBColor, RGBAColor, HSVColor, HSVAColor, HexColor
-from ..exceptions import ColorFormatError, ValidationError
+from ..shared.types import RGBColor, RGBAColor, HSVColor, HSVAColor, HexColor
+from ..shared.exceptions import ColorFormatError, ValidationError
 
 
 class ColorSpace(Enum):

@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QApplication, QColorDialog
 from qtpy.QtGui import QColor
 from typing import Optional, Tuple
 
-from .types import RGBColor
+from ...shared.types import RGBColor
 
 
 def get_simple_color(initial_color: Optional[RGBColor] = None) -> Optional[RGBColor]:

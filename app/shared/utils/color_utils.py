@@ -6,8 +6,8 @@
 
 import colorsys
 from typing import Union, Tuple, Optional
-from .types import RGBColor, RGBAColor, HSVColor, HSVAColor, HexColor
-from .exceptions import ColorFormatError
+from ..types import RGBColor, RGBAColor, HSVColor, HSVAColor, HexColor
+from ..exceptions import ColorFormatError
 
 
 class ColorConverter:

@@ -125,43 +125,43 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     
     # Контекстное меню
     "transparency": {
-        "ru": "🔍 Прозрачность",
-        "en": "🔍 Transparency",
-        "de": "🔍 Transparenz",
-        "fr": "🔍 Transparence",
-        "es": "🔍 Transparencia"
+        "ru": "Прозрачность",
+        "en": "Transparency",
+        "de": "Transparenz",
+        "fr": "Transparence",
+        "es": "Transparencia"
     },
     
     "reset_position": {
-        "ru": "📍 Сбросить позицию",
-        "en": "📍 Reset position",
-        "de": "📍 Position zurücksetzen",
-        "fr": "📍 Réinitialiser la position",
-        "es": "📍 Restablecer posición"
+        "ru": "Сбросить позицию",
+        "en": "Reset position",
+        "de": "Position zurücksetzen",
+        "fr": "Réinitialiser la position",
+        "es": "Restablecer posición"
     },
     
     "hide_window": {
-        "ru": "👁️ Скрыть окно",
-        "en": "👁️ Hide window",
-        "de": "👁️ Fenster ausblenden",
-        "fr": "👁️ Masquer la fenêtre",
-        "es": "👁️ Ocultar ventana"
+        "ru": "Скрыть окно",
+        "en": "Hide window",
+        "de": "Fenster ausblenden",
+        "fr": "Masquer la fenêtre",
+        "es": "Ocultar ventana"
     },
     
     "show_window": {
-        "ru": "👁️ Показать окно",
-        "en": "👁️ Show window",
-        "de": "👁️ Fenster anzeigen",
-        "fr": "👁️ Afficher la fenêtre",
-        "es": "👁️ Mostrar ventana"
+        "ru": "Показать окно",
+        "en": "Show window",
+        "de": "Fenster anzeigen",
+        "fr": "Afficher la fenêtre",
+        "es": "Mostrar ventana"
     },
     
     "restart_hotkeys": {
-        "ru": "🔄 Перезапустить горячие клавиши",
-        "en": "🔄 Restart hotkeys",
-        "de": "🔄 Tastenkombinationen neu starten",
-        "fr": "🔄 Redémarrer les raccourcis",
-        "es": "🔄 Reiniciar atajos"
+        "ru": "Перезапустить горячие клавиши",
+        "en": "Restart hotkeys",
+        "de": "Tastenkombinationen neu starten",
+        "fr": "Redémarrer les raccourcis",
+        "es": "Reiniciar atajos"
     },
     
     "about_menu": {
@@ -232,43 +232,51 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     
     # Контекстное меню
     "always_on_top": {
-        "ru": "📌 Закрепить поверх окон",
-        "en": "📌 Always on top",
-        "de": "📌 Immer im Vordergrund",
-        "fr": "📌 Toujours au premier plan",
-        "es": "📌 Siempre visible"
+        "ru": "Закрепить поверх окон",
+        "en": "Always on top",
+        "de": "Immer im Vordergrund",
+        "fr": "Toujours au premier plan",
+        "es": "Siempre visible"
+    },
+    
+    "force_restore": {
+        "ru": "Принудительно восстановить окно",
+        "en": "Force restore window",
+        "de": "Fenster zwangsweise wiederherstellen",
+        "fr": "Restaurer la fenêtre de force",
+        "es": "Restaurar ventana forzadamente"
     },
     
     "settings": {
-        "ru": "⚙️ Настройки",
-        "en": "⚙️ Settings",
-        "de": "⚙️ Einstellungen",
-        "fr": "⚙️ Paramètres",
-        "es": "⚙️ Configuración"
+        "ru": "Настройки",
+        "en": "Settings",
+        "de": "Einstellungen",
+        "fr": "Paramètres",
+        "es": "Configuración"
     },
     
     "language": {
-        "ru": "🌐 Язык",
-        "en": "🌐 Language",
-        "de": "🌐 Sprache",
-        "fr": "🌐 Langue",
-        "es": "🌐 Idioma"
+        "ru": "Язык",
+        "en": "Language",
+        "de": "Sprache",
+        "fr": "Langue",
+        "es": "Idioma"
     },
     
     "about": {
-        "ru": "ℹ️ О программе",
-        "en": "ℹ️ About",
-        "de": "ℹ️ Über",
-        "fr": "ℹ️ À propos",
-        "es": "ℹ️ Acerca de"
+        "ru": "О программе",
+        "en": "About",
+        "de": "Über",
+        "fr": "À propos",
+        "es": "Acerca de"
     },
     
     "exit": {
-        "ru": "❌ Выход",
-        "en": "❌ Exit",
-        "de": "❌ Beenden",
-        "fr": "❌ Quitter",
-        "es": "❌ Salir"
+        "ru": "Выход",
+        "en": "Exit",
+        "de": "Beenden",
+        "fr": "Quitter",
+        "es": "Salir"
     },
     
     # Сообщения и уведомления

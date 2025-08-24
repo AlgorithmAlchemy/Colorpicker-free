@@ -20,7 +20,7 @@ except ImportError:
     print("⚠️ Модуль автоустановки недоступен, пропускаем проверку зависимостей")
 
 from .facade import get_color, reset_instance
-from .config import use_light_theme, use_alpha
+from .data.config import use_light_theme, use_alpha
 from .i18n import set_language, Language, get_i18n_manager
 from .core.settings_manager import get_setting
 

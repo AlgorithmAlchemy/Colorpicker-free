@@ -12,14 +12,14 @@ from qtpy.QtCore import (QPoint, Qt)
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (QApplication, QDialog, QGraphicsDropShadowEffect)
 
-from .ui.ui.ui_dark import Ui_ColorPicker as Ui_Dark
-from .ui.ui.ui_dark_alpha import Ui_ColorPicker as Ui_Dark_Alpha
-from .ui.ui.ui_light import Ui_ColorPicker as Ui_Light
-from .ui.ui.ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
+from ...ui.ui.ui_dark import Ui_ColorPicker as Ui_Dark
+from ...ui.ui.ui_dark_alpha import Ui_ColorPicker as Ui_Dark_Alpha
+from ...ui.ui.ui_light import Ui_ColorPicker as Ui_Light
+from ...ui.ui.ui_light_alpha import Ui_ColorPicker as Ui_Light_Alpha
 
-from .ui.resources.img import *
-from .ui.components.ui_updater import register_widget, unregister_widget
-from .i18n import get_text
+from ...ui.resources.img import *
+from ...ui.components.ui_updater import register_widget, unregister_widget
+from ...i18n import get_text
 
 
 class ColorPicker(QDialog):

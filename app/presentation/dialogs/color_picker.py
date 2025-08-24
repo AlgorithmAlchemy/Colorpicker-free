@@ -9,14 +9,14 @@ from qtpy.QtCore import QPoint, Qt
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import QApplication, QDialog, QGraphicsDropShadowEffect
 
-from .types import RGBColor, RGBAColor, HSVColor
-from .color_utils import hsv2rgb, rgb2hsv, rgb2hex, hex2rgb, safe_int, clamp_rgb
-from .data.config import ColorPickerConfig
-from .constants import (
+from ...shared.types import RGBColor, RGBAColor, HSVColor
+from ...shared.utils.color_utils import hsv2rgb, rgb2hsv, rgb2hex, hex2rgb, safe_int, clamp_rgb
+from ...data.config import ColorPickerConfig
+from ...shared.constants import (
     SHADOW_BLUR_RADIUS, SHADOW_COLOR, WINDOW_TITLE,
     HUE_SELECTOR_X, SV_SELECTOR_OFFSET, HUE_BAR_HEIGHT, SV_AREA_SIZE
 )
-from .exceptions import UIError
+from ...shared.exceptions import UIError
 
 
 class ColorPicker(QDialog):
