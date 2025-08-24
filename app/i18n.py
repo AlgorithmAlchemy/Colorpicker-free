@@ -279,6 +279,31 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "es": "Salir"
     },
     
+    # Системный трей
+    "tray_hidden_message": {
+        "ru": "Приложение скрыто в трей. Дважды кликните по иконке для показа.",
+        "en": "Application hidden to tray. Double-click the icon to show.",
+        "de": "Anwendung in Systemleiste ausgeblendet. Doppelklicken Sie auf das Symbol zum Anzeigen.",
+        "fr": "Application masquée dans la barre d'état. Double-cliquez sur l'icône pour afficher.",
+        "es": "Aplicación oculta en la bandeja. Haga doble clic en el icono para mostrar."
+    },
+    
+    "tray_show_tooltip": {
+        "ru": "Показать окно",
+        "en": "Show window",
+        "de": "Fenster anzeigen",
+        "fr": "Afficher la fenêtre",
+        "es": "Mostrar ventana"
+    },
+    
+    "tray_exit_tooltip": {
+        "ru": "Выход",
+        "en": "Exit",
+        "de": "Beenden",
+        "fr": "Quitter",
+        "es": "Salir"
+    },
+    
     # Сообщения и уведомления
     "color_copied": {
         "ru": "Цвет скопирован в буфер обмена",

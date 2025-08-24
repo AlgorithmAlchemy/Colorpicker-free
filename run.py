@@ -9,6 +9,8 @@
 import sys
 import threading
 import time
+import tempfile
+import os
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox,
     QSizePolicy, QMenu, QSystemTrayIcon
@@ -56,6 +58,62 @@ elif WIN32_AVAILABLE:
     print("✅ win32api доступен для глобальных горячих клавиш")
 elif KEYBOARD_AVAILABLE:
     print("✅ keyboard доступен для глобальных горячих клавиш")
+
+
+class SingleInstanceApp:
+    """Класс для обеспечения единственного экземпляра приложения."""
+    
+    def __init__(self, app_name="DesktopColorPicker"):
+        self.app_name = app_name
+        self.lock_file = None
+        
+    def is_already_running(self):
+        """Проверяет, запущено ли уже приложение."""
+        try:
+            # Создаем путь к файлу блокировки
+            lock_path = os.path.join(tempfile.gettempdir(), f"{self.app_name}.lock")
+            
+            # Проверяем, существует ли файл блокировки
+            if os.path.exists(lock_path):
+                # Читаем PID из файла
+                try:
+                    with open(lock_path, 'r') as f:
+                        pid_str = f.read().strip()
+                        if pid_str.isdigit():
+                            pid = int(pid_str)
+                            # Проверяем, существует ли процесс с этим PID
+                            try:
+                                os.kill(pid, 0)  # Проверяем существование процесса
+                                print(f"⚠️ Приложение уже запущено (PID: {pid})")
+                                return True
+                            except OSError:
+                                # Процесс не существует, удаляем старый файл блокировки
+                                print(f"🔧 Удаляем старый файл блокировки (PID {pid} не существует)")
+                                os.unlink(lock_path)
+                except:
+                    # Не удалось прочитать файл, удаляем его
+                    os.unlink(lock_path)
+            
+            # Создаем новый файл блокировки
+            with open(lock_path, 'w') as f:
+                f.write(str(os.getpid()))
+            
+            self.lock_file = lock_path
+            print(f"✅ Файл блокировки создан: {lock_path}")
+            return False  # Приложение не запущено
+            
+        except Exception as e:
+            print(f"❌ Ошибка проверки единственного экземпляра: {e}")
+            return False  # В случае ошибки позволяем запуск
+    
+    def cleanup(self):
+        """Очищает блокировку при завершении."""
+        try:
+            if self.lock_file and os.path.exists(self.lock_file):
+                os.unlink(self.lock_file)
+                print(f"✅ Файл блокировки удален: {self.lock_file}")
+        except Exception as e:
+            print(f"⚠️ Ошибка удаления файла блокировки: {e}")
 
 
 def get_pixel_color_qt(x: int, y: int):
@@ -598,8 +656,11 @@ class ClickableLabel(QLabel):
 class FixedDesktopColorPicker(QWidget):
     """Исправленная версия десктопного color picker."""
     
-    def __init__(self):
+    def __init__(self, single_instance=None):
         super().__init__()
+        
+        # Сохраняем ссылку на блокировку единственного экземпляра
+        self.single_instance = single_instance
         
         # Инициализируем атрибуты ДО установки флагов окна
         self._should_be_visible = True  # Флаг для отслеживания видимости
@@ -1425,10 +1486,10 @@ class FixedDesktopColorPicker(QWidget):
                 show_text = "👁️ Показать окно"
             if self.isVisible():
                 hide_action = QAction(hide_text, self)
-                hide_action.triggered.connect(self.hide)
+                hide_action.triggered.connect(self.hide_to_tray)
             else:
                 hide_action = QAction(show_text, self)
-                hide_action.triggered.connect(self.show)
+                hide_action.triggered.connect(self.show_from_tray)
             menu.addAction(hide_action)
             
             menu.addSeparator()
@@ -1547,7 +1608,29 @@ class FixedDesktopColorPicker(QWidget):
             # Создаем иконку трея
             self.tray_icon = QSystemTrayIcon(self)
             
-            # Устанавливаем иконку (используем стандартную иконку приложения)
+            # Создаем простую иконку (красный квадрат с буквой C)
+            from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QIcon
+            from PySide6.QtCore import QSize
+            
+            # Создаем иконку 16x16 пикселей
+            pixmap = QPixmap(16, 16)
+            pixmap.fill(QColor(255, 0, 0))  # Красный фон
+            
+            # Рисуем букву C
+            painter = QPainter(pixmap)
+            painter.setPen(QColor(255, 255, 255))  # Белый текст
+            font = QFont()
+            font.setPointSize(10)
+            font.setBold(True)
+            painter.setFont(font)
+            painter.drawText(pixmap.rect(), Qt.AlignCenter, "C")
+            painter.end()
+            
+            # Создаем QIcon из pixmap
+            icon = QIcon(pixmap)
+            self.tray_icon.setIcon(icon)
+            
+            # Устанавливаем подсказку
             if I18N_AVAILABLE:
                 self.tray_icon.setToolTip(get_text("app_title"))
             else:
@@ -1558,7 +1641,7 @@ class FixedDesktopColorPicker(QWidget):
             
             # Показать/скрыть окно
             if I18N_AVAILABLE:
-                show_action = QAction(get_text("show_window"), self)
+                show_action = QAction(get_text("tray_show_tooltip"), self)
             else:
                 show_action = QAction("Показать окно", self)
             show_action.triggered.connect(self.show_from_tray)
@@ -1569,7 +1652,7 @@ class FixedDesktopColorPicker(QWidget):
             
             # Выход
             if I18N_AVAILABLE:
-                exit_action = QAction(get_text("exit"), self)
+                exit_action = QAction(get_text("tray_exit_tooltip"), self)
             else:
                 exit_action = QAction("Выход", self)
             exit_action.triggered.connect(self.close)
@@ -1584,7 +1667,17 @@ class FixedDesktopColorPicker(QWidget):
             # Показываем иконку в трее
             self.tray_icon.show()
             
-            print("✅ Системный трей настроен")
+            # Проверяем, что иконка действительно показана
+            if self.tray_icon.isVisible():
+                print("✅ Системный трей настроен и иконка видна")
+                print(f"🔧 Иконка трея: {self.tray_icon.toolTip()}")
+            else:
+                print("⚠️ Системный трей настроен, но иконка не видна")
+                print("🔧 Попробуйте проверить область уведомлений Windows")
+            
+        except Exception as e:
+            print(f"Ошибка настройки системного трея: {e}")
+            self.tray_icon = None
             
         except Exception as e:
             print(f"Ошибка настройки системного трея: {e}")
@@ -1608,17 +1701,40 @@ class FixedDesktopColorPicker(QWidget):
     def hide_to_tray(self):
         """Скрывает окно в трей."""
         try:
+            # Проверяем доступность трея
+            if not self.tray_icon or not self.tray_icon.isSystemTrayAvailable():
+                print("⚠️ Системный трей недоступен, просто скрываем окно")
+                self.hide()
+                return
+            
+            # Скрываем окно
             self.hide()
-            if self.tray_icon:
-                self.tray_icon.showMessage(
-                    "Desktop Color Picker",
-                    "Приложение скрыто в трей. Дважды кликните по иконке для показа.",
-                    QSystemTrayIcon.Information,
-                    2000
-                )
+            
+            # Принудительно показываем иконку в трее
+            self.tray_icon.show()
+            
+            # Показываем уведомление в трее
+            if I18N_AVAILABLE:
+                title = get_text("app_title")
+                message = get_text("tray_hidden_message")
+            else:
+                title = "Desktop Color Picker"
+                message = "Приложение скрыто в трей. Дважды кликните по иконке для показа."
+            
+            self.tray_icon.showMessage(
+                title,
+                message,
+                QSystemTrayIcon.Information,
+                3000  # Показываем 3 секунды
+            )
+            
             print("🔧 Окно скрыто в трей")
+            print(f"🔧 Иконка трея видна: {self.tray_icon.isVisible()}")
+            
         except Exception as e:
             print(f"Ошибка скрытия в трей: {e}")
+            # В случае ошибки просто скрываем окно
+            self.hide()
     
     def _ensure_window_visible(self):
         """Дополнительная проверка видимости окна после изменения флагов."""
@@ -2000,6 +2116,15 @@ class FixedDesktopColorPicker(QWidget):
             if hasattr(self, 'hotkey_manager'):
                 self.hotkey_manager.stop()
             
+            # Удаляем иконку из системного трея
+            if hasattr(self, 'tray_icon') and self.tray_icon:
+                self.tray_icon.hide()
+                self.tray_icon = None
+            
+            # Очищаем блокировку единственного экземпляра
+            if hasattr(self, 'single_instance'):
+                self.single_instance.cleanup()
+            
             # Принудительно останавливаем keyboard listener
             if KEYBOARD_AVAILABLE:
                 try:
@@ -2071,6 +2196,14 @@ class FixedDesktopColorPicker(QWidget):
 
 def main():
     """Основная функция."""
+    # Проверяем, не запущено ли уже приложение
+    single_instance = SingleInstanceApp()
+    if single_instance.is_already_running():
+        print("⚠️ Приложение уже запущено!")
+        print("🔧 Проверьте системный трей - иконка должна быть там")
+        print("💡 Если иконки нет, закройте все процессы и попробуйте снова")
+        return
+    
     print("🎨 Исправленный Desktop Color Picker")
     print("=" * 40)
     
@@ -2093,7 +2226,7 @@ def main():
     app = QApplication(sys.argv)
     
     # Создаем и показываем окно
-    picker = FixedDesktopColorPicker()
+    picker = FixedDesktopColorPicker(single_instance)
     picker.show()
     
     print("🎨 Исправленный Desktop Color Picker запущен!")
