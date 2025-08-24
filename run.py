@@ -11,7 +11,7 @@ import threading
 import time
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox,
-    QSizePolicy, QMenu
+    QSizePolicy, QMenu, QSystemTrayIcon
 )
 from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QEvent
 from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAction
