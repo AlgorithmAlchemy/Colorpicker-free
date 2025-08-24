@@ -651,6 +651,9 @@ class FixedDesktopColorPicker(QWidget):
         # Создание UI
         self.setup_ui()
         
+        # Инициализируем системный трей
+        self.setup_system_tray()
+        
         # Таймер для обновления координат
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_coordinates)
@@ -1531,6 +1534,91 @@ class FixedDesktopColorPicker(QWidget):
             # В случае ошибки принудительно показываем окно
             self.show()
             self.raise_()
+    
+    def setup_system_tray(self):
+        """Настраивает системный трей."""
+        try:
+            # Проверяем доступность системного трея
+            if not QSystemTrayIcon.isSystemTrayAvailable():
+                print("⚠️ Системный трей недоступен")
+                self.tray_icon = None
+                return
+            
+            # Создаем иконку трея
+            self.tray_icon = QSystemTrayIcon(self)
+            
+            # Устанавливаем иконку (используем стандартную иконку приложения)
+            if I18N_AVAILABLE:
+                self.tray_icon.setToolTip(get_text("app_title"))
+            else:
+                self.tray_icon.setToolTip("Desktop Color Picker")
+            
+            # Создаем контекстное меню трея
+            tray_menu = QMenu()
+            
+            # Показать/скрыть окно
+            if I18N_AVAILABLE:
+                show_action = QAction(get_text("show_window"), self)
+            else:
+                show_action = QAction("Показать окно", self)
+            show_action.triggered.connect(self.show_from_tray)
+            tray_menu.addAction(show_action)
+            
+            # Разделитель
+            tray_menu.addSeparator()
+            
+            # Выход
+            if I18N_AVAILABLE:
+                exit_action = QAction(get_text("exit"), self)
+            else:
+                exit_action = QAction("Выход", self)
+            exit_action.triggered.connect(self.close)
+            tray_menu.addAction(exit_action)
+            
+            # Устанавливаем меню
+            self.tray_icon.setContextMenu(tray_menu)
+            
+            # Подключаем обработчик клика
+            self.tray_icon.activated.connect(self._on_tray_activated)
+            
+            # Показываем иконку в трее
+            self.tray_icon.show()
+            
+            print("✅ Системный трей настроен")
+            
+        except Exception as e:
+            print(f"Ошибка настройки системного трея: {e}")
+            self.tray_icon = None
+    
+    def _on_tray_activated(self, reason):
+        """Обработчик активации иконки в трее."""
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.show_from_tray()
+    
+    def show_from_tray(self):
+        """Показывает окно из трея."""
+        try:
+            self.show()
+            self.raise_()
+            self.activateWindow()
+            print("🔧 Окно показано из трея")
+        except Exception as e:
+            print(f"Ошибка показа окна из трея: {e}")
+    
+    def hide_to_tray(self):
+        """Скрывает окно в трей."""
+        try:
+            self.hide()
+            if self.tray_icon:
+                self.tray_icon.showMessage(
+                    "Desktop Color Picker",
+                    "Приложение скрыто в трей. Дважды кликните по иконке для показа.",
+                    QSystemTrayIcon.Information,
+                    2000
+                )
+            print("🔧 Окно скрыто в трей")
+        except Exception as e:
+            print(f"Ошибка скрытия в трей: {e}")
     
     def _ensure_window_visible(self):
         """Дополнительная проверка видимости окна после изменения флагов."""
