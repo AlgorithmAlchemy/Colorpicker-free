@@ -116,11 +116,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     
     "hotkeys_unavailable": {
-        "ru": "⚠️ Глобальные горячие клавиши: Недоступны",
-        "en": "⚠️ Global hotkeys: Unavailable",
-        "de": "⚠️ Globale Tastenkombinationen: Nicht verfügbar",
-        "fr": "⚠️ Raccourcis globaux: Indisponibles",
-        "es": "⚠️ Atajos globales: No disponibles"
+        "ru": "WARNING Глобальные горячие клавиши: Недоступны",
+        "en": "WARNING Global hotkeys: Unavailable",
+        "de": "WARNING Globale Tastenkombinationen: Nicht verfügbar",
+        "fr": "WARNING Raccourcis globaux: Indisponibles",
+        "es": "WARNING Atajos globales: No disponibles"
     },
     
     # Контекстное меню
@@ -165,11 +165,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     
     "about_menu": {
-        "ru": "ℹ️ О программе",
-        "en": "ℹ️ About",
-        "de": "ℹ️ Über",
-        "fr": "ℹ️ À propos",
-        "es": "ℹ️ Acerca de"
+        "ru": "ℹ О программе",
+        "en": "ℹ About",
+        "de": "ℹ Über",
+        "fr": "ℹ À propos",
+        "es": "ℹ Acerca de"
     },
     
     # Диалоги
@@ -485,11 +485,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     
     "usage_stable": {
-        "ru": "   - 💡 Эта версия исправлена и работает стабильно",
-        "en": "   - 💡 This version is fixed and works stably",
-        "de": "   - 💡 Diese Version ist korrigiert und funktioniert stabil",
-        "fr": "   - 💡 Cette version est corrigée et fonctionne de manière stable",
-        "es": "   - 💡 Esta versión está corregida y funciona de manera estable"
+        "ru": "   - TIP Эта версия исправлена и работает стабильно",
+        "en": "   - TIP This version is fixed and works stably",
+        "de": "   - TIP Diese Version ist korrigiert und funktioniert stabil",
+        "fr": "   - TIP Cette version est corrigée et fonctionne de manière stable",
+        "es": "   - TIP Esta versión está corregida y funciona de manera estable"
     },
     
     # Дополнительные элементы интерфейса
@@ -526,11 +526,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     
     "clear_history": {
-        "ru": "🗑️ Очистить историю",
-        "en": "🗑️ Clear history",
-        "de": "🗑️ Verlauf löschen",
-        "fr": "🗑️ Effacer l'historique",
-        "es": "🗑️ Limpiar historial"
+        "ru": "🗑 Очистить историю",
+        "en": "🗑 Clear history",
+        "de": "🗑 Verlauf löschen",
+        "fr": "🗑 Effacer l'historique",
+        "es": "🗑 Limpiar historial"
     },
     
     "use_color": {
@@ -550,19 +550,19 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     
     "saved": {
-        "ru": "✅ Сохранено!",
-        "en": "✅ Saved!",
-        "de": "✅ Gespeichert!",
-        "fr": "✅ Sauvegardé !",
-        "es": "✅ ¡Guardado!"
+        "ru": "OK Сохранено!",
+        "en": "OK Saved!",
+        "de": "OK Gespeichert!",
+        "fr": "OK Sauvegardé !",
+        "es": "OK ¡Guardado!"
     },
     
     "quick_save": {
-        "ru": "⚡ Цвет быстро сохранен",
-        "en": "⚡ Color quickly saved",
-        "de": "⚡ Farbe schnell gespeichert",
-        "fr": "⚡ Couleur rapidement sauvegardée",
-        "es": "⚡ Color guardado rápidamente"
+        "ru": "FAST Цвет быстро сохранен",
+        "en": "FAST Color quickly saved",
+        "de": "FAST Farbe schnell gespeichert",
+        "fr": "FAST Couleur rapidement sauvegardée",
+        "es": "FAST Color guardado rápidamente"
     },
     
     "state_loaded": {
@@ -623,19 +623,19 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     
     "error_saving_state": {
-        "ru": "❌ Ошибка сохранения: {e}",
-        "en": "❌ Error saving: {e}",
-        "de": "❌ Fehler beim Speichern: {e}",
-        "fr": "❌ Erreur lors de la sauvegarde: {e}",
-        "es": "❌ Error al guardar: {e}"
+        "ru": "ERROR Ошибка сохранения: {e}",
+        "en": "ERROR Error saving: {e}",
+        "de": "ERROR Fehler beim Speichern: {e}",
+        "fr": "ERROR Erreur lors de la sauvegarde: {e}",
+        "es": "ERROR Error al guardar: {e}"
     },
     
     "error_loading_state": {
-        "ru": "⚠️ Ошибка загрузки состояния: {e}",
-        "en": "⚠️ Error loading state: {e}",
-        "de": "⚠️ Fehler beim Laden des Zustands: {e}",
-        "fr": "⚠️ Erreur lors du chargement de l'état: {e}",
-        "es": "⚠️ Error al cargar el estado: {e}"
+        "ru": "WARNING Ошибка загрузки состояния: {e}",
+        "en": "WARNING Error loading state: {e}",
+        "de": "WARNING Fehler beim Laden des Zustands: {e}",
+        "fr": "WARNING Erreur lors du chargement de l'état: {e}",
+        "es": "WARNING Error al cargar el estado: {e}"
     },
     
     # Статусы
@@ -739,11 +739,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
     
     "modern_color_picker": {
-        "ru": "Современный цветовой пикер для Windows",
-        "en": "Modern color picker for Windows",
-        "de": "Moderner Farbauswahl für Windows",
-        "fr": "Sélecteur de couleur moderne pour Windows",
-        "es": "Selector de color moderno para Windows"
+        "ru": "Цветовой пикер для Windows",
+        "en": "Color picker for Windows",
+        "de": "Farbauswahl für Windows",
+        "fr": "Sélecteur de couleur pour Windows",
+        "es": "Selector de color para Windows"
     },
     
     # Настройки

@@ -112,12 +112,12 @@ class ContextMenu(QMenu):
     def _add_advanced_actions(self):
         """Добавляет дополнительные действия."""
         # История цветов
-        history_action = QAction("📚 История цветов", self)
+        history_action = QAction("DOCS История цветов", self)
         history_action.triggered.connect(self._show_color_history)
         self.addAction(history_action)
         
         # Очистить историю
-        clear_history_action = QAction("🗑️ Очистить историю", self)
+        clear_history_action = QAction("🗑 Очистить историю", self)
         clear_history_action.triggered.connect(self._clear_color_history)
         self.addAction(clear_history_action)
         
@@ -167,7 +167,7 @@ class ContextMenu(QMenu):
         dark_action.triggered.connect(lambda: self._set_theme("dark"))
         theme_menu.addAction(dark_action)
         
-        light_action = QAction(f"☀️ {get_text('light_theme')}", theme_menu)
+        light_action = QAction(f"☀ {get_text('light_theme')}", theme_menu)
         light_action.setCheckable(True)
         light_action.setChecked(current_theme == "light")
         light_action.triggered.connect(lambda: self._set_theme("light"))
@@ -201,7 +201,7 @@ class ContextMenu(QMenu):
         
         current_language = get_setting("language", "ru")
         
-        # Добавляем все поддерживаемые языки
+        # Все поддерживаемые языки
         languages = [
             ("ru", "🇷🇺"),
             ("en", "🇺🇸"),
@@ -224,13 +224,13 @@ class ContextMenu(QMenu):
         """Устанавливает язык."""
         from ..i18n import set_language, Language
         
-        # Устанавливаем язык в системе интернационализации
+        # Язык в системе интернационализации
         set_language(Language(language_code))
         
-        # Сохраняем в настройках
+        # В настройках
         set_setting("language", language_code)
         
-        # Обновляем интерфейс
+        # Интерфейс
         update_all_widgets()
     
     def _show_color_history(self):
@@ -244,12 +244,12 @@ class ContextMenu(QMenu):
     
     def _show_about(self):
         """Показывает информацию о программе."""
-        print("🔍 _show_about вызван!")
+        print("INFO _show_about вызван!")
         try:
             from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
             from PySide6.QtCore import Qt
             
-            # Создаем кастомный диалог
+            # кастомный диалог
             dialog = QDialog(self.parent())
             dialog.setWindowTitle("О программе")
             dialog.setFixedSize(300, 120)
@@ -357,7 +357,7 @@ class SettingsDialog(QDialog):
         """Настраивает интерфейс."""
         layout = QVBoxLayout()
         
-        # Создаем вкладки
+        # вкладки
         tab_widget = QTabWidget()
         
         # Вкладка "Основные"
@@ -594,7 +594,7 @@ class SettingsDialog(QDialog):
     
     def accept(self):
         """Сохраняет настройки при принятии диалога."""
-        # Сохраняем настройки
+        # Настройки
         theme_map = {0: "dark", 1: "light", 2: "auto"}
         set_setting(SettingsKeys.THEME, theme_map[self.theme_combo.currentIndex()])
         set_setting(SettingsKeys.ALPHA_ENABLED, self.alpha_checkbox.isChecked())

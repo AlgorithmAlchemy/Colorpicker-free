@@ -8,7 +8,7 @@ import subprocess
 
 def install_dependencies():
     """Устанавливает все необходимые зависимости."""
-    print("🔧 Установка зависимостей для ColorPicker...")
+    print("TOOL Установка зависимостей для ColorPicker...")
     
     dependencies = [
         "PySide6>=6.0.0",
@@ -23,13 +23,13 @@ def install_dependencies():
                 sys.executable, "-m", "pip", "install", dep
             ], check=True)
         
-        print("✅ Все зависимости установлены успешно!")
-        print("🎨 Теперь можно запустить: python run.py")
+        print("OK Все зависимости установлены успешно!")
+        print("COLOR Теперь можно запустить: python run.py")
         return True
         
     except subprocess.CalledProcessError as e:
-        print(f"❌ Ошибка установки: {e}")
-        print("💡 Попробуйте установить вручную:")
+        print(f"ERROR Ошибка установки: {e}")
+        print("TIP Попробуйте установить вручную:")
         print("   pip install PySide6 pyautogui Pillow")
         return False
 

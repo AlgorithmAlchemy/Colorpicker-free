@@ -1,7 +1,7 @@
 """
 Движок для работы с цветами
 
-Современный движок для конвертации, валидации и манипуляции цветами.
+Движок для конвертации, валидации и манипуляции цветами.
 """
 
 import colorsys
@@ -47,7 +47,7 @@ class ColorInfo:
 
 class ColorEngine:
     """
-    Современный движок для работы с цветами.
+    Движок для работы с цветами.
     
     Предоставляет полный набор инструментов для конвертации, валидации
     и манипуляции цветами в различных цветовых пространствах.
@@ -332,7 +332,7 @@ class ColorEngine:
             (ColorSpace.HEX, ColorSpace.RGB): self._hex_to_rgb,
             (ColorSpace.HSV, ColorSpace.HEX): self._hsv_to_hex,
             (ColorSpace.HEX, ColorSpace.HSV): self._hex_to_hsv,
-            # Добавляем поддержку альфа-канала
+            # Поддержка альфа-канала
             (ColorSpace.RGBA, ColorSpace.HSVA): self._rgba_to_hsva,
             (ColorSpace.HSVA, ColorSpace.RGBA): self._hsva_to_rgba,
         }

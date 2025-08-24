@@ -12,10 +12,10 @@ from PySide6.QtCore import Qt, QTimer, Signal, QObject
 try:
     import keyboard
     KEYBOARD_AVAILABLE = True
-    print("✅ keyboard доступен")
+    print("OK keyboard доступен")
 except ImportError:
     KEYBOARD_AVAILABLE = False
-    print("❌ keyboard не установлен")
+    print("ERROR keyboard не установлен")
 
 
 class DebugKeyboardManager(QObject):
@@ -48,7 +48,7 @@ class DebugKeyboardManager(QObject):
             
             return True
         except Exception as e:
-            print(f"❌ Ошибка запуска: {e}")
+            print(f"ERROR Ошибка запуска: {e}")
             self._running = False
             return False
     
@@ -61,59 +61,59 @@ class DebugKeyboardManager(QObject):
     def _debug_keyboard(self):
         """Диагностика keyboard."""
         try:
-            print("🔧 Начинаем диагностику keyboard...")
+            print("TOOL Начинаем диагностику keyboard...")
             
-            # Очищаем все хуки
+            # Все хуки
             keyboard.unhook_all()
             time.sleep(0.2)
             
-            # Проверяем listener
+            # listener
             if hasattr(keyboard, '_listener'):
-                print("✅ Keyboard listener существует")
+                print("OK Keyboard listener существует")
                 try:
-                    # Проверяем работоспособность через is_pressed
+                    # работоспособность через is_pressed
                     keyboard.is_pressed('ctrl')
-                    print("✅ Keyboard listener работает")
+                    print("OK Keyboard listener работает")
                 except Exception as e:
-                    print(f"⚠️ Keyboard listener не работает: {e}")
+                    print(f"WARNING Keyboard listener не работает: {e}")
             else:
-                print("❌ Keyboard listener не существует")
+                print("ERROR Keyboard listener не существует")
             
             # Принудительно запускаем listener
             if hasattr(keyboard, '_listener'):
                 keyboard._listener.start_if_necessary()
                 time.sleep(0.2)
-                print("🔧 Listener запущен принудительно")
+                print("TOOL Listener запущен принудительно")
             
             # Регистрируем обработчики
             def on_ctrl_press(e):
                 self._ctrl_count += 1
-                print(f"🎯 Ctrl нажат! Всего: {self._ctrl_count}")
+                print(f"TARGET Ctrl нажат! Всего: {self._ctrl_count}")
                 self.ctrl_pressed.emit()
             
             def on_escape_press(e):
                 self._escape_count += 1
-                print(f"🎯 Escape нажат! Всего: {self._escape_count}")
+                print(f"TARGET Escape нажат! Всего: {self._escape_count}")
                 self.escape_pressed.emit()
             
             keyboard.on_press_key('ctrl', on_ctrl_press)
             keyboard.on_press_key('esc', on_escape_press)
             
-            print("✅ Обработчики зарегистрированы")
+            print("OK Обработчики зарегистрированы")
             
             # Мониторинг
             last_check = time.time()
             while self._running:
                 time.sleep(0.1)
                 
-                # Проверяем состояние каждые 3 секунды
+                # состояние каждые 3 секунды
                 current_time = time.time()
                 if current_time - last_check > 3.0:
                     last_check = current_time
                     self._check_keyboard_state()
                 
         except Exception as e:
-            print(f"❌ Ошибка диагностики: {e}")
+            print(f"ERROR Ошибка диагностики: {e}")
         finally:
             try:
                 keyboard.unhook_all()
@@ -123,11 +123,11 @@ class DebugKeyboardManager(QObject):
     def _check_keyboard_state(self):
         """Проверяет состояние keyboard."""
         try:
-            print("🔍 Проверка состояния keyboard...")
+            print("INFO Проверка состояния keyboard...")
             
             if hasattr(keyboard, '_listener'):
                 try:
-                    # Проверяем работоспособность через is_pressed
+                    # работоспособность через is_pressed
                     keyboard.is_pressed('ctrl')
                     print("   - Listener работает")
                 except Exception as e:
@@ -137,7 +137,7 @@ class DebugKeyboardManager(QObject):
             else:
                 print("   - Listener не существует")
             
-            # Проверяем состояние клавиш
+            # состояние клавиш
             try:
                 ctrl_pressed = keyboard.is_pressed('ctrl')
                 print(f"   - Ctrl нажат: {ctrl_pressed}")
@@ -186,27 +186,27 @@ class DebugWindow(QWidget):
         
         self.setLayout(layout)
         
-        # Запускаем диагностику
+        # Диагностика
         self.debug_manager = DebugKeyboardManager()
         self.debug_manager.ctrl_pressed.connect(self._on_ctrl_pressed)
         self.debug_manager.escape_pressed.connect(self._on_escape_pressed)
         
         if self.debug_manager.start():
             self.status_label.setText("Статус: Диагностика активна")
-            self._log("✅ Диагностика запущена")
+            self._log("OK Диагностика запущена")
         else:
             self.status_label.setText("Статус: Ошибка запуска")
-            self._log("❌ Ошибка запуска диагностики")
+            self._log("ERROR Ошибка запуска диагностики")
     
     def _on_ctrl_pressed(self):
         """Обработчик нажатия Ctrl."""
         self.ctrl_label.setText(f"Нажатий Ctrl: {self.debug_manager._ctrl_count}")
-        self._log(f"🎯 Ctrl нажат! Всего: {self.debug_manager._ctrl_count}")
+        self._log(f"TARGET Ctrl нажат! Всего: {self.debug_manager._ctrl_count}")
     
     def _on_escape_pressed(self):
         """Обработчик нажатия Escape."""
         self.escape_label.setText(f"Нажатий Escape: {self.debug_manager._escape_count}")
-        self._log(f"🎯 Escape нажат! Всего: {self.debug_manager._escape_count}")
+        self._log(f"TARGET Escape нажат! Всего: {self.debug_manager._escape_count}")
     
     def restart_debug(self):
         """Перезапускает диагностику."""
@@ -214,10 +214,10 @@ class DebugWindow(QWidget):
         time.sleep(0.5)
         if self.debug_manager.start():
             self.status_label.setText("Статус: Диагностика перезапущена")
-            self._log("✅ Диагностика перезапущена")
+            self._log("OK Диагностика перезапущена")
         else:
             self.status_label.setText("Статус: Ошибка перезапуска")
-            self._log("❌ Ошибка перезапуска")
+            self._log("ERROR Ошибка перезапуска")
     
     def _log(self, message):
         """Добавляет сообщение в лог."""
@@ -241,8 +241,8 @@ def main():
     window = DebugWindow()
     window.show()
     
-    print("🔧 Диагностика keyboard запущена")
-    print("📝 Инструкции:")
+    print("TOOL Диагностика keyboard запущена")
+    print("NOTE Инструкции:")
     print("   - Нажмите Ctrl для тестирования")
     print("   - Нажмите Escape для тестирования")
     print("   - Следите за логом диагностики")

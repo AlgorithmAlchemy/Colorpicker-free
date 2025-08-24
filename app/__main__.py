@@ -17,7 +17,7 @@ try:
     from .utils.auto_install import ensure_requirements_installed, check_qt_backend
     ensure_requirements_installed()
 except ImportError:
-    print("⚠️ Модуль автоустановки недоступен, пропускаем проверку зависимостей")
+    print("WARNING Модуль автоустановки недоступен, пропускаем проверку зависимостей")
 
 from .facade import get_color, reset_instance
 from .data.config import use_light_theme, use_alpha
@@ -73,8 +73,8 @@ def main() -> int:
         # Проверка Qt backend
         try:
             if not check_qt_backend():
-                print("❌ Qt backend не найден!")
-                print("💡 Установите PySide6:")
+                print("ERROR Qt backend не найден!")
+                print("TIP Установите PySide6:")
                 print("   pip install PySide6")
                 return 1
         except NameError:

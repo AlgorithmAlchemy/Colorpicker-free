@@ -47,12 +47,12 @@ class EnhancedColorPicker(QDialog):
 
         layout = QVBoxLayout()
 
-        # Создаем вкладки
+        # вкладки
         self._tab_widget = QTabWidget()
 
         # Вкладка обычного пикера (упрощенная версия)
         self._color_picker_widget = self._create_simple_color_picker()
-        self._tab_widget.addTab(self._color_picker_widget, "🎨 Цветовой пикер")
+        self._tab_widget.addTab(self._color_picker_widget, "COLOR Цветовой пикер")
 
         # Вкладка screen picker
         self._screen_picker = ScreenColorPicker()
@@ -61,7 +61,7 @@ class EnhancedColorPicker(QDialog):
 
         # Вкладка истории
         self._history_widget = self._create_history_widget()
-        self._tab_widget.addTab(self._history_widget, "📚 История")
+        self._tab_widget.addTab(self._history_widget, "DOCS История")
 
         layout.addWidget(self._tab_widget)
 
@@ -76,11 +76,11 @@ class EnhancedColorPicker(QDialog):
         self._save_state_button.clicked.connect(self.save_state)
         button_layout.addWidget(self._save_state_button)
 
-        self._ok_button = QPushButton("✅ OK")
+        self._ok_button = QPushButton("OK OK")
         self._ok_button.clicked.connect(self.accept)
         button_layout.addWidget(self._ok_button)
 
-        self._cancel_button = QPushButton("❌ Отмена")
+        self._cancel_button = QPushButton("ERROR Отмена")
         self._cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(self._cancel_button)
 
@@ -216,7 +216,7 @@ class EnhancedColorPicker(QDialog):
         layout.addStretch()
 
         # Кнопка очистки истории
-        clear_button = QPushButton("🗑️ Очистить историю")
+        clear_button = QPushButton("🗑 Очистить историю")
         clear_button.clicked.connect(self._clear_history)
         layout.addWidget(clear_button)
 
@@ -253,7 +253,7 @@ class EnhancedColorPicker(QDialog):
             f"border: 1px solid gray; background-color: rgb({r},{g},{b});"
         )
 
-        # Обновляем информацию
+        # Информация
         self._rgb_info.setText(f"RGB: ({r}, {g}, {b})")
         self._hex_info.setText(f"HEX: #{hex_color}")
 
@@ -262,7 +262,7 @@ class EnhancedColorPicker(QDialog):
         if not hasattr(self, '_color_history'):
             self._color_history = []
 
-        # Добавляем новый цвет
+        # Новый цвет
         self._color_history.append({
             'color': color,
             'source': source,
@@ -277,15 +277,15 @@ class EnhancedColorPicker(QDialog):
 
     def _update_history_display(self):
         """Обновляет отображение истории."""
-        # Очищаем старые виджеты
+        # Старые виджеты
         for i in reversed(range(self._history_layout.count())):
             child = self._history_layout.itemAt(i).widget()
             if child:
                 child.setParent(None)
 
-        # Добавляем новые
+        # Новые
         if hasattr(self, '_color_history'):
-            for i, entry in enumerate(reversed(self._color_history[-10:])):  # Показываем последние 10
+            for i, entry in enumerate(reversed(self._color_history[-10:])):  # последние 10
                 color = entry['color']
                 source = entry['source']
 
@@ -347,21 +347,21 @@ class EnhancedColorPicker(QDialog):
 
             # Визуальная обратная связь
             original_text = self._save_state_button.text()
-            self._save_state_button.setText("✅ Сохранено!")
+            self._save_state_button.setText("OK Сохранено!")
             QTimer.singleShot(1000, lambda: self._save_state_button.setText(original_text))
 
         except Exception as e:
-            self._show_status(f"❌ Ошибка сохранения: {e}", 3000)
+            self._show_status(f"ERROR Ошибка сохранения: {e}", 3000)
 
     def quick_save(self):
         """Быстрое сохранение текущего цвета."""
         self._add_to_history(self._current_color, "Quick Save")
-        self._show_status("⚡ Цвет быстро сохранен", 1500)
+        self._show_status("FAST Цвет быстро сохранен", 1500)
 
     def _load_state(self):
         """Загружает сохраненное состояние."""
         try:
-            # Восстанавливаем состояние
+            # Состояние
             self._current_color = self._state_service.get_current_color()
             self._color_history = self._state_service.get_color_history()
 
@@ -371,7 +371,7 @@ class EnhancedColorPicker(QDialog):
             self._show_status("📂 Состояние загружено", 2000)
 
         except Exception as e:
-            self._show_status(f"⚠️ Ошибка загрузки состояния: {e}", 3000)
+            self._show_status(f"WARNING Ошибка загрузки состояния: {e}", 3000)
 
 
 
@@ -384,7 +384,7 @@ class EnhancedColorPicker(QDialog):
     def _show_help(self):
         """Показывает справку."""
         help_text = (
-            "🎨 Enhanced Color Picker - Справка:\n\n"
+            "COLOR Enhanced Color Picker - Справка:\n\n"
             "Вкладки:\n"
             "• Цветовой пикер - обычный выбор цвета\n"
             "• Экранный пикер - выбор цвета с экрана\n"

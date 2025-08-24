@@ -131,7 +131,7 @@ def demonstrate_color_manager():
     """Демонстрирует использование ColorManager."""
     print("=== Демонстрация ColorManager ===")
 
-    # Создание менеджера с альфа-каналом
+    # Менеджер с альфа-каналом
     manager = ColorManager(light_theme=True, use_alpha_channel=True)
 
     # Выбор первого цвета
@@ -177,7 +177,7 @@ def demonstrate_color_conversion():
 
     # Проверка корректности
     assert initial_rgb == rgb_back
-    print("✅ Конвертация корректна!")
+    print("OK Конвертация корректна!")
 
 
 def demonstrate_validation():
@@ -198,9 +198,9 @@ def demonstrate_validation():
     for color in test_colors:
         try:
             validated = validate_color(color)
-            print(f"✅ {color} - валиден")
+            print(f"OK {color} - валиден")
         except (ColorFormatError, ValidationError) as e:
-            print(f"❌ {color} - невалиден: {e}")
+            print(f"ERROR {color} - невалиден: {e}")
 
 
 def demonstrate_configuration():
@@ -226,7 +226,7 @@ def demonstrate_configuration():
 
 def main():
     """Основная функция демонстрации."""
-    print("🎨 Демонстрация colorpicker 2.0")
+    print("COLOR Демонстрация colorpicker 2.0")
     print("=" * 50)
 
     try:
@@ -239,7 +239,7 @@ def main():
         print("🎉 Демонстрация завершена!")
 
     except Exception as e:
-        print(f"\n❌ Ошибка при демонстрации: {e}")
+        print(f"\nERROR Ошибка при демонстрации: {e}")
 
 
 if __name__ == "__main__":

@@ -98,7 +98,7 @@ class ScreenColorPicker(QWidget):
 
         self.setLayout(layout)
 
-        # Инициализируем с черным цветом
+        # С черным цветом
         self._update_color_info((0, 0, 0), (0, 0))
 
     def _setup_shortcuts(self):
@@ -119,10 +119,10 @@ class ScreenColorPicker(QWidget):
         """Начинает процесс выбора цвета с экрана."""
         try:
             self._is_picking = True
-            self._pick_button.setText("🎯 Кликните на экран...")
+            self._pick_button.setText("TARGET Кликните на экран...")
             self._pick_button.setEnabled(False)
 
-            # Создаем полноэкранное прозрачное окно
+            # полноэкранное прозрачное окно
             self._create_overlay()
 
         except Exception as e:
@@ -180,14 +180,14 @@ class ScreenColorPicker(QWidget):
 
             print(f"💾 Цвет сохранен: RGB{self._current_color} в позиции {self._current_position}")
 
-            # Показываем уведомление
+            # Уведомление
             self._show_save_notification()
 
     def _show_save_notification(self):
         """Показывает уведомление о сохранении."""
         # Временно меняем текст кнопки
         original_text = self._save_button.text()
-        self._save_button.setText("✅ Сохранено!")
+        self._save_button.setText("OK Сохранено!")
 
         QTimer.singleShot(1000, lambda: self._save_button.setText(original_text))
 
@@ -197,12 +197,12 @@ class ScreenColorPicker(QWidget):
         hex_color = rgb2hex(color)
         x, y = position
 
-        # Обновляем превью цвета
+        # Превью цвета
         self._color_preview.setStyleSheet(
             f"border: 1px solid gray; background-color: rgb({r},{g},{b});"
         )
 
-        # Обновляем текстовую информацию
+        # Текстовая информацию
         self._rgb_label.setText(f"RGB: ({r}, {g}, {b})")
         self._hex_label.setText(f"HEX: #{hex_color}")
         self._pos_label.setText(f"Позиция: ({x}, {y})")
@@ -217,7 +217,7 @@ class ScreenColorPicker(QWidget):
 
     def _handle_error(self, message: str):
         """Обрабатывает ошибки."""
-        print(f"❌ Ошибка: {message}")
+        print(f"ERROR Ошибка: {message}")
         self._finish_picking()
 
 
@@ -239,10 +239,10 @@ class ScreenOverlay(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowState(Qt.WindowFullScreen)
 
-        # Устанавливаем курсор-прицел
+        # Курсор-прицел
         self.setCursor(Qt.CrossCursor)
 
-        # Получаем размеры всех экранов
+        # Размеры всех экранов
         app = QApplication.instance()
         if app:
             screens = app.screens()
@@ -254,7 +254,7 @@ class ScreenOverlay(QWidget):
     def mousePressEvent(self, event):
         """Обрабатывает клик мыши для выбора цвета."""
         if event.button() == Qt.LeftButton:
-            # Получаем позицию клика в глобальных координатах
+            # Позиция клика в глобальных координатах
             global_pos = event.globalPos()
             color = self._get_pixel_color(global_pos)
 
@@ -291,7 +291,7 @@ class ScreenOverlay(QWidget):
             if not app:
                 return None
 
-            # Получаем скриншот экрана
+            # Скриншот экрана
             screen = app.primaryScreen()
             if not screen:
                 return None
@@ -307,7 +307,7 @@ class ScreenOverlay(QWidget):
                 # Обрезаем до нужного пикселя
                 pixmap = pixmap.copy(position.x(), position.y(), 1, 1)
 
-            # Получаем цвет пикселя
+            # Цвет пикселя
             image = pixmap.toImage()
             if image.isNull():
                 return None
@@ -473,7 +473,7 @@ def get_pixel_color_advanced(x: int, y: int) -> Optional[RGBColor]:
         try:
             pixmap = screen.grabWindow(0)
             if not pixmap.isNull():
-                # Проверяем границы экрана
+                # границы экрана
                 if 0 <= x < pixmap.width() and 0 <= y < pixmap.height():
                     pixmap = pixmap.copy(x, y, 1, 1)
                     image = pixmap.toImage()
@@ -491,10 +491,10 @@ def get_pixel_color_advanced(x: int, y: int) -> Optional[RGBColor]:
             import win32con
             import win32api
             
-            # Получаем DC экрана
+            # DC экрана
             hdc = win32gui.GetDC(0)
             if hdc:
-                # Получаем цвет пикселя
+                # Цвет пикселя
                 color = win32gui.GetPixel(hdc, x, y)
                 win32gui.ReleaseDC(0, hdc)
                 
@@ -530,7 +530,7 @@ def get_pixel_color_with_retry(x: int, y: int, max_retries: int = 3) -> Optional
     """
     for attempt in range(max_retries):
         try:
-            # Сначала пробуем обычный метод
+            # Пробуем обычный метод
             color = get_pixel_color(x, y)
             if color:
                 return color

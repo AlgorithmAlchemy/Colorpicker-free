@@ -32,7 +32,7 @@ def get_color(initial_color: Optional[Tuple] = None) -> Tuple:
     # Получение текущей конфигурации
     config = get_config()
 
-    # Создание нового экземпляра если не существует или настройки изменились
+        # Новый экземпляр если не существует или настройки изменились
     if _instance is None or config.use_alpha != _instance.use_alpha:
         _instance = SimpleColorPicker(
             use_alpha=config.use_alpha
@@ -45,7 +45,7 @@ def reset_instance() -> None:
     """
     Сбрасывает глобальный экземпляр пикера.
     
-    Полезно при изменении настроек для принудительного создания нового экземпляра.
+    Полезно при изменении настроек для принудительного создания экземпляра.
     
     Examples:
         >>> use_light_theme(True)

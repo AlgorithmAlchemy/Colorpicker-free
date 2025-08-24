@@ -34,7 +34,7 @@ class SettingsManager:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 
-                # Создаем таблицу настроек
+                # таблицу настроек
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS settings (
                         key TEXT PRIMARY KEY,
@@ -45,7 +45,7 @@ class SettingsManager:
                     )
                 """)
                 
-                # Создаем таблицу истории цветов
+                # таблицу истории цветов
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS color_history (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +57,7 @@ class SettingsManager:
                     )
                 """)
                 
-                # Создаем таблицу пользовательских настроек окна
+                # таблицу пользовательских настроек окна
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS window_settings (
                         key TEXT PRIMARY KEY,

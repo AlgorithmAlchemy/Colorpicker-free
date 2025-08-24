@@ -37,7 +37,7 @@ class UIUpdater(QObject):
             if widget and widget.isVisible():
                 self.update_widget(widget)
         
-        # Отправляем сигнал для обновления
+        # Сигнал для обновления
         self.language_changed.emit()
     
     def update_widget(self, widget: QWidget):
@@ -45,7 +45,7 @@ class UIUpdater(QObject):
         if hasattr(widget, 'update_language'):
             widget.update_language()
         
-        # Обновляем дочерние виджеты
+        # Дочерние виджеты
         for child in widget.findChildren(QWidget):
             if hasattr(child, 'update_language'):
                 child.update_language()

@@ -21,7 +21,7 @@ class HexColor:
             raise ColorFormatError(
                 f"Неверный HEX формат: {self.value}"
             )
-        # Сохраняем нормализованное значение
+        # Нормализованное значение
         object.__setattr__(self, 'value', normalized)
     
     @staticmethod

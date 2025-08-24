@@ -47,7 +47,7 @@ class ColorStateService:
                 'timestamp': __import__('time').time()
             }
             
-            # Создаем директорию если не существует
+            # директорию если не существует
             os.makedirs(self.config_dir, exist_ok=True)
             
             with open(self.state_file, 'w', encoding='utf-8') as f:

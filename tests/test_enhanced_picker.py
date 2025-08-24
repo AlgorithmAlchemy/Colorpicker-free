@@ -18,10 +18,10 @@ def test_basic_picker():
 
     try:
         from app import get_color, get_enhanced_color, pick_screen_color
-        print("✅ Импорт успешен")
+        print("OK Импорт успешен")
         return True
     except Exception as e:
-        print(f"❌ Ошибка импорта: {e}")
+        print(f"ERROR Ошибка импорта: {e}")
         return False
 
 
@@ -37,19 +37,19 @@ def test_enhanced_picker():
             app = QApplication(sys.argv)
 
         picker = EnhancedColorPicker(light_theme=False, use_alpha=False)
-        print("✅ EnhancedColorPicker создан успешно")
+        print("OK EnhancedColorPicker инициализирован успешно")
 
-        # Проверяем, что все компоненты на месте
+        # все компоненты на месте
         assert hasattr(picker, '_tab_widget'), "Отсутствует _tab_widget"
         assert hasattr(picker, '_color_picker_widget'), "Отсутствует _color_picker_widget"
         assert hasattr(picker, '_screen_picker'), "Отсутствует _screen_picker"
         assert hasattr(picker, 'save_state'), "Отсутствует метод save_state"
 
-        print("✅ Все компоненты на месте")
+        print("OK Все компоненты на месте")
         return True
 
     except Exception as e:
-        print(f"❌ Ошибка тестирования: {e}")
+        print(f"ERROR Ошибка тестирования: {e}")
         return False
 
 
@@ -65,24 +65,24 @@ def test_screen_picker():
             app = QApplication(sys.argv)
 
         picker = ScreenColorPicker()
-        print("✅ ScreenColorPicker создан успешно")
+        print("OK ScreenColorPicker инициализирован успешно")
 
-        # Проверяем методы
+        # методы
         assert hasattr(picker, 'start_screen_picking'), "Отсутствует start_screen_picking"
         assert hasattr(picker, 'save_current_color'), "Отсутствует save_current_color"
         assert hasattr(picker, 'get_color_history'), "Отсутствует get_color_history"
 
-        print("✅ Все методы на месте")
+        print("OK Все методы на месте")
         return True
 
     except Exception as e:
-        print(f"❌ Ошибка тестирования: {e}")
+        print(f"ERROR Ошибка тестирования: {e}")
         return False
 
 
 def interactive_test():
     """Интерактивный тест."""
-    print("\n🎮 Интерактивный тест")
+    print("\nGAME Интерактивный тест")
     print("Выберите тест:")
     print("1. Показать обычный пикер")
     print("2. Показать улучшенный пикер")
@@ -127,13 +127,13 @@ def interactive_test():
         return True
 
     except Exception as e:
-        print(f"❌ Ошибка интерактивного теста: {e}")
+        print(f"ERROR Ошибка интерактивного теста: {e}")
         return False
 
 
 def main():
     """Основная функция тестирования."""
-    print("🚀 Тестирование Enhanced Color Picker")
+    print("START Тестирование Enhanced Color Picker")
     print("=" * 50)
 
     tests = [
@@ -159,7 +159,7 @@ def main():
         if input("\nЗапустить интерактивный тест? (y/n): ").lower() == 'y':
             interactive_test()
     else:
-        print("❌ Некоторые тесты не прошли")
+        print("ERROR Некоторые тесты не прошли")
 
     return passed == total
 

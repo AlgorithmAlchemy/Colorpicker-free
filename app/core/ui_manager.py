@@ -1,7 +1,7 @@
 """
 Менеджер пользовательского интерфейса
 
-Современный менеджер для управления UI компонентами и их взаимодействием.
+Менеджер для управления UI компонентами и их взаимодействием.
 """
 
 from typing import Optional, Dict, Any, Callable, List
@@ -197,17 +197,17 @@ class ColorPickerWidget(QWidget):
 
     def _update_ui_from_color(self):
         """Обновляет UI на основе текущего цвета."""
-        # Обновляем RGB вводы
+        # RGB вводы
         r, g, b = self._state.current_color
         self.red_input.setText(str(r))
         self.green_input.setText(str(g))
         self.blue_input.setText(str(b))
 
-        # Обновляем HEX ввод
+        # HEX ввод
         hex_color = f"{r:02x}{g:02x}{b:02x}"
         self.hex_input.setText(hex_color)
 
-        # Обновляем пикеры
+        # Пикеры
         # (здесь будет логика обновления HSV пикеров)
 
     def _on_sv_changed(self, saturation: int, value: int):
@@ -428,7 +428,7 @@ class UIManager:
     """
     Менеджер пользовательского интерфейса.
     
-    Управляет созданием, настройкой и взаимодействием UI компонентов.
+    Управляет настройкой и взаимодействием UI компонентов.
     """
 
     def __init__(self):
@@ -454,16 +454,16 @@ class UIManager:
         dialog.setModal(True)
         dialog.setFixedSize(400, 500)
 
-        # Создаем основной виджет
+        # основной виджет
         color_picker = ColorPickerWidget()
         if initial_color:
             color_picker.set_color(initial_color)
 
-        # Настраиваем макет
+        # макет
         layout = QVBoxLayout(dialog)
         layout.addWidget(color_picker)
 
-        # Подключаем сигналы
+        # Сигналы
         color_picker.color_selected.connect(dialog.accept)
         color_picker.color_cancelled.connect(dialog.reject)
 

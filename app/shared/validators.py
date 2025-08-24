@@ -198,11 +198,11 @@ def validate_hex_color(color: Any) -> HexColor:
     # Убираем # если есть
     hex_color = color.lstrip('#')
 
-    # Проверяем длину
+    # длину
     if len(hex_color) not in [3, 6]:
         raise ColorFormatError(f"HEX цвет должен содержать 3 или 6 символов, получено {len(hex_color)}")
 
-    # Проверяем что все символы являются шестнадцатеричными
+    # все символы являются шестнадцатеричными
     try:
         int(hex_color, 16)
     except ValueError:

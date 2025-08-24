@@ -1,5 +1,5 @@
 """
-UI файлы - сгенерированные из .ui файлов классы интерфейса
+UI файлы - классы интерфейса
 """
 
 from .ui_dark import Ui_ColorPicker as Ui_Dark

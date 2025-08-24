@@ -15,10 +15,10 @@ def run_command(command: list[str], description: str) -> bool:
     print(f"🔄 {description}...")
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
-        print(f"✅ {description} завершено успешно")
+        print(f"OK {description} завершено успешно")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Ошибка при {description.lower()}:")
+        print(f"ERROR Ошибка при {description.lower()}:")
         print(f"   Команда: {' '.join(command)}")
         print(f"   Код ошибки: {e.returncode}")
         if e.stdout:
@@ -30,15 +30,15 @@ def run_command(command: list[str], description: str) -> bool:
 
 def main():
     """Основная функция настройки."""
-    print("🚀 Настройка среды разработки colorpicker")
+    print("START Настройка среды разработки colorpicker")
     print("=" * 50)
 
     # Проверка Python версии
     if sys.version_info < (3, 8):
-        print("❌ Требуется Python 3.8 или выше")
+        print("ERROR Требуется Python 3.8 или выше")
         sys.exit(1)
 
-    print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+    print(f"OK Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
 
     # Установка зависимостей для разработки
     commands = [
@@ -65,7 +65,7 @@ print("  flake8 colorpicker/             # Проверка стиля кода"
 print("  mypy colorpicker/               # Проверка типов")
 print("  python -m colorpicker           # Запуск цветового пикера")
 else:
-print("\n❌ Настройка завершена с ошибками")
+print("\nERROR Настройка завершена с ошибками")
 sys.exit(1)
 
 if __name__ == "__main__":

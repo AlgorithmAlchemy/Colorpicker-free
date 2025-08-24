@@ -188,7 +188,7 @@ class ColorPicker(QDialog):
 
     def _update_button_texts(self):
         """Обновляет текст кнопок с переводами."""
-        # Обновляем текст кнопок в buttonBox
+        # Текст кнопок в buttonBox
         ok_button = self.ui.buttonBox.button(self.ui.buttonBox.Ok)
         if ok_button:
             ok_button.setText(get_text("ok"))

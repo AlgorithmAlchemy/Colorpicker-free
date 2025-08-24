@@ -135,10 +135,10 @@ class EventBus:
         if not self._enabled:
             return False
 
-        # Добавляем в историю
+        # В историю
         self._add_to_history(event)
 
-        # Получаем обработчики
+        # Обработчики
         handlers = self._get_handlers(event.type)
 
         if not handlers:
@@ -150,7 +150,7 @@ class EventBus:
             if h.filter_func is None or h.filter_func(event)
         ]
 
-        # Выполняем обработчики
+        # Обработчики
         success = True
         one_time_handlers = []
 
@@ -174,7 +174,7 @@ class EventBus:
                 )
                 self.publish(error_event)
 
-        # Удаляем одноразовые обработчики
+        # Одноразовые обработчики
         if one_time_handlers:
             with self._lock:
                 for handler in one_time_handlers:
@@ -280,7 +280,7 @@ class EventBus:
         if self._async_loop and self._async_loop.is_running():
             asyncio.create_task(self._run_async_handler(handler, event))
         else:
-            # Запускаем в отдельном потоке
+            # В отдельном потоке
             threading.Thread(
                 target=self._run_async_handler_sync,
                 args=(handler, event),
@@ -314,10 +314,10 @@ class EventBus:
 
     async def _publish_async(self, event: Event) -> bool:
         """Публикует событие асинхронно."""
-        # Добавляем в историю
+        # В историю
         self._add_to_history(event)
 
-        # Получаем обработчики
+        # Обработчики
         handlers = self._get_handlers(event.type)
 
         if not handlers:
@@ -329,7 +329,7 @@ class EventBus:
             if h.filter_func is None or h.filter_func(event)
         ]
 
-        # Выполняем обработчики
+        # Обработчики
         success = True
         one_time_handlers = []
 
@@ -353,7 +353,7 @@ class EventBus:
                 )
                 await self._publish_async(error_event)
 
-        # Удаляем одноразовые обработчики
+        # Одноразовые обработчики
         if one_time_handlers:
             with self._lock:
                 for handler in one_time_handlers:
