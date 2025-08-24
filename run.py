@@ -7,16 +7,99 @@
 """
 
 import sys
-import threading
-import time
-import tempfile
 import os
-from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox,
-    QSizePolicy, QMenu, QSystemTrayIcon
-)
-from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QEvent
-from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAction
+import time
+import threading
+import tempfile
+
+# Импортируем логгер
+from logger import logger
+
+# Проверяем доступность PyQt5
+try:
+    from PyQt5.QtWidgets import (QApplication, QMainWindow, QLabel, QVBoxLayout, 
+                                QWidget, QSystemTrayIcon, QMenu, QAction, QSlider,
+                                QHBoxLayout, QPushButton, QColorDialog, QMessageBox,
+                                QInputDialog, QLineEdit, QDialog, QTextEdit, QCheckBox,
+                                QGroupBox, QRadioButton, QButtonGroup, QComboBox,
+                                QSpinBox, QDoubleSpinBox, QTabWidget, QFrame,
+                                QSplitter, QScrollArea, QGridLayout, QFormLayout,
+                                QProgressBar, QListWidget, QTreeWidget, QTableWidget,
+                                QHeaderView, QAbstractItemView, QStyledItemDelegate,
+                                QStyle, QStyleFactory, QFontDialog, QFileDialog,
+                                QDialogButtonBox, QToolButton, QToolBar, QStatusBar,
+                                QDockWidget, QMdiArea, QMdiSubWindow, QSplashScreen,
+                                QWizard, QWizardPage, QCalendarWidget, QDateEdit,
+                                QTimeEdit, QDateTimeEdit, QLCDNumber, QDial,
+                                QBusyIndicator, QStackedWidget, QToolBox, QTabBar,
+                                QRubberBand, QSizeGrip, QMenuBar)
+    from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QPoint, QRect, QSize
+    from PyQt5.QtGui import QPixmap, QPainter, QColor, QFont, QIcon, QPalette, QBrush
+    from PyQt5.QtCore import QCoreApplication, QTranslator, QLocale, QLibraryInfo
+    PYQT5_AVAILABLE = True
+    logger.success("PyQt5 доступен")
+except ImportError:
+    PYQT5_AVAILABLE = False
+    logger.error("PyQt5 не найден")
+
+# Проверяем доступность keyboard
+try:
+    import keyboard
+    KEYBOARD_AVAILABLE = True
+    logger.success("keyboard доступен для глобальных горячих клавиш")
+except ImportError:
+    KEYBOARD_AVAILABLE = False
+    logger.error("keyboard не найден")
+
+# Проверяем доступность pywin32
+try:
+    import win32api
+    import win32con
+    import win32gui
+    import win32process
+    import ctypes
+    from ctypes import wintypes
+
+    # RegisterHotKey действительно доступен
+    if hasattr(win32api, 'RegisterHotKey'):
+        WIN32_AVAILABLE = True
+        logger.success("win32api доступен для глобальных горячих клавиш")
+
+        # Дополнительные константы для работы с окнами
+        WS_EX_TOPMOST = 0x0008
+        WS_EX_LAYERED = 0x00080000
+        LWA_ALPHA = 0x00000002
+        LWA_COLORKEY = 0x00000001
+
+        # Дополнительные константы для максимально агрессивной работы
+        WS_EX_NOACTIVATE = 0x08000000
+        WS_EX_TOOLWINDOW = 0x00000080
+        WS_EX_APPWINDOW = 0x00040000
+        WS_EX_WINDOWEDGE = 0x00000100
+
+        # Функции для работы с окнами
+        SetWindowLong = ctypes.windll.user32.SetWindowLongW
+        GetWindowLong = ctypes.windll.user32.GetWindowLongW
+        SetLayeredWindowAttributes = ctypes.windll.user32.SetLayeredWindowAttributes
+
+        # Дополнительные функции для максимально агрессивной работы
+        SetWindowPos = ctypes.windll.user32.SetWindowPos
+        GetWindowRect = ctypes.windll.user32.GetWindowRect
+        GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
+        SetForegroundWindow = ctypes.windll.user32.SetForegroundWindow
+        BringWindowToTop = ctypes.windll.user32.BringWindowToTop
+        IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+        ShowWindow = ctypes.windll.user32.ShowWindow
+        UpdateWindow = ctypes.windll.user32.UpdateWindow
+
+    else:
+        WIN32_AVAILABLE = False
+        logger.error("win32api не поддерживает RegisterHotKey")
+except ImportError:
+    WIN32_AVAILABLE = False
+    logger.error("pywin32 не найден")
+
+
 
 # Импорт системы интернационализации
 try:
@@ -26,18 +109,49 @@ try:
     I18N_AVAILABLE = True
 except ImportError:
     I18N_AVAILABLE = False
-    print("Система интернационализации недоступна")
+    logger.warning("Система интернационализации недоступна")
 
 # Попытка импорта win32api для глобальных горячих клавиш
 try:
     import win32api
     import win32con
     import win32gui
+    import win32process
+    import ctypes
+    from ctypes import wintypes
 
     # RegisterHotKey действительно доступен
     if hasattr(win32api, 'RegisterHotKey'):
         WIN32_AVAILABLE = True
-        print("OK win32api доступен для глобальных горячих клавиш")
+        logger.success("win32api доступен для глобальных горячих клавиш")
+        
+        # Дополнительные константы для работы с окнами
+        WS_EX_TOPMOST = 0x0008
+        WS_EX_LAYERED = 0x00080000
+        LWA_ALPHA = 0x00000002
+        LWA_COLORKEY = 0x00000001
+        
+        # Дополнительные константы для максимально агрессивной работы
+        WS_EX_NOACTIVATE = 0x08000000
+        WS_EX_TOOLWINDOW = 0x00000080
+        WS_EX_APPWINDOW = 0x00040000
+        WS_EX_WINDOWEDGE = 0x00000100
+        
+        # Функции для работы с окнами
+        SetWindowLong = ctypes.windll.user32.SetWindowLongW
+        GetWindowLong = ctypes.windll.user32.GetWindowLongW
+        SetLayeredWindowAttributes = ctypes.windll.user32.SetLayeredWindowAttributes
+        
+        # Дополнительные функции для максимально агрессивной работы
+        SetWindowPos = ctypes.windll.user32.SetWindowPos
+        GetWindowRect = ctypes.windll.user32.GetWindowRect
+        GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
+        SetForegroundWindow = ctypes.windll.user32.SetForegroundWindow
+        BringWindowToTop = ctypes.windll.user32.BringWindowToTop
+        IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+        ShowWindow = ctypes.windll.user32.ShowWindow
+        UpdateWindow = ctypes.windll.user32.UpdateWindow
+        
     else:
         WIN32_AVAILABLE = False
         print("ERROR win32api не поддерживает RegisterHotKey")
@@ -685,18 +799,21 @@ class FixedDesktopColorPicker(QWidget):
         else:
             self.setWindowTitle("Desktop Color Picker (Fixed)")
 
-        # Флаги для работы в полноэкранных играх
+        # Флаги для работы в полноэкранных играх с максимальным приоритетом
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint |
             Qt.FramelessWindowHint |
             Qt.Tool |  # Делает окно инструментом (не в панели задач)
             Qt.WindowSystemMenuHint |  # Системное меню
-            Qt.WindowCloseButtonHint  # Кнопка закрытия
+            Qt.WindowCloseButtonHint |  # Кнопка закрытия
+            Qt.X11BypassWindowManagerHint  # Обходит оконный менеджер
         )
 
         # Дополнительные настройки для принудительного отображения поверх игр
         self.setAttribute(Qt.WA_AlwaysShowToolTips, True)
         self.setAttribute(Qt.WA_ShowWithoutActivating, False)  # Показывать с активацией
+        self.setAttribute(Qt.WA_TranslucentBackground, False)  # Непрозрачный фон
+        self.setAttribute(Qt.WA_NoSystemBackground, False)  # Системный фон
         self.setWindowState(Qt.WindowActive)  # Принудительно активное состояние
 
         # Переменные
@@ -726,7 +843,12 @@ class FixedDesktopColorPicker(QWidget):
         # Таймер для проверки видимости окна в играх
         self.visibility_timer = QTimer()
         self.visibility_timer.timeout.connect(self._safe_check_window_visibility)
-        self.visibility_timer.start(2000)  # Проверка каждые 2 секунды
+        self.visibility_timer.start(250)  # Проверка каждые 250мс для максимально быстрой реакции
+
+        # Таймер для агрессивного восстановления окна в играх
+        self.aggressive_timer = QTimer()
+        self.aggressive_timer.timeout.connect(self._aggressive_window_restore)
+        self.aggressive_timer.start(100)  # Проверка каждые 100мс для максимально агрессивного мониторинга
 
         # Обработчик потери фокуса приложения
         QApplication.instance().focusChanged.connect(self._on_application_focus_changed)
@@ -1548,7 +1670,7 @@ class FixedDesktopColorPicker(QWidget):
             traceback.print_exc()
 
     def _toggle_always_on_top(self):
-        """Переключает режим 'поверх всех окон'."""
+        """Переключает режим 'поверх всех окон' с максимально агрессивными методами для игр."""
         try:
             # Текущая позицию окна
             current_pos = self.pos()
@@ -1564,19 +1686,24 @@ class FixedDesktopColorPicker(QWidget):
                     Qt.WindowSystemMenuHint |
                     Qt.WindowCloseButtonHint
                 )
+                # Убираем атрибут принудительного отображения поверх всех
+                self.setAttribute(Qt.WA_AlwaysStackOnTop, False)
                 print("📌 Окно больше не поверх всех окон")
             else:
-                # Включаем режим "поверх всех окон" с принудительной активацией
+                # Включаем режим "поверх всех окон" с максимальными флагами
                 self.setWindowFlags(
                     Qt.WindowStaysOnTopHint |
                     Qt.FramelessWindowHint |
                     Qt.Tool |
                     Qt.WindowSystemMenuHint |
                     Qt.WindowCloseButtonHint |
-                    Qt.X11BypassWindowManagerHint  # Обходит оконный менеджер
+                    Qt.X11BypassWindowManagerHint |  # Обходит оконный менеджер
+                    Qt.WindowTransparentForInput  # Прозрачно для ввода
                 )
+                # Устанавливаем атрибут принудительного отображения поверх всех
+                self.setAttribute(Qt.WA_AlwaysStackOnTop, True)
 
-                print("📌 Окно закреплено поверх всех окон")
+                print("📌 Окно закреплено поверх всех окон с максимальным приоритетом")
 
             # Принудительно показываем окно в любом случае
             self.show()
@@ -1586,14 +1713,90 @@ class FixedDesktopColorPicker(QWidget):
             # Позиция
             self.move(current_pos)
 
-            # Дополнительная проверка через небольшую задержку
+            # Дополнительные попытки поднять окно
+            QTimer.singleShot(50, lambda: self.raise_())
             QTimer.singleShot(100, self._ensure_window_visible)
+            QTimer.singleShot(200, lambda: self.activateWindow())
+
+            # Если включен режим "поверх всех", используем ультра-агрессивные методы
+            if not is_currently_on_top and WIN32_AVAILABLE:
+                QTimer.singleShot(150, self._force_ultra_toggle_topmost)
+                # Запускаем постоянную проверку для игр
+                QTimer.singleShot(200, self._constant_game_check)
 
         except Exception as e:
             print(f"Ошибка переключения режима 'поверх всех окон': {e}")
             # В случае ошибки принудительно показываем окно
             self.show()
             self.raise_()
+
+    def _force_game_toggle_topmost(self):
+        """Максимально агрессивная установка поверх всех через Windows API после переключения режима."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self.winId()
+                if hwnd:
+                    # Устанавливаем расширенные стили окна для максимального приоритета
+                    current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                    new_style = current_style | WS_EX_TOPMOST | WS_EX_LAYERED
+                    SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+                    
+                    # Принудительно устанавливаем поверх всех
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                          win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                    
+                    # Дополнительные попытки через короткие интервалы
+                    for delay in [100, 200, 300, 500]:
+                        QTimer.singleShot(delay, lambda: self._force_game_window_topmost())
+                    
+                    print("GAME Применены максимально агрессивные методы после переключения режима")
+        except Exception as e:
+            print(f"Ошибка расширенных методов Windows API после переключения: {e}")
+
+    def _force_ultra_toggle_topmost(self):
+        """Ультра-агрессивная установка поверх всех через все доступные Windows API методы после переключения режима."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self.winId()
+                if hwnd:
+                    # Устанавливаем максимально агрессивные стили окна
+                    current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                    new_style = (current_style | WS_EX_TOPMOST | WS_EX_LAYERED | 
+                                WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW)
+                    SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+                    
+                    # Принудительно поднимаем окно через все доступные методы
+                    BringWindowToTop(hwnd)
+                    SetForegroundWindow(hwnd)
+                    
+                    # Принудительно устанавливаем поверх всех
+                    SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                    
+                    # Дополнительные попытки через короткие интервалы
+                    for delay in [50, 100, 150, 200, 250, 300]:
+                        QTimer.singleShot(delay, lambda: self._force_ultra_topmost())
+                    
+                    print("GAME Применены ультра-агрессивные методы после переключения режима")
+        except Exception as e:
+            print(f"Ошибка ультра-агрессивных методов Windows API после переключения: {e}")
+
+    def _force_windows_topmost_after_toggle(self):
+        """Принудительная установка поверх всех через Windows API после переключения режима."""
+        try:
+            if WIN32_AVAILABLE:
+                import win32gui
+                import win32con
+                hwnd = self.winId()
+                if hwnd:
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                          win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                    print("TOOL Windows API применен после переключения режима")
+        except Exception as e:
+            print(f"Ошибка Windows API после переключения: {e}")
 
     def setup_system_tray(self):
         """Настраивает системный трей."""
@@ -1730,14 +1933,17 @@ class FixedDesktopColorPicker(QWidget):
             self.show_from_tray()
 
     def show_from_tray(self):
-        """Показывает окно из трея."""
+        """Показывает окно из трея с максимально агрессивными методами."""
         try:
+            # Принудительно восстанавливаем окно с ультра-агрессивными методами
+            self._ultra_aggressive_restore()
+            print("GAME Окно принудительно показано из системного трея с ультра-агрессивными методами")
+        except Exception as e:
+            print(f"Ошибка показа окна из трея: {e}")
+            # Fallback к обычному показу
             self.show()
             self.raise_()
             self.activateWindow()
-            print("TOOL Окно показано из трея")
-        except Exception as e:
-            print(f"Ошибка показа окна из трея: {e}")
 
     def hide_to_tray(self):
         """Скрывает окно в трей."""
@@ -1789,19 +1995,20 @@ class FixedDesktopColorPicker(QWidget):
             print(f"Ошибка проверки видимости окна: {e}")
 
     def force_show_window(self):
-        """Принудительно показывает окно в полноэкранных играх и приложениях типа Discord."""
+        """Максимально агрессивное принудительное отображение окна в играх и приложениях с высоким приоритетом."""
         try:
             # Текущая позицию
             current_pos = self.pos()
 
-            # Более агрессивные флаги для работы в Discord, FPS мониторах и других приложениях
+            # Максимально агрессивные флаги для работы поверх всех приложений
             self.setWindowFlags(
                 Qt.WindowStaysOnTopHint |
                 Qt.FramelessWindowHint |
                 Qt.Tool |
                 Qt.WindowSystemMenuHint |
                 Qt.WindowCloseButtonHint |
-                Qt.X11BypassWindowManagerHint  # Обходит оконный менеджер
+                Qt.X11BypassWindowManagerHint |  # Обходит оконный менеджер
+                Qt.WindowTransparentForInput  # Прозрачно для ввода (но видимо)
             )
 
             # Дополнительные атрибуты для принудительного отображения
@@ -1809,38 +2016,68 @@ class FixedDesktopColorPicker(QWidget):
             self.setAttribute(Qt.WA_ShowWithoutActivating, False)
             self.setAttribute(Qt.WA_TranslucentBackground, False)
             self.setAttribute(Qt.WA_NoSystemBackground, False)
+            self.setAttribute(Qt.WA_AlwaysStackOnTop, True)  # Всегда поверх всех окон
 
             # Принудительно показываем окно
             self.show()
             self.raise_()
             self.activateWindow()
 
-            # Дополнительная попытка поднять окно
-            QTimer.singleShot(100, lambda: self.raise_())
-            QTimer.singleShot(200, lambda: self.activateWindow())
+            # Множественные попытки поднять окно с разными интервалами
+            QTimer.singleShot(50, lambda: self.raise_())
+            QTimer.singleShot(100, lambda: self.activateWindow())
+            QTimer.singleShot(200, lambda: self.raise_())
+            QTimer.singleShot(300, lambda: self.activateWindow())
+            QTimer.singleShot(500, lambda: self.raise_())
 
-            # Попытка использовать Windows API для принудительного отображения
+            # Используем ультра-агрессивные методы для игр
             if WIN32_AVAILABLE:
                 try:
-                    import win32gui
-                    import win32con
                     hwnd = self.winId()
                     if hwnd:
-                        # Принудительно поднимаем окно через Windows API
-                        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
-                                              win32con.SWP_SHOWWINDOW)
-                        print("TOOL Использован Windows API для принудительного отображения")
+                        # Устанавливаем максимально агрессивные стили окна
+                        current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                        new_style = (current_style | WS_EX_TOPMOST | WS_EX_LAYERED | 
+                                    WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW)
+                        SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+                        
+                        # Принудительно поднимаем окно через все доступные методы
+                        BringWindowToTop(hwnd)
+                        SetForegroundWindow(hwnd)
+                        
+                        # Принудительно устанавливаем поверх всех через Windows API
+                        SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                    win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                        
+                        # Дополнительные попытки через короткие интервалы
+                        for delay in [50, 100, 150, 200, 250, 300]:
+                            QTimer.singleShot(delay, lambda: self._force_ultra_topmost())
+                        
+                        print("GAME Применены ультра-агрессивные методы отображения")
                 except Exception as api_error:
-                    print(f"Windows API недоступен: {api_error}")
+                    print(f"Ошибка ультра-агрессивных методов Windows API: {api_error}")
 
             # Позиция
             self.move(current_pos)
 
-            print("TOOL Окно принудительно восстановлено с расширенными флагами")
+            print("GAME Окно принудительно восстановлено с максимальными методами")
 
         except Exception as e:
             print(f"Ошибка принудительного показа окна: {e}")
+
+    def _force_windows_topmost(self, hwnd):
+        """Дополнительная принудительная установка окна поверх всех через Windows API."""
+        try:
+            if WIN32_AVAILABLE:
+                import win32gui
+                import win32con
+                # Повторная попытка установки поверх всех окон
+                win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                      win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                      win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+        except Exception as e:
+            print(f"Ошибка дополнительной установки поверх всех: {e}")
 
     def _on_window_hidden(self):
         """Обработчик скрытия окна - восстанавливает его."""
@@ -1880,8 +2117,112 @@ class FixedDesktopColorPicker(QWidget):
                 if not self.isVisible():
                     print("INFO Окно не видимо, восстанавливаем...")
                     self.force_show_window()
+                else:
+                    # Даже если окно видимо, проверяем, что оно действительно поверх всех
+                    if self.windowFlags() & Qt.WindowStaysOnTopHint:
+                        # Дополнительная проверка через Windows API
+                        if WIN32_AVAILABLE:
+                            QTimer.singleShot(100, self._verify_windows_topmost)
         except Exception as e:
             print(f"Ошибка проверки видимости окна: {e}")
+
+    def _verify_windows_topmost(self):
+        """Проверяет и принудительно устанавливает окно поверх всех через Windows API."""
+        try:
+            if WIN32_AVAILABLE:
+                import win32gui
+                import win32con
+                hwnd = self.winId()
+                if hwnd:
+                    # Проверяем текущий Z-order окна
+                    current_hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
+                    if current_hwnd != 0:  # Если есть окна поверх нашего
+                        # Принудительно поднимаем окно
+                        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                              win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                        print("TOOL Окно принудительно поднято через Windows API")
+        except Exception as e:
+            print(f"Ошибка проверки Windows API: {e}")
+
+    def _aggressive_window_restore(self):
+        """Максимально агрессивное восстановление окна для работы в играх и приложениях с высоким приоритетом."""
+        try:
+            # Только если окно должно быть видимым и включен режим "поверх всех"
+            if (hasattr(self, '_should_be_visible') and self._should_be_visible and 
+                self.windowFlags() & Qt.WindowStaysOnTopHint):
+                
+                # Проверяем видимость окна
+                if not self.isVisible():
+                    print("GAME Окно скрылось в игре, применяем ультра-агрессивные методы...")
+                    self._ultra_aggressive_restore()
+                else:
+                    # Даже если окно видимо, принудительно поднимаем его через все доступные методы
+                    self._force_ultra_topmost()
+                    
+                # Дополнительная постоянная проверка каждые 50ms
+                QTimer.singleShot(50, self._constant_game_check)
+                            
+        except Exception as e:
+            print(f"Ошибка агрессивного восстановления окна: {e}")
+
+    def _force_game_window_restore(self):
+        """Специальный метод для принудительного восстановления окна в играх."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self.winId()
+                if hwnd:
+                    # Устанавливаем расширенные стили окна для максимального приоритета
+                    current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                    new_style = current_style | WS_EX_TOPMOST | WS_EX_LAYERED
+                    SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+                    
+                    # Принудительно устанавливаем окно поверх всех
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                          win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                    
+                    # Показываем окно через Qt
+                    self.show()
+                    self.raise_()
+                    
+                    # Дополнительные попытки через короткие интервалы
+                    for delay in [50, 100, 200, 300, 500]:
+                        QTimer.singleShot(delay, lambda: self._force_game_window_topmost())
+                    
+                    print("GAME Применены максимально агрессивные методы восстановления")
+                    
+        except Exception as e:
+            print(f"Ошибка принудительного восстановления в игре: {e}")
+
+    def _force_game_window_topmost(self):
+        """Специальный метод для принудительной установки окна поверх всех в играх."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self.winId()
+                if hwnd:
+                    # Проверяем текущий Z-order
+                    current_hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
+                    
+                    # Если есть окна поверх нашего, принудительно поднимаем
+                    if current_hwnd != 0:
+                        # Устанавливаем максимальный приоритет через расширенные стили
+                        current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                        new_style = current_style | WS_EX_TOPMOST
+                        SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+                        
+                        # Принудительно устанавливаем поверх всех
+                        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                              win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                        
+                        # Дополнительно поднимаем через Qt
+                        self.raise_()
+                        
+                        print("GAME Окно принудительно поднято через расширенные методы")
+                        
+        except Exception as e:
+            print(f"Ошибка принудительной установки поверх всех в игре: {e}")
 
     def _on_application_focus_changed(self, old_widget, new_widget):
         """Обработчик изменения фокуса приложения."""
@@ -2166,6 +2507,131 @@ class FixedDesktopColorPicker(QWidget):
             msg.exec()
         except Exception as e:
             print(f"Ошибка показа диалога 'О программе': {e}")
+
+    def _emergency_window_restore(self):
+        """Экстренное восстановление окна с максимально агрессивными методами для критических ситуаций."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self.winId()
+                if hwnd:
+                    # Устанавливаем максимально агрессивные стили окна
+                    current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                    new_style = current_style | WS_EX_TOPMOST | WS_EX_LAYERED
+                    SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+                    
+                    # Принудительно устанавливаем поверх всех с максимальным приоритетом
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                          win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                    
+                    # Показываем окно через Qt
+                    self.show()
+                    self.raise_()
+                    self.activateWindow()
+                    
+                    # Множественные попытки через очень короткие интервалы
+                    for delay in [25, 50, 75, 100, 150, 200, 250, 300]:
+                        QTimer.singleShot(delay, lambda: self._force_game_window_topmost())
+                    
+                    print("EMERGENCY Применены экстренные методы восстановления окна")
+                    
+                    # Дополнительные агрессивные попытки через ctypes
+                    self._ultra_aggressive_restore()
+                    
+        except Exception as e:
+            print(f"Ошибка экстренного восстановления окна: {e}")
+
+    def _ultra_aggressive_restore(self):
+        """Ультра-агрессивное восстановление окна с использованием всех доступных Windows API методов."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self.winId()
+                if hwnd:
+                    # Получаем текущие координаты окна
+                    rect = ctypes.wintypes.RECT()
+                    GetWindowRect(hwnd, ctypes.byref(rect))
+                    
+                    # Устанавливаем максимально агрессивные стили
+                    current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                    new_style = (current_style | WS_EX_TOPMOST | WS_EX_LAYERED | 
+                                WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW)
+                    SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
+                    
+                    # Принудительно показываем окно через Windows API
+                    ShowWindow(hwnd, win32con.SW_SHOW)
+                    UpdateWindow(hwnd)
+                    
+                    # Принудительно поднимаем окно через все доступные методы
+                    BringWindowToTop(hwnd)
+                    SetForegroundWindow(hwnd)
+                    
+                    # Устанавливаем позицию с максимальным приоритетом
+                    SetWindowPos(hwnd, win32con.HWND_TOPMOST, 
+                                rect.left, rect.top, 
+                                rect.right - rect.left, rect.bottom - rect.top,
+                                win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                    
+                    # Дополнительные попытки через очень короткие интервалы
+                    for delay in [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+                        QTimer.singleShot(delay, lambda: self._force_ultra_topmost())
+                    
+                    print("ULTRA Применены ультра-агрессивные методы восстановления")
+                    
+        except Exception as e:
+            print(f"Ошибка ультра-агрессивного восстановления: {e}")
+
+    def _force_ultra_topmost(self):
+        """Ультра-агрессивная установка окна поверх всех через все доступные методы."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self.winId()
+                if hwnd:
+                    # Проверяем, видимо ли окно
+                    if not IsWindowVisible(hwnd):
+                        ShowWindow(hwnd, win32con.SW_SHOW)
+
+                    # Принудительно поднимаем через все методы
+                    BringWindowToTop(hwnd)
+                    SetForegroundWindow(hwnd)
+
+                    # Устанавливаем максимальный приоритет
+                    SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+
+                    # Обновляем окно
+                    UpdateWindow(hwnd)
+
+        except Exception as e:
+            print(f"Ошибка ультра-агрессивной установки поверх всех: {e}")
+
+    def _constant_game_check(self):
+        """Постоянная проверка и восстановление окна в играх каждые 50ms."""
+        try:
+            if (hasattr(self, '_should_be_visible') and self._should_be_visible and 
+                self.windowFlags() & Qt.WindowStaysOnTopHint):
+                
+                if WIN32_AVAILABLE:
+                    hwnd = self.winId()
+                    if hwnd:
+                        # Проверяем видимость через Windows API
+                        if not IsWindowVisible(hwnd):
+                            print("GAME Постоянная проверка: окно не видимо, восстанавливаем...")
+                            self._ultra_aggressive_restore()
+                        else:
+                            # Даже если видимо, принудительно поднимаем
+                            BringWindowToTop(hwnd)
+                            SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                        win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                                        win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
+                
+                # Планируем следующую проверку
+                QTimer.singleShot(50, self._constant_game_check)
+                
+        except Exception as e:
+            print(f"Ошибка постоянной проверки в играх: {e}")
+            # Даже при ошибке продолжаем проверку
+            QTimer.singleShot(50, self._constant_game_check)
 
     def closeEvent(self, event):
         """Обработчик закрытия окна."""
