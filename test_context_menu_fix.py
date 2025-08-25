@@ -165,6 +165,20 @@ class ContextMenuFixWindow(QWidget):
             else:
                 print("Клик игнорируется (режим кликов выключен)")
     
+    def focusOutEvent(self, event):
+        """Закрываем меню при потере фокуса."""
+        super().focusOutEvent(event)
+        if hasattr(self, '_context_menu') and self._context_menu:
+            self._context_menu.close()
+            self._force_cleanup_menus()
+    
+    def hideEvent(self, event):
+        """Закрываем меню при скрытии окна."""
+        super().hideEvent(event)
+        if hasattr(self, '_context_menu') and self._context_menu:
+            self._context_menu.close()
+            self._force_cleanup_menus()
+    
     def show_context_menu(self, pos):
         """Показывает контекстное меню поверх всех окон."""
         
@@ -174,7 +188,7 @@ class ContextMenuFixWindow(QWidget):
                 self._context_menu.close()
                 self._context_menu.deleteLater()
                 self._context_menu = None
-            except:
+            except Exception:
                 pass
         
         # Принудительная очистка всех меню
@@ -182,7 +196,7 @@ class ContextMenuFixWindow(QWidget):
             for child in self.findChildren(QMenu):
                 child.close()
                 child.deleteLater()
-        except:
+        except Exception:
             pass
         
         # Создаем новое меню
@@ -238,8 +252,11 @@ class ContextMenuFixWindow(QWidget):
         exit_action.triggered.connect(self.close)
         self._context_menu.addAction(exit_action)
         
-        # Показываем меню
-        self._context_menu.exec(pos)
+        # Показываем меню с автоматическим закрытием при клике вне области
+        self._context_menu.popup(pos)
+        
+        # Подключаем сигнал закрытия меню
+        self._context_menu.aboutToHide.connect(self._on_menu_closed)
         
         # Принудительно поднимаем меню поверх всех окон через Windows API
         if WIN32_AVAILABLE:
@@ -257,6 +274,16 @@ class ContextMenuFixWindow(QWidget):
         # Принудительная очистка после показа меню
         QTimer.singleShot(100, self._force_cleanup_menus)
 
+    def _on_menu_closed(self):
+        """Обработчик закрытия меню."""
+        try:
+            if hasattr(self, '_context_menu') and self._context_menu:
+                self._context_menu.close()
+                self._context_menu.deleteLater()
+                self._context_menu = None
+        except Exception:
+            pass
+
     def _force_cleanup_menus(self):
         """Принудительная очистка всех меню."""
         try:
@@ -270,7 +297,7 @@ class ContextMenuFixWindow(QWidget):
             for child in self.findChildren(QMenu):
                 child.close()
                 child.deleteLater()
-        except:
+        except Exception:
             pass
 
 def main():

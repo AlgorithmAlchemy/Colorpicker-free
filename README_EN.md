@@ -176,3 +176,4 @@ Tom F.
 
 **Note**: For global hotkeys to work in games and other applications, the `keyboard` library is required. Without it,
 hotkeys only work when the window is active.
+

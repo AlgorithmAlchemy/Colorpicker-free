@@ -22,6 +22,19 @@ from qtpy.QtWidgets import (
 
 from ..shared.types import RGBColor, RGBAColor, HSVColor
 from ..shared.exceptions import UIError
+E:\Code\PYTHON\Сolorpicker-free\.venv\Scripts\python.exe E:\Code\PYTHON\Сolorpicker-free\run.py 
+[07:29:56.741] PySide6 не найден
+[07:29:56.751] keyboard доступен для глобальных горячих клавиш
+[07:29:56.760] win32api не поддерживает RegisterHotKey
+ERROR win32api не поддерживает RegisterHotKey
+OK keyboard доступен для глобальных горячих клавиш
+Traceback (most recent call last):
+  File "E:\Code\PYTHON\Сolorpicker-free\run.py", line 314, in <module>
+    class Win32HotkeyManager(QObject):
+                             ^^^^^^^
+NameError: name 'QObject' is not defined. Did you mean: 'object'?
+
+Process finished with exit code 1
 
 
 class UITheme(Enum):

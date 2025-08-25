@@ -13,7 +13,7 @@ import threading
 import tempfile
 
 # Импортируем логгер
-from logger import logger, logger_ru, logger_en
+from logger import logger
 
 # Проверяем доступность PySide6
 try:
@@ -21,8 +21,8 @@ try:
         QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox,
         QSizePolicy, QMenu, QSystemTrayIcon
     )
-    from PySide6.QtCore import Qt, QTimer, Signal, QObject, QPoint, QEvent
-    from PySide6.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QAction
+    from PySide6.QtCore import Qt, QTimer, Signal, QObject, QEvent
+    from PySide6.QtGui import QCursor, QColor, QAction
     PYSIDE6_AVAILABLE = True
     logger.log_message('pyside6_available', 'SUCCESS')
 except ImportError:
@@ -43,9 +43,7 @@ try:
     import win32api
     import win32con
     import win32gui
-    import win32process
     import ctypes
-    from ctypes import wintypes
 
     # RegisterHotKey действительно доступен
     if hasattr(win32api, 'RegisterHotKey'):
@@ -98,65 +96,32 @@ except ImportError:
     I18N_AVAILABLE = False
     logger.warning("Система интернационализации недоступна")
 
-# Попытка импорта win32api для глобальных горячих клавиш
-try:
-    import win32api
-    import win32con
-    import win32gui
-    import win32process
-    import ctypes
-    from ctypes import wintypes
+# Дополнительные константы для максимально агрессивной работы
+WS_EX_NOACTIVATE = 0x08000000
+WS_EX_TOOLWINDOW = 0x00000080
+WS_EX_APPWINDOW = 0x00040000
+WS_EX_WINDOWEDGE = 0x00000100
 
-    # RegisterHotKey действительно доступен
-    if hasattr(win32api, 'RegisterHotKey'):
-        WIN32_AVAILABLE = True
-        logger.success("win32api доступен для глобальных горячих клавиш")
-        
-        # Дополнительные константы для работы с окнами
-        WS_EX_TOPMOST = 0x0008
-        WS_EX_LAYERED = 0x00080000
-        LWA_ALPHA = 0x00000002
-        LWA_COLORKEY = 0x00000001
-        
-        # Дополнительные константы для максимально агрессивной работы
-        WS_EX_NOACTIVATE = 0x08000000
-        WS_EX_TOOLWINDOW = 0x00000080
-        WS_EX_APPWINDOW = 0x00040000
-        WS_EX_WINDOWEDGE = 0x00000100
-        
-        # Функции для работы с окнами
-        SetWindowLong = ctypes.windll.user32.SetWindowLongW
-        GetWindowLong = ctypes.windll.user32.GetWindowLongW
-        SetLayeredWindowAttributes = ctypes.windll.user32.SetLayeredWindowAttributes
-        
-        # Дополнительные функции для максимально агрессивной работы
-        SetWindowPos = ctypes.windll.user32.SetWindowPos
-        GetWindowRect = ctypes.windll.user32.GetWindowRect
-        GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
-        SetForegroundWindow = ctypes.windll.user32.SetForegroundWindow
-        BringWindowToTop = ctypes.windll.user32.BringWindowToTop
-        IsWindowVisible = ctypes.windll.user32.IsWindowVisible
-        ShowWindow = ctypes.windll.user32.ShowWindow
-        UpdateWindow = ctypes.windll.user32.UpdateWindow
-        
-    else:
-        WIN32_AVAILABLE = False
-        print("ERROR win32api не поддерживает RegisterHotKey")
-except ImportError:
-    WIN32_AVAILABLE = False
-    print("ERROR win32api не установлен")
+# Функции для работы с окнами
+SetWindowLong = ctypes.windll.user32.SetWindowLongW
+GetWindowLong = ctypes.windll.user32.GetWindowLongW
+SetLayeredWindowAttributes = ctypes.windll.user32.SetLayeredWindowAttributes
 
-# Попытка импорта keyboard для глобальных горячих клавиш (резервный)
-try:
-    import keyboard
+# Дополнительные функции для максимально агрессивной работы
+SetWindowPos = ctypes.windll.user32.SetWindowPos
+GetWindowRect = ctypes.windll.user32.GetWindowRect
+GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
+SetForegroundWindow = ctypes.windll.user32.SetForegroundWindow
+BringWindowToTop = ctypes.windll.user32.BringWindowToTop
+IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+ShowWindow = ctypes.windll.user32.ShowWindow
+UpdateWindow = ctypes.windll.user32.UpdateWindow
 
-    KEYBOARD_AVAILABLE = True
-except ImportError:
-    KEYBOARD_AVAILABLE = False
+
 
 # Выводим информацию о доступности
 if not WIN32_AVAILABLE and not KEYBOARD_AVAILABLE:
-    print("WARNING  Библиотеки для глобальных горячих клавиш не установлены.")
+    print("WARNING Библиотеки для глобальных горячих клавиш не установлены.")
     print("TIP Установите: pip install pywin32 keyboard")
 elif WIN32_AVAILABLE:
     print("OK win32api доступен для глобальных горячих клавиш")
@@ -194,7 +159,7 @@ class SingleInstanceApp:
                                 # Процесс не существует, удаляем старый файл блокировки
                                 print(f"TOOL Удаляем старый файл блокировки (PID {pid} не существует)")
                                 os.unlink(lock_path)
-                except:
+                except Exception:
                     # Не удалось прочитать файл, удаляем его
                     os.unlink(lock_path)
 
@@ -832,19 +797,25 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         self.setup_system_tray()
 
         # Таймер для обновления координат
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_coordinates)
-        self.timer.start(16)  # Обновление каждые 16мс (~60 FPS)
+        self.coordinates_timer = QTimer()
+        self.coordinates_timer.timeout.connect(self.update_coordinates)
+        self.coordinates_timer.start(16)  # Обновление каждые 16мс (~60 FPS)
 
         # Таймер для проверки видимости окна в играх
         self.visibility_timer = QTimer()
         self.visibility_timer.timeout.connect(self._safe_check_window_visibility)
-        self.visibility_timer.start(250)  # Проверка каждые 250мс для максимально быстрой реакции
+        self.visibility_timer.start(500)  # Проверка каждые 500мс для стабильности
 
-        # Таймер для агрессивного восстановления окна в играх
-        self.aggressive_timer = QTimer()
-        self.aggressive_timer.timeout.connect(self._aggressive_window_restore)
-        self.aggressive_timer.start(100)  # Проверка каждые 100мс для максимально агрессивного мониторинга
+        # Таймер для проверки и закрытия зависших меню
+        self.menu_cleanup_timer = QTimer()
+        self.menu_cleanup_timer.timeout.connect(self._check_and_close_stale_menus)
+        self.menu_cleanup_timer.start(1000)  # Проверка каждые 1000мс
+        
+        # Таймер для проверки кликов мыши и закрытия меню
+        self.mouse_check_timer = QTimer()
+        self.mouse_check_timer.timeout.connect(self._check_mouse_clicks)
+        self.mouse_check_timer.start(200)  # Проверка каждые 200мс
+        self._last_mouse_state = False
 
         # Windows API таймер точно как в рабочем примере
         self._setup_windows_api_timer()
@@ -860,6 +831,9 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         # Кэш для стилей
         self._style_cache = {}
         self._last_style_key = None
+        
+        # Устанавливаем глобальный обработчик событий для закрытия меню
+        self.installEventFilter(self)
 
         # Позиционирование в правом верхнем углу
         self.position_window()
@@ -1432,6 +1406,14 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
 
     def mousePressEvent(self, event):
         """Обработка нажатий мыши для перетаскивания окна и контекстного меню."""
+        # Закрываем меню при любом клике вне его области
+        if hasattr(self, '_context_menu') and self._context_menu:
+            menu_rect = self._context_menu.geometry()
+            if not menu_rect.contains(event.globalPosition().toPoint()):
+                self._context_menu.close()
+                self._context_menu.deleteLater()
+                self._context_menu = None
+        
         if event.button() == Qt.LeftButton:
             # Проверяем, попали ли мы в кнопку захвата
             if hasattr(self, 'capture_button'):
@@ -1441,10 +1423,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                     self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
                     # При первом клике перезапускаем горячие клавиши если они не работают
                     if (WIN32_AVAILABLE or KEYBOARD_AVAILABLE) and not hasattr(self, '_hotkeys_initialized'):
-                        QTimer.singleShot(100, self.restart_global_hotkeys)
                         self._hotkeys_initialized = True
-                    # Проверка и восстановление горячих клавиш
-                    QTimer.singleShot(200, self._check_and_restore_hotkeys)
                     event.accept()
                 else:
                     # Клик вне кнопки - игнорируем (не сворачиваем игру)
@@ -1453,9 +1432,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 # Если кнопки нет, обрабатываем как обычно
                 self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
                 if (WIN32_AVAILABLE or KEYBOARD_AVAILABLE) and not hasattr(self, '_hotkeys_initialized'):
-                    QTimer.singleShot(100, self.restart_global_hotkeys)
                     self._hotkeys_initialized = True
-                QTimer.singleShot(200, self._check_and_restore_hotkeys)
                 event.accept()
         elif event.button() == Qt.RightButton:
             # Правый клик всегда открывает меню
@@ -1471,8 +1448,6 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         """Обработчик получения фокуса окном."""
         super().focusInEvent(event)
         self._is_window_active = True
-        # Глобальные горячие клавиши при получении фокуса
-        QTimer.singleShot(100, self.restart_global_hotkeys)
 
     def focusOutEvent(self, event):
         """Обработчик потери фокуса окном."""
@@ -1496,8 +1471,6 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         super().hideEvent(event)
         self._should_be_visible = False
         # print("INFO Окно скрыто")
-        # Если окно скрыто не по нашей воле, восстанавливаем его
-        QTimer.singleShot(100, self._on_window_hidden)
         # Закрываем меню при скрытии окна
         if hasattr(self, '_context_menu') and self._context_menu:
             self._context_menu.close()
@@ -1512,7 +1485,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             # Но только если это не наше собственное изменение флагов
             if not self.isVisible() and self._should_be_visible:
                 # Небольшая задержку, чтобы не срабатывать при нашем изменении флагов
-                QTimer.singleShot(200, self._check_and_restore_if_needed)
+                QTimer.singleShot(500, self._check_and_restore_if_needed)
 
     def _check_and_restore_hotkeys(self):
         """Проверяет и восстанавливает горячие клавиши если они не работают."""
@@ -1584,7 +1557,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                     self._context_menu.close()
                     self._context_menu.deleteLater()
                     self._context_menu = None
-                except:
+                except Exception:
                     pass
             
             # Принудительная очистка всех меню
@@ -1592,7 +1565,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 for child in self.findChildren(QMenu):
                     child.close()
                     child.deleteLater()
-            except:
+            except Exception:
                 pass
             
             # Создаем новое меню
@@ -1732,7 +1705,10 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             # print("INFO Контекстное меню создано, показываем...")
             
             # Показываем меню с автоматическим закрытием при клике вне области
-            self._context_menu.exec(pos)
+            self._context_menu.popup(pos)
+            
+            # Подключаем сигнал закрытия меню
+            self._context_menu.aboutToHide.connect(self._on_menu_closed)
             
             # Принудительно поднимаем меню поверх всех окон через Windows API
             if WIN32_AVAILABLE:
@@ -1747,15 +1723,6 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 except Exception as e:
                     pass  # Убираем вывод ошибок в лог
             
-            # Принудительно закрываем меню после выполнения
-            if self._context_menu:
-                self._context_menu.close()
-                self._context_menu.deleteLater()
-                self._context_menu = None
-            
-            # Принудительная очистка после показа меню
-            QTimer.singleShot(100, self._force_cleanup_menus)
-            
             # print("INFO Контекстное меню закрыто")
         except Exception as e:
             print(f"Ошибка показа контекстного меню: {e}")
@@ -1763,133 +1730,50 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             traceback.print_exc()
 
     def _toggle_always_on_top(self):
-        """Переключает режим 'поверх всех окон' с максимально агрессивными методами для игр."""
+        """Переключает режим 'поверх всех окон'."""
         try:
-            # Текущая позицию окна
+            # Сохраняем текущую позицию
             current_pos = self.pos()
-
-            # текущее состояние
+            
+            # Текущее состояние
             is_currently_on_top = bool(self.windowFlags() & Qt.WindowStaysOnTopHint)
 
             if is_currently_on_top:
                 # Отключаем режим "поверх всех окон"
-                self.setWindowFlags(
+                new_flags = (
                     Qt.FramelessWindowHint |
                     Qt.Tool |
                     Qt.WindowSystemMenuHint |
                     Qt.WindowCloseButtonHint
                 )
-                # Убираем атрибут принудительного отображения поверх всех
                 self.setAttribute(Qt.WA_AlwaysStackOnTop, False)
                 print("📌 Окно больше не поверх всех окон")
             else:
-                # Включаем режим "поверх всех окон" с максимальными флагами
-                self.setWindowFlags(
+                # Включаем режим "поверх всех окон"
+                new_flags = (
                     Qt.WindowStaysOnTopHint |
                     Qt.FramelessWindowHint |
                     Qt.Tool |
                     Qt.WindowSystemMenuHint |
-                    Qt.WindowCloseButtonHint |
-                    Qt.X11BypassWindowManagerHint |  # Обходит оконный менеджер
-                    Qt.WindowTransparentForInput  # Прозрачно для ввода
+                    Qt.WindowCloseButtonHint
                 )
-                # Устанавливаем атрибут принудительного отображения поверх всех
                 self.setAttribute(Qt.WA_AlwaysStackOnTop, True)
+                print("📌 Окно закреплено поверх всех окон")
 
-                print("📌 Окно закреплено поверх всех окон с максимальным приоритетом")
-
-            # Принудительно показываем окно в любом случае
+            # Применяем новые флаги
+            self.setWindowFlags(new_flags)
+            
+            # Восстанавливаем позицию и показываем окно
+            self.move(current_pos)
             self.show()
             self.raise_()
-            self.activateWindow()
-
-            # Позиция
-            self.move(current_pos)
-
-            # Дополнительные попытки поднять окно
-            QTimer.singleShot(50, lambda: self.raise_())
-            QTimer.singleShot(100, self._ensure_window_visible)
-            QTimer.singleShot(200, lambda: self.activateWindow())
-
-            # Если включен режим "поверх всех", используем ультра-агрессивные методы
-            if not is_currently_on_top and WIN32_AVAILABLE:
-                QTimer.singleShot(150, self._force_ultra_toggle_topmost)
-                # Запускаем постоянную проверку для игр
-                QTimer.singleShot(200, self._constant_game_check)
 
         except Exception as e:
             print(f"Ошибка переключения режима 'поверх всех окон': {e}")
-            # В случае ошибки принудительно показываем окно
-            self.show()
-            self.raise_()
 
-    def _force_game_toggle_topmost(self):
-        """Максимально агрессивная установка поверх всех через Windows API после переключения режима."""
-        try:
-            if WIN32_AVAILABLE:
-                hwnd = self.winId()
-                if hwnd:
-                    # Устанавливаем расширенные стили окна для максимального приоритета
-                    current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-                    new_style = current_style | WS_EX_TOPMOST | WS_EX_LAYERED
-                    SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
-                    
-                    # Принудительно устанавливаем поверх всех
-                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
-                                          win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
-                    
-                    # Дополнительные попытки через короткие интервалы
-                    for delay in [100, 200, 300, 500]:
-                        QTimer.singleShot(delay, lambda: self._force_game_window_topmost())
-                    
-                    print("GAME Применены максимально агрессивные методы после переключения режима")
-        except Exception as e:
-            print(f"Ошибка расширенных методов Windows API после переключения: {e}")
 
-    def _force_ultra_toggle_topmost(self):
-        """Ультра-агрессивная установка поверх всех через все доступные Windows API методы после переключения режима."""
-        try:
-            if WIN32_AVAILABLE:
-                hwnd = self.winId()
-                if hwnd:
-                    # Устанавливаем максимально агрессивные стили окна
-                    current_style = GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-                    new_style = (current_style | WS_EX_TOPMOST | WS_EX_LAYERED | 
-                                WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW)
-                    SetWindowLong(hwnd, win32con.GWL_EXSTYLE, new_style)
-                    
-                    # Принудительно поднимаем окно через все доступные методы
-                    BringWindowToTop(hwnd)
-                    SetForegroundWindow(hwnd)
-                    
-                    # Принудительно устанавливаем поверх всех
-                    SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
-                                win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
-                    
-                    # Дополнительные попытки через короткие интервалы
-                    for delay in [50, 100, 150, 200, 250, 300]:
-                        QTimer.singleShot(delay, lambda: self._force_ultra_topmost())
-                    
-                    print("GAME Применены ультра-агрессивные методы после переключения режима")
-        except Exception as e:
-            print(f"Ошибка ультра-агрессивных методов Windows API после переключения: {e}")
 
-    def _force_windows_topmost_after_toggle(self):
-        """Принудительная установка поверх всех через Windows API после переключения режима."""
-        try:
-            if WIN32_AVAILABLE:
-                import win32gui
-                import win32con
-                hwnd = self.winId()
-                if hwnd:
-                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
-                                          win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
-                    print("TOOL Windows API применен после переключения режима")
-        except Exception as e:
-            print(f"Ошибка Windows API после переключения: {e}")
+
 
     def setup_system_tray(self):
         """Настраивает системный трей."""
@@ -1904,8 +1788,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             self.tray_icon = QSystemTrayIcon(self)
 
             # простую иконку (красный квадрат с буквой C)
-            from PySide6.QtGui import QPixmap, QPainter, QColor, QFont, QIcon
-            from PySide6.QtCore import QSize
+            from PySide6.QtGui import QPixmap, QPainter, QFont, QIcon
 
             # иконку 16x16 пикселей
             pixmap = QPixmap(16, 16)
@@ -2193,46 +2076,25 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 if not self.isVisible():
                     print("INFO Окно не видимо, восстанавливаем...")
                     self.force_show_window()
-                else:
-                    # Даже если окно видимо, проверяем, что оно действительно поверх всех
-                    if self.windowFlags() & Qt.WindowStaysOnTopHint:
-                        # Дополнительная проверка через Windows API
-                        if WIN32_AVAILABLE:
-                            QTimer.singleShot(100, self._verify_windows_topmost)
         except Exception as e:
             print(f"Ошибка проверки видимости окна: {e}")
 
-    def _verify_windows_topmost(self):
-        """Проверяет и принудительно устанавливает окно поверх всех через Windows API."""
-        try:
-            if WIN32_AVAILABLE:
-                import win32gui
-                import win32con
-                hwnd = self.winId()
-                if hwnd:
-                    # Проверяем текущий Z-order окна
-                    current_hwnd = win32gui.GetWindow(hwnd, win32con.GW_HWNDNEXT)
-                    if current_hwnd != 0:  # Если есть окна поверх нашего
-                        # Принудительно поднимаем окно
-                        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
-                                              win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
-                        print("TOOL Окно принудительно поднято через Windows API")
-        except Exception as e:
-            print(f"Ошибка проверки Windows API: {e}")
+
 
     def _aggressive_window_restore(self):
-        """Рабочие методы восстановления окна для работы в играх."""
+        """Упрощенная проверка и восстановление окна в играх."""
         try:
             # Только если окно должно быть видимым и включен режим "поверх всех"
             if (hasattr(self, '_should_be_visible') and self._should_be_visible and 
                 self.windowFlags() & Qt.WindowStaysOnTopHint):
                 
-                # Используем рабочие методы: Windows API + Layered Window
-                self.force_topmost()
+                # Простая проверка видимости
+                if not self.isVisible():
+                    self.show()
+                    self.raise_()
                             
         except Exception as e:
-            logger.error(f"Ошибка агрессивного восстановления окна: {e}")
+            print(f"Ошибка восстановления окна: {e}")
 
     def _force_game_window_restore(self):
         """Специальный метод для принудительного восстановления окна в играх."""
@@ -2254,9 +2116,8 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                     self.show()
                     self.raise_()
                     
-                    # Дополнительные попытки через короткие интервалы
-                    for delay in [50, 100, 200, 300, 500]:
-                        QTimer.singleShot(delay, lambda: self._force_game_window_topmost())
+                    # Одна попытка через небольшую задержку
+                    QTimer.singleShot(100, self._force_game_window_topmost)
                     
                     print("GAME Применены максимально агрессивные методы восстановления")
                     
@@ -2597,9 +2458,8 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                     self.raise_()
                     self.activateWindow()
                     
-                    # Множественные попытки через очень короткие интервалы
-                    for delay in [25, 50, 75, 100, 150, 200, 250, 300]:
-                        QTimer.singleShot(delay, lambda: self._force_game_window_topmost())
+                    # Одна попытка через небольшую задержку
+                    QTimer.singleShot(100, self._force_game_window_topmost)
                     
                     print("EMERGENCY Применены экстренные методы восстановления окна")
                     
@@ -2639,9 +2499,8 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                                 rect.right - rect.left, rect.bottom - rect.top,
                                 win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE)
                     
-                    # Дополнительные попытки через очень короткие интервалы
-                    for delay in [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
-                        QTimer.singleShot(delay, lambda: self._force_ultra_topmost())
+                    # Одна попытка через небольшую задержку
+                    QTimer.singleShot(100, self._force_ultra_topmost)
                     
                     print("ULTRA Применены ультра-агрессивные методы восстановления")
                     
@@ -2688,32 +2547,30 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             print(f"Ошибка Windows API: {e}")
 
     def _setup_windows_api_timer(self):
-        """ТОЧНАЯ КОПИЯ setup_timer из примера 3."""
+        """Настройка Windows API таймера для поддержания окна поверх всех."""
         if not WIN32_AVAILABLE:
             return
             
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.force_topmost)
-        self.timer.start(100)  # Каждые 100ms
+        # Создаем отдельный таймер для Windows API
+        self.windows_api_timer = QTimer()
+        self.windows_api_timer.timeout.connect(self.force_topmost)
+        self.windows_api_timer.start(100)  # Каждые 100ms
         
-        print("Windows API таймер запущен (точная копия примера 3)")
+        print("Windows API таймер запущен")
 
     def _constant_game_check(self):
-        """Постоянная проверка и восстановление окна в играх каждые 100ms."""
+        """Упрощенная проверка окна в играх."""
         try:
             if (hasattr(self, '_should_be_visible') and self._should_be_visible and 
                 self.windowFlags() & Qt.WindowStaysOnTopHint):
                 
-                # Используем точную копию рабочего метода
-                self.force_topmost()
-                
-                # Планируем следующую проверку
-                QTimer.singleShot(100, self._constant_game_check)
+                # Простая проверка видимости
+                if not self.isVisible():
+                    self.show()
+                    self.raise_()
                 
         except Exception as e:
-            logger.error(f"Ошибка постоянной проверки в играх: {e}")
-            # Даже при ошибке продолжаем проверку
-            QTimer.singleShot(100, self._constant_game_check)
+            print(f"Ошибка проверки в играх: {e}")
 
     def closeEvent(self, event):
         """Обработчик закрытия окна."""
@@ -2726,7 +2583,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                     self._context_menu.close()
                     self._context_menu.deleteLater()
                     self._context_menu = None
-                except:
+                except Exception:
                     pass
             
             # Принудительная очистка всех меню при закрытии
@@ -2734,14 +2591,20 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 for child in self.findChildren(QMenu):
                     child.close()
                     child.deleteLater()
-            except:
+            except Exception:
                 pass
 
             # Таймеры
+            if hasattr(self, 'coordinates_timer'):
+                self.coordinates_timer.stop()
             if hasattr(self, 'visibility_timer'):
                 self.visibility_timer.stop()
-            if hasattr(self, 'timer'):
-                self.timer.stop()
+            if hasattr(self, 'windows_api_timer'):
+                self.windows_api_timer.stop()
+            if hasattr(self, 'menu_cleanup_timer'):
+                self.menu_cleanup_timer.stop()
+            if hasattr(self, 'mouse_check_timer'):
+                self.mouse_check_timer.stop()
 
             # Глобальные горячие клавиши
             if hasattr(self, 'hotkey_manager'):
@@ -2760,8 +2623,6 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             if KEYBOARD_AVAILABLE:
                 try:
                     keyboard.unhook_all()
-                    if hasattr(keyboard, '_listener') and keyboard._listener:
-                        keyboard._listener.stop()
                 except Exception as e:
                     print(f"Ошибка остановки keyboard: {e}")
 
@@ -2794,6 +2655,75 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             import sys
             sys.exit(0)
 
+    def eventFilter(self, obj, event):
+        """Глобальный обработчик событий для закрытия меню при клике вне его области."""
+        if event.type() == QEvent.MouseButtonPress:
+            if hasattr(self, '_context_menu') and self._context_menu and self._context_menu is not None:
+                # Просто закрываем меню при любом клике
+                try:
+                    self._context_menu.close()
+                    self._context_menu.deleteLater()
+                    self._context_menu = None
+                except Exception:
+                    pass
+        return super().eventFilter(obj, event)
+
+    def _on_menu_closed(self):
+        """Обработчик закрытия меню."""
+        try:
+            if hasattr(self, '_context_menu') and self._context_menu:
+                self._context_menu.close()
+                self._context_menu.deleteLater()
+                self._context_menu = None
+        except Exception:
+            pass
+
+    def _check_mouse_clicks(self):
+        """Проверяет клики мыши и закрывает меню при клике вне его области."""
+        try:
+            if hasattr(self, '_context_menu') and self._context_menu and self._context_menu.isVisible():
+                if WIN32_AVAILABLE:
+                    # Проверяем состояние левой кнопки мыши
+                    mouse_pressed = win32gui.GetAsyncKeyState(0x01) & 0x8000
+                    
+                    # Если кнопка была отпущена (переход от нажатого к отпущенному)
+                    if not mouse_pressed and self._last_mouse_state:
+                        # Получаем позицию курсора
+                        cursor_pos = win32gui.GetCursorPos()
+                        
+                        # Получаем позицию и размеры меню
+                        menu_rect = self._context_menu.geometry()
+                        menu_x = menu_rect.x()
+                        menu_y = menu_rect.y()
+                        menu_width = menu_rect.width()
+                        menu_height = menu_rect.height()
+                        
+                        # Проверяем, находится ли курсор вне области меню
+                        if (cursor_pos[0] < menu_x or cursor_pos[0] > menu_x + menu_width or
+                            cursor_pos[1] < menu_y or cursor_pos[1] > menu_y + menu_height):
+                            
+                            # Клик вне меню - закрываем его
+                            self._context_menu.close()
+                            self._context_menu.deleteLater()
+                            self._context_menu = None
+                            QTimer.singleShot(50, self._force_cleanup_menus)
+                    
+                    self._last_mouse_state = mouse_pressed
+        except Exception:
+            pass
+
+    def _check_and_close_stale_menus(self):
+        """Проверяет и закрывает зависшие меню."""
+        try:
+            if hasattr(self, '_context_menu') and self._context_menu:
+                # Проверяем, видимо ли меню
+                if not self._context_menu.isVisible():
+                    self._context_menu.close()
+                    self._context_menu.deleteLater()
+                    self._context_menu = None
+        except Exception:
+            pass
+
     def _force_cleanup_menus(self):
         """Принудительная очистка всех меню."""
         try:
@@ -2807,7 +2737,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             for child in self.findChildren(QMenu):
                 child.close()
                 child.deleteLater()
-        except:
+        except Exception:
             pass
 
     def _cleanup_resources(self):
@@ -2819,10 +2749,14 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             self._last_style_key = None
 
             # Все таймеры
-            if hasattr(self, 'timer'):
-                self.timer.stop()
+            if hasattr(self, 'coordinates_timer'):
+                self.coordinates_timer.stop()
             if hasattr(self, 'visibility_timer'):
                 self.visibility_timer.stop()
+            if hasattr(self, 'windows_api_timer'):
+                self.windows_api_timer.stop()
+            if hasattr(self, 'menu_cleanup_timer'):
+                self.menu_cleanup_timer.stop()
 
             # Ссылки
             self._last_pos = None
@@ -2832,7 +2766,14 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             if KEYBOARD_AVAILABLE:
                 try:
                     keyboard.unhook_all()
-                except:
+                except Exception:
+                    pass
+            
+            # Останавливаем таймер проверки мыши
+            if hasattr(self, 'mouse_check_timer'):
+                try:
+                    self.mouse_check_timer.stop()
+                except Exception:
                     pass
 
         except Exception as e:
@@ -2867,7 +2808,7 @@ def main():
             # Принудительно завершаем процесс
             import os
             os._exit(0)
-        except:
+        except Exception:
             import sys
             sys.exit(0)
 
