@@ -79,7 +79,8 @@ class ContextMenuFixWindow(QWidget):
             Qt.FramelessWindowHint |
             Qt.Tool
         )
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        # Убираем прозрачность чтобы избежать ошибок UpdateLayeredWindowIndirect
+        # self.setAttribute(Qt.WA_TranslucentBackground)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)  # По умолчанию прозрачно
         self.resize(300, 200)
         self.move(100, 100)
@@ -156,7 +157,7 @@ class ContextMenuFixWindow(QWidget):
         """Обработчик нажатий мыши."""
         if event.button() == Qt.RightButton:
             # Правый клик всегда открывает меню
-            self.show_context_menu(event.globalPos())
+            self.show_context_menu(event.globalPosition().toPoint())
         else:
             # Левый клик проверяем режим
             if self._clickable_mode:
@@ -166,13 +167,32 @@ class ContextMenuFixWindow(QWidget):
     
     def show_context_menu(self, pos):
         """Показывает контекстное меню поверх всех окон."""
-        menu = QMenu(self)
+        
+        # Агрессивная очистка старого меню
+        if hasattr(self, '_context_menu') and self._context_menu:
+            try:
+                self._context_menu.close()
+                self._context_menu.deleteLater()
+                self._context_menu = None
+            except:
+                pass
+        
+        # Принудительная очистка всех меню
+        try:
+            for child in self.findChildren(QMenu):
+                child.close()
+                child.deleteLater()
+        except:
+            pass
+        
+        # Создаем новое меню
+        self._context_menu = QMenu(self)
         
         # Делаем меню поверх всех окон
-        menu.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+        self._context_menu.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
         
         # Стили для меню
-        menu.setStyleSheet("""
+        self._context_menu.setStyleSheet("""
             QMenu {
                 background-color: #2d2d2d;
                 border: 1px solid #555;
@@ -199,32 +219,32 @@ class ContextMenuFixWindow(QWidget):
         # Опции меню
         action1 = QAction("Опция 1", self)
         action1.triggered.connect(lambda: print("Опция 1 выбрана"))
-        menu.addAction(action1)
+        self._context_menu.addAction(action1)
         
         action2 = QAction("Опция 2", self)
         action2.triggered.connect(lambda: print("Опция 2 выбрана"))
-        menu.addAction(action2)
+        self._context_menu.addAction(action2)
         
         # Переключение режима кликов
         clickable_status = "ВКЛ" if self._clickable_mode else "ВЫКЛ"
         clickable_text = f"🖱 Режим кликов: {clickable_status}"
         clickable_action = QAction(clickable_text, self)
         clickable_action.triggered.connect(self.toggle_clickable_mode)
-        menu.addAction(clickable_action)
+        self._context_menu.addAction(clickable_action)
         
-        menu.addSeparator()
+        self._context_menu.addSeparator()
         
         exit_action = QAction("Выход", self)
         exit_action.triggered.connect(self.close)
-        menu.addAction(exit_action)
+        self._context_menu.addAction(exit_action)
         
         # Показываем меню
-        menu.exec_(pos)
+        self._context_menu.exec(pos)
         
         # Принудительно поднимаем меню поверх всех окон через Windows API
         if WIN32_AVAILABLE:
             try:
-                menu_hwnd = menu.winId()
+                menu_hwnd = self._context_menu.winId()
                 if menu_hwnd:
                     win32gui.SetWindowPos(
                         menu_hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
@@ -232,8 +252,26 @@ class ContextMenuFixWindow(QWidget):
                         win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE
                     )
             except Exception as e:
-                print(f"Ошибка поднятия меню: {e}")
+                pass  # Убираем вывод ошибок в лог
+        
+        # Принудительная очистка после показа меню
+        QTimer.singleShot(100, self._force_cleanup_menus)
 
+    def _force_cleanup_menus(self):
+        """Принудительная очистка всех меню."""
+        try:
+            # Очищаем текущее меню
+            if hasattr(self, '_context_menu') and self._context_menu:
+                self._context_menu.close()
+                self._context_menu.deleteLater()
+                self._context_menu = None
+            
+            # Очищаем все найденные меню
+            for child in self.findChildren(QMenu):
+                child.close()
+                child.deleteLater()
+        except:
+            pass
 
 def main():
     """Основная функция для тестирования."""

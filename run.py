@@ -804,7 +804,8 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         # Дополнительные настройки для принудительного отображения поверх игр
         self.setAttribute(Qt.WA_AlwaysShowToolTips, True)
         self.setAttribute(Qt.WA_ShowWithoutActivating, False)  # Показывать с активацией
-        self.setAttribute(Qt.WA_TranslucentBackground, False)  # Непрозрачный фон
+        # Убираем прозрачность чтобы избежать ошибок UpdateLayeredWindowIndirect
+        # self.setAttribute(Qt.WA_TranslucentBackground, False)  # Непрозрачный фон
         self.setAttribute(Qt.WA_NoSystemBackground, False)  # Системный фон
         # Полностью прозрачно для кликов по умолчанию
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)  # Прозрачно для кликов
@@ -1479,6 +1480,10 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         self._is_window_active = False
         # Проверка горячих клавиш после потери фокуса
         QTimer.singleShot(500, self._check_and_restore_hotkeys)
+        # Закрываем меню при потере фокуса
+        if hasattr(self, '_context_menu') and self._context_menu:
+            self._context_menu.close()
+            self._force_cleanup_menus()
 
     def showEvent(self, event):
         """Обработчик показа окна."""
@@ -1493,6 +1498,10 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         # print("INFO Окно скрыто")
         # Если окно скрыто не по нашей воле, восстанавливаем его
         QTimer.singleShot(100, self._on_window_hidden)
+        # Закрываем меню при скрытии окна
+        if hasattr(self, '_context_menu') and self._context_menu:
+            self._context_menu.close()
+            self._force_cleanup_menus()
 
     def changeEvent(self, event):
         """Обработчик изменения состояния окна."""
@@ -1568,10 +1577,29 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         """Показывает контекстное меню."""
         try:
             # print("INFO Показываем контекстное меню...")
-            menu = QMenu(self)
+            
+            # Агрессивная очистка старого меню
+            if hasattr(self, '_context_menu') and self._context_menu:
+                try:
+                    self._context_menu.close()
+                    self._context_menu.deleteLater()
+                    self._context_menu = None
+                except:
+                    pass
+            
+            # Принудительная очистка всех меню
+            try:
+                for child in self.findChildren(QMenu):
+                    child.close()
+                    child.deleteLater()
+            except:
+                pass
+            
+            # Создаем новое меню
+            self._context_menu = QMenu(self)
             # Делаем меню поверх всех окон
-            menu.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
-            menu.setStyleSheet("""
+            self._context_menu.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+            self._context_menu.setStyleSheet("""
                 QMenu {
                     background-color: #2d2d2d;
                     border: 1px solid #555;
@@ -1606,14 +1634,14 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 transparency_text = "INFO Прозрачность"
             always_on_top_action = QAction(always_on_top_text, self)
             always_on_top_action.triggered.connect(self._toggle_always_on_top)
-            menu.addAction(always_on_top_action)
+            self._context_menu.addAction(always_on_top_action)
 
             # Прозрачность окна
             transparency_action = QAction(transparency_text, self)
             transparency_action.triggered.connect(self._show_transparency_menu)
-            menu.addAction(transparency_action)
+            self._context_menu.addAction(transparency_action)
 
-            menu.addSeparator()
+            self._context_menu.addSeparator()
 
             # Сбросить позицию окна
             if I18N_AVAILABLE:
@@ -1624,12 +1652,12 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 force_restore_text = "TOOL Принудительно восстановить окно"
             reset_pos_action = QAction(reset_pos_text, self)
             reset_pos_action.triggered.connect(self.position_window)
-            menu.addAction(reset_pos_action)
+            self._context_menu.addAction(reset_pos_action)
 
             # Принудительно восстановить окно (для игр)
             force_restore_action = QAction(force_restore_text, self)
             force_restore_action.triggered.connect(self.force_show_window)
-            menu.addAction(force_restore_action)
+            self._context_menu.addAction(force_restore_action)
 
             # Скрыть/показать окно
             if I18N_AVAILABLE:
@@ -1644,9 +1672,9 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             else:
                 hide_action = QAction(show_text, self)
                 hide_action.triggered.connect(self.show_from_tray)
-            menu.addAction(hide_action)
+            self._context_menu.addAction(hide_action)
 
-            menu.addSeparator()
+            self._context_menu.addSeparator()
 
             # Перезапустить глобальные горячие клавиши
             if WIN32_AVAILABLE or KEYBOARD_AVAILABLE:
@@ -1656,14 +1684,14 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                     restart_hotkeys_text = "🔄 Перезапустить горячие клавиши"
                 restart_hotkeys_action = QAction(restart_hotkeys_text, self)
                 restart_hotkeys_action.triggered.connect(self.restart_global_hotkeys)
-                menu.addAction(restart_hotkeys_action)
+                self._context_menu.addAction(restart_hotkeys_action)
 
             # Переключение режима кликов
             clickable_status = "ВКЛ" if self._clickable_mode else "ВЫКЛ"
             clickable_text = f"🖱 Режим кликов: {clickable_status}"
             clickable_action = QAction(clickable_text, self)
             clickable_action.triggered.connect(self.toggle_clickable_mode)
-            menu.addAction(clickable_action)
+            self._context_menu.addAction(clickable_action)
 
             # Настройки
             if I18N_AVAILABLE:
@@ -1672,14 +1700,14 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 settings_text = "⚙ Настройки"
             settings_action = QAction(settings_text, self)
             settings_action.triggered.connect(self._show_settings)
-            menu.addAction(settings_action)
+            self._context_menu.addAction(settings_action)
 
             # Язык
             if I18N_AVAILABLE:
                 language_text = f"🌐 {get_text('language')}"
                 language_action = QAction(language_text, self)
                 language_action.triggered.connect(self._show_language_menu)
-                menu.addAction(language_action)
+                self._context_menu.addAction(language_action)
 
             # О программе
             if I18N_AVAILABLE:
@@ -1688,9 +1716,9 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 about_text = "ℹ О программе"
             about_action = QAction(about_text, self)
             about_action.triggered.connect(self._show_about)
-            menu.addAction(about_action)
+            self._context_menu.addAction(about_action)
 
-            menu.addSeparator()
+            self._context_menu.addSeparator()
 
             # Выход
             if I18N_AVAILABLE:
@@ -1699,15 +1727,17 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                 exit_text = "🚪 Выход"
             exit_action = QAction(exit_text, self)
             exit_action.triggered.connect(self.close)
-            menu.addAction(exit_action)
+            self._context_menu.addAction(exit_action)
 
             # print("INFO Контекстное меню создано, показываем...")
-            menu.exec(pos)
+            
+            # Показываем меню с автоматическим закрытием при клике вне области
+            self._context_menu.exec(pos)
             
             # Принудительно поднимаем меню поверх всех окон через Windows API
             if WIN32_AVAILABLE:
                 try:
-                    menu_hwnd = menu.winId()
+                    menu_hwnd = self._context_menu.winId()
                     if menu_hwnd:
                         win32gui.SetWindowPos(
                             menu_hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
@@ -1715,7 +1745,16 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                             win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE
                         )
                 except Exception as e:
-                    print(f"Ошибка поднятия меню: {e}")
+                    pass  # Убираем вывод ошибок в лог
+            
+            # Принудительно закрываем меню после выполнения
+            if self._context_menu:
+                self._context_menu.close()
+                self._context_menu.deleteLater()
+                self._context_menu = None
+            
+            # Принудительная очистка после показа меню
+            QTimer.singleShot(100, self._force_cleanup_menus)
             
             # print("INFO Контекстное меню закрыто")
         except Exception as e:
@@ -2062,7 +2101,8 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             )
 
             # Рабочие атрибуты окна
-            self.setAttribute(Qt.WA_TranslucentBackground)
+            # Убираем прозрачность чтобы избежать ошибок UpdateLayeredWindowIndirect
+            # self.setAttribute(Qt.WA_TranslucentBackground)
 
             # Принудительно показываем окно
             self.show()
@@ -2081,13 +2121,14 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                             win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE
                         )
                         
+                        # Убираем Layered Window чтобы избежать ошибок UpdateLayeredWindowIndirect
                         # Метод 2: Layered Window (как в примере 5)
-                        current_style = ctypes.windll.user32.GetWindowLongW(hwnd, win32con.GWL_EXSTYLE)
-                        layered_style = current_style | 0x00080000  # WS_EX_LAYERED
-                        ctypes.windll.user32.SetWindowLongW(hwnd, win32con.GWL_EXSTYLE, layered_style)
+                        # current_style = ctypes.windll.user32.GetWindowLongW(hwnd, win32con.GWL_EXSTYLE)
+                        # layered_style = current_style | 0x00080000  # WS_EX_LAYERED
+                        # ctypes.windll.user32.SetWindowLongW(hwnd, win32con.GWL_EXSTYLE, layered_style)
                         
                         # Устанавливаем прозрачность
-                        ctypes.windll.user32.SetLayeredWindowAttributes(hwnd, 0, 200, 2)  # LWA_ALPHA
+                        # ctypes.windll.user32.SetLayeredWindowAttributes(hwnd, 0, 200, 2)  # LWA_ALPHA
 
                         logger.game("Применены рабочие методы Windows API + Layered Window")
                 except Exception as api_error:
@@ -2679,6 +2720,23 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
         try:
             print("TOOL Закрытие программы...")
 
+            # Удаляем контекстное меню если оно есть
+            if hasattr(self, '_context_menu') and self._context_menu:
+                try:
+                    self._context_menu.close()
+                    self._context_menu.deleteLater()
+                    self._context_menu = None
+                except:
+                    pass
+            
+            # Принудительная очистка всех меню при закрытии
+            try:
+                for child in self.findChildren(QMenu):
+                    child.close()
+                    child.deleteLater()
+            except:
+                pass
+
             # Таймеры
             if hasattr(self, 'visibility_timer'):
                 self.visibility_timer.stop()
@@ -2736,6 +2794,22 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             import sys
             sys.exit(0)
 
+    def _force_cleanup_menus(self):
+        """Принудительная очистка всех меню."""
+        try:
+            # Очищаем текущее меню
+            if hasattr(self, '_context_menu') and self._context_menu:
+                self._context_menu.close()
+                self._context_menu.deleteLater()
+                self._context_menu = None
+            
+            # Очищаем все найденные меню
+            for child in self.findChildren(QMenu):
+                child.close()
+                child.deleteLater()
+        except:
+            pass
+
     def _cleanup_resources(self):
         """Очищает ресурсы для экономии памяти."""
         try:
@@ -2762,7 +2836,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
                     pass
 
         except Exception as e:
-            print(f"Ошибка очистки ресурсов: {e}")
+            pass  # Убираем вывод ошибок в лог
 
 
 def main():
