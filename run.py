@@ -191,7 +191,7 @@ class ColorPickerWorker(QObject):
     def run(self):
         """Выполняет захват цвета."""
         try:
-            color = get_pixel_color_pyautogui(self.x, self.y)
+            color = get_pixel_color_win32(self.x, self.y)
             if color:
                 self.color_picked.emit(self.x, self.y, color)
             else:
@@ -202,16 +202,21 @@ class ColorPickerWorker(QObject):
             self.finished.emit()
 
 
-def get_pixel_color_pyautogui(x: int, y: int):
+def get_pixel_color_win32(x: int, y: int):
     """
-    Получает цвет пикселя с помощью PyAutoGUI (потокобезопасный).
+    Получает цвет пикселя с помощью Win32 API (потокобезопасный).
     """
-    if not PYAUTOGUI_AVAILABLE:
-        return None
     try:
-        return pyautogui.pixel(x, y)
+        import win32gui
+        hdc = win32gui.GetDC(0)
+        pixel = win32gui.GetPixel(hdc, x, y)
+        win32gui.ReleaseDC(0, hdc)
+        r = pixel & 0xff
+        g = (pixel >> 8) & 0xff
+        b = (pixel >> 16) & 0xff
+        return (r, g, b)
     except Exception as e:
-        print(f"Ошибка pyautogui при получении цвета пикселя ({x}, {y}): {e}")
+        print(f"Ошибка win32 при получении цвета пикселя ({x}, {y}): {e}")
         return None
 
 
@@ -1417,30 +1422,29 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             self.frozen = False
             self.capture_btn.setText("CTRL")
             print("Разморожено")
-            return
+        else:
+            # Замораживаем
+            try:
+                x, y = get_cursor_position()
+                color = get_pixel_color_win32(x, y)
 
-        # Замораживаем
-        try:
-            x, y = get_cursor_position()
+                if color:
+                    self.frozen_coords = (x, y)
+                    self.frozen_color = color
+                    self.frozen = True
+                    self.capture_btn.setText("CTRL - Разморозить")
+                    coords = f"({self.frozen_coords[0]}, {self.frozen_coords[1]})"
+                    color_str = f"RGB{self.frozen_color}"
+                    print(f"Заморожено: {coords} - {color_str}")
+                else:
+                    print("Ошибка захвата цвета с помощью Win32")
+                    self.capture_btn.setText("Ошибка!")
 
-            # Создаем рабочего и поток
-            self.thread = QThread()
-            self.worker = ColorPickerWorker(x, y)
-            self.worker.moveToThread(self.thread)
+            except Exception as e:
+                print(f"Ошибка при обработке Ctrl: {e}")
 
-            # Соединяем сигналы
-            self.thread.started.connect(self.worker.run)
-            self.worker.finished.connect(self.thread.quit)
-            self.worker.finished.connect(self.worker.deleteLater)
-            self.thread.finished.connect(self.thread.deleteLater)
-            self.worker.color_picked.connect(self._on_color_picked)
-            self.worker.error_occurred.connect(self._on_picker_error)
-
-            # Запускаем
-            self.thread.start()
-
-        except Exception as e:
-            print(f"Ошибка создания потока для захвата цвета: {e}")
+        # Принудительно обновляем интерфейс
+        self._update_info()
 
     def _on_color_picked(self, x, y, color):
         """Обрабатывает успешный захват цвета из рабочего потока."""
@@ -2846,6 +2850,29 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
 
         except Exception as e:
             pass  # Убираем вывод ошибок в лог
+
+    def _update_info(self):
+        """Обновляет отображаемую информацию (координаты и цвет)."""
+        if self.frozen:
+            x, y = self.frozen_coords
+            color = self.frozen_color
+        else:
+            try:
+                x, y = get_cursor_position()
+                color = get_pixel_color_win32(x, y)
+            except Exception:
+                x, y = 0, 0
+                color = (0, 0, 0)
+
+        if color:
+            hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+            self.coords_label.setText(f"({x}, {y})")
+            self.hex_label.setText(hex_color.upper())
+            self.color_preview.setStyleSheet(f"background-color: {hex_color};")
+        else:
+            self.coords_label.setText(f"({x}, {y})")
+            self.hex_label.setText("N/A")
+            self.color_preview.setStyleSheet("background-color: black;")
 
 
 def main():
