@@ -38,6 +38,15 @@ except ImportError:
     KEYBOARD_AVAILABLE = False
     logger.error("keyboard не найден")
 
+# Проверяем доступность pyautogui
+try:
+    import pyautogui
+    PYAUTOGUI_AVAILABLE = True
+    logger.log_message('pyautogui_available', 'SUCCESS')
+except ImportError:
+    PYAUTOGUI_AVAILABLE = False
+    logger.error("pyautogui не найден")
+
 # Проверяем доступность pywin32
 try:
     import win32api
@@ -112,49 +121,60 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class SingleInstanceApp(metaclass=Singleton):
+class SingleInstanceApp:
     """Класс для обеспечения единственного экземпляра приложения."""
-    pass
 
+    def __init__(self, app_name="DesktopColorPicker"):
+        self.app_name = app_name
+        self.lock_file = None
 
-class LockFileManager:
-    """Менеджер для lock-файла."""
-    def __init__(self, filename="color_picker.lock"):
-        # Используем временную директорию для lock-файла
-        self.lock_file = os.path.join(tempfile.gettempdir(), filename)
-        self._acquired = False
-
-    def acquire(self):
-        """Захватывает lock-файл."""
+    def is_already_running(self):
+        """Проверяет, запущено ли уже приложение."""
         try:
-            if os.path.exists(self.lock_file):
-                print("WARNING Lock-файл уже существует. Возможно, приложение уже запущено.")
-                return False
-            with open(self.lock_file, "w") as f:
+            # Путь к файлу блокировки
+            lock_path = os.path.join(tempfile.gettempdir(), f"{self.app_name}.lock")
+
+            # Существует ли файл блокировки
+            if os.path.exists(lock_path):
+                # Читаем PID из файла
+                try:
+                    with open(lock_path, 'r') as f:
+                        pid_str = f.read().strip()
+                        if pid_str.isdigit():
+                            pid = int(pid_str)
+                            # Существует ли процесс с этим PID
+                            try:
+                                os.kill(pid, 0)  # существование процесса
+                                print(f"WARNING Приложение уже запущено (PID: {pid})")
+                                return True
+                            except OSError:
+                                # Процесс не существует, удаляем старый файл блокировки
+                                print(f"TOOL Удаляем старый файл блокировки (PID {pid} не существует)")
+                                os.unlink(lock_path)
+                except Exception:
+                    # Не удалось прочитать файл, удаляем его
+                    os.unlink(lock_path)
+
+            # Новый файл блокировки
+            with open(lock_path, 'w') as f:
                 f.write(str(os.getpid()))
-            self._acquired = True
-            print(f"OK Lock-файл создан: {self.lock_file}")
-            return True
-        except IOError as e:
-            print(f"ERROR Не удалось создать lock-файл: {e}")
-            return False
 
-    def release(self):
-        """Освобождает lock-файл."""
-        if self._acquired and os.path.exists(self.lock_file):
-            try:
-                os.remove(self.lock_file)
-                self._acquired = False
-                print(f"OK Lock-файл удален: {self.lock_file}")
-            except IOError as e:
-                print(f"ERROR Не удалось удалить lock-файл: {e}")
+            self.lock_file = lock_path
+            print(f"OK Файл блокировки создан: {lock_path}")
+            return False  # Приложение не запущено
 
-    def __enter__(self):
-        self.acquire()
-        return self
+        except Exception as e:
+            print(f"ERROR Ошибка проверки единственного экземпляра: {e}")
+            return False  # В случае ошибки позволяем запуск
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.release()
+    def cleanup(self):
+        """Очищает блокировку при завершении."""
+        try:
+            if self.lock_file and os.path.exists(self.lock_file):
+                os.unlink(self.lock_file)
+                print(f"OK Файл блокировки удален: {self.lock_file}")
+        except Exception as e:
+            print(f"WARNING Ошибка удаления файла блокировки: {e}")
 
 
 class ColorPickerWorker(QObject):
@@ -171,7 +191,7 @@ class ColorPickerWorker(QObject):
     def run(self):
         """Выполняет захват цвета."""
         try:
-            color = get_pixel_color_qt(self.x, self.y)
+            color = get_pixel_color_pyautogui(self.x, self.y)
             if color:
                 self.color_picked.emit(self.x, self.y, color)
             else:
@@ -180,6 +200,19 @@ class ColorPickerWorker(QObject):
             self.error_occurred.emit(f"Ошибка в потоке: {e}")
         finally:
             self.finished.emit()
+
+
+def get_pixel_color_pyautogui(x: int, y: int):
+    """
+    Получает цвет пикселя с помощью PyAutoGUI (потокобезопасный).
+    """
+    if not PYAUTOGUI_AVAILABLE:
+        return None
+    try:
+        return pyautogui.pixel(x, y)
+    except Exception as e:
+        print(f"Ошибка pyautogui при получении цвета пикселя ({x}, {y}): {e}")
+        return None
 
 
 def get_pixel_color_qt(x: int, y: int):
@@ -2871,7 +2904,11 @@ def main():
     print("   - TIP Эта версия исправлена и работает стабильно")
     print("   - C - переключить режим кликов (по умолчанию ВЫКЛ)")
 
-    return app.exec()
+    try:
+        app.exec()
+    finally:
+        single_instance.cleanup()
+        print("Приложение завершено.")
 
 
 if __name__ == "__main__":
