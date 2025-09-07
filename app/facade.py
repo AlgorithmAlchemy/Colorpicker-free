@@ -5,8 +5,9 @@
 """
 
 from typing import Optional, Tuple
-from .presentation.dialogs.simple_color_picker import get_simple_color, SimpleColorPicker
-from .data.config import get_config, use_light_theme, use_alpha
+
+from .data.config import get_config
+from .presentation.dialogs.simple_color_picker import SimpleColorPicker
 
 # Глобальный экземпляр пикера
 _instance: Optional[SimpleColorPicker] = None

@@ -15,10 +15,12 @@ class Ui_ColorPicker(object):
     def setupUi(self, ColorPicker):
         ColorPicker.setObjectName("ColorPicker")
         ColorPicker.resize(400, 300)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(ColorPicker.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            ColorPicker.sizePolicy().hasHeightForWidth())
         ColorPicker.setSizePolicy(sizePolicy)
         ColorPicker.setMinimumSize(QtCore.QSize(400, 300))
         ColorPicker.setMaximumSize(QtCore.QSize(400, 300))
@@ -87,13 +89,16 @@ class Ui_ColorPicker(object):
         self.horizontalLayout_2.setContentsMargins(10, 0, 10, 0)
         self.horizontalLayout_2.setSpacing(5)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        spacerItem = QtWidgets.QSpacerItem(16, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            16, 0, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.window_title = QtWidgets.QLabel(self.title_bar)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.window_title.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.window_title.sizePolicy().hasHeightForWidth())
         self.window_title.setSizePolicy(sizePolicy)
         self.window_title.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.window_title.setStyleSheet("QLabel{\n"
@@ -118,7 +123,8 @@ class Ui_ColorPicker(object):
                                     "}")
         self.exit_btn.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/img/exit.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/img/exit.ico"),
+                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.exit_btn.setIcon(icon)
         self.exit_btn.setIconSize(QtCore.QSize(12, 12))
         self.exit_btn.setObjectName("exit_btn")
@@ -244,17 +250,20 @@ class Ui_ColorPicker(object):
                                      "")
         self.color_vis.setText("")
         self.color_vis.setObjectName("color_vis")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.color_vis)
+        self.formLayout.setWidget(
+            0, QtWidgets.QFormLayout.FieldRole, self.color_vis)
         self.lastcolor_vis = QtWidgets.QLabel(self.editfields)
         self.lastcolor_vis.setMinimumSize(QtCore.QSize(0, 24))
         self.lastcolor_vis.setStyleSheet("/* ALL CHANGES HERE WILL BE OVERWRITTEN */;\n"
                                          "background-color: rgb(0, 0, 0);")
         self.lastcolor_vis.setText("")
         self.lastcolor_vis.setObjectName("lastcolor_vis")
-        self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.lastcolor_vis)
+        self.formLayout.setWidget(
+            1, QtWidgets.QFormLayout.FieldRole, self.lastcolor_vis)
         self.lbl_red = QtWidgets.QLabel(self.editfields)
         self.lbl_red.setObjectName("lbl_red")
-        self.formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.lbl_red)
+        self.formLayout.setWidget(
+            2, QtWidgets.QFormLayout.LabelRole, self.lbl_red)
         self.red = QtWidgets.QLineEdit(self.editfields)
         self.red.setAlignment(QtCore.Qt.AlignCenter)
         self.red.setClearButtonEnabled(False)
@@ -262,22 +271,27 @@ class Ui_ColorPicker(object):
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.red)
         self.lbl_green = QtWidgets.QLabel(self.editfields)
         self.lbl_green.setObjectName("lbl_green")
-        self.formLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.lbl_green)
+        self.formLayout.setWidget(
+            3, QtWidgets.QFormLayout.LabelRole, self.lbl_green)
         self.green = QtWidgets.QLineEdit(self.editfields)
         self.green.setAlignment(QtCore.Qt.AlignCenter)
         self.green.setObjectName("green")
-        self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.green)
+        self.formLayout.setWidget(
+            3, QtWidgets.QFormLayout.FieldRole, self.green)
         self.lbl_blue = QtWidgets.QLabel(self.editfields)
         self.lbl_blue.setObjectName("lbl_blue")
-        self.formLayout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.lbl_blue)
+        self.formLayout.setWidget(
+            4, QtWidgets.QFormLayout.LabelRole, self.lbl_blue)
         self.blue = QtWidgets.QLineEdit(self.editfields)
         self.blue.setAlignment(QtCore.Qt.AlignCenter)
         self.blue.setObjectName("blue")
-        self.formLayout.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.blue)
+        self.formLayout.setWidget(
+            4, QtWidgets.QFormLayout.FieldRole, self.blue)
         self.lbl_hex = QtWidgets.QLabel(self.editfields)
         self.lbl_hex.setStyleSheet("font-size: 14pt;")
         self.lbl_hex.setObjectName("lbl_hex")
-        self.formLayout.setWidget(5, QtWidgets.QFormLayout.LabelRole, self.lbl_hex)
+        self.formLayout.setWidget(
+            5, QtWidgets.QFormLayout.LabelRole, self.lbl_hex)
         self.hex = QtWidgets.QLineEdit(self.editfields)
         self.hex.setAlignment(QtCore.Qt.AlignCenter)
         self.hex.setObjectName("hex")
@@ -285,10 +299,12 @@ class Ui_ColorPicker(object):
         self.horizontalLayout.addWidget(self.editfields)
         self.verticalLayout_3.addWidget(self.content_bar)
         self.button_bar = QtWidgets.QFrame(self.drop_shadow_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.button_bar.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.button_bar.sizePolicy().hasHeightForWidth())
         self.button_bar.setSizePolicy(sizePolicy)
         self.button_bar.setStyleSheet("QFrame{\n"
                                       "background-color: #1d1d1d;\n"
@@ -303,7 +319,8 @@ class Ui_ColorPicker(object):
         self.horizontalLayout_3.setSpacing(10)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.buttonBox = QtWidgets.QDialogButtonBox(self.button_bar)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setCenterButtons(True)
         self.buttonBox.setObjectName("buttonBox")
         self.horizontalLayout_3.addWidget(self.buttonBox)
@@ -322,7 +339,8 @@ class Ui_ColorPicker(object):
     def retranslateUi(self, ColorPicker):
         _translate = QtCore.QCoreApplication.translate
         ColorPicker.setWindowTitle(_translate("ColorPicker", "Form"))
-        self.window_title.setText(_translate("ColorPicker", "<strong>COLOR</strong> PICKER"))
+        self.window_title.setText(_translate(
+            "ColorPicker", "<strong>COLOR</strong> PICKER"))
         self.lbl_red.setText(_translate("ColorPicker", "R"))
         self.red.setText(_translate("ColorPicker", "255"))
         self.lbl_green.setText(_translate("ColorPicker", "G"))

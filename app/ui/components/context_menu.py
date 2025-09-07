@@ -4,20 +4,21 @@
 Предоставляет доступ к настройкам и дополнительным функциям.
 """
 
-from typing import Optional, Callable
+from typing import Optional
+
+from PySide6.QtCore import Qt, QObject
+from PySide6.QtGui import QIcon, QFont, QAction
 from PySide6.QtWidgets import (
     QMenu, QWidget, QCheckBox, QVBoxLayout,
     QHBoxLayout, QLabel, QSpinBox, QComboBox, QDialog,
     QPushButton, QGroupBox, QTabWidget, QSlider, QFrame
 )
-from PySide6.QtCore import Qt, Signal, QObject
-from PySide6.QtGui import QIcon, QFont, QAction
 
+from .ui_updater import update_all_widgets
 from ...core.settings_manager import (
     get_settings_manager, SettingsKeys, get_setting, set_setting
 )
 from ...i18n import get_text, Language
-from .ui_updater import update_all_widgets
 
 
 class ContextMenu(QMenu):

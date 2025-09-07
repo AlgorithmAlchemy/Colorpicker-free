@@ -25,13 +25,38 @@ __version__ = "2.0.0"
 __author__ = 'nlfmt'
 __maintainer__ = 'nlfmt'
 
-# Основные классы и функции
-from .presentation.dialogs.simple_color_picker import get_simple_color, SimpleColorPicker
+# Конфигурация
+from .data.config import (
+    use_alpha,
+    use_light_theme,
+    get_config,
+    set_config,
+    ColorPickerConfig
+)
 from .facade import get_color, reset_instance
 from .presentation.dialogs.enhanced_color_picker import EnhancedColorPicker, get_enhanced_color
-from .presentation.dialogs.screen_color_picker import ScreenColorPicker, pick_screen_color
 from .presentation.dialogs.legacy_color_picker import ColorPicker, getColor, useAlpha, useLightTheme
-
+# Функции из legacy_color_picker.py для обратной совместимости
+from .presentation.dialogs.legacy_color_picker import (
+    hsv2rgb as hsv2rgb_legacy,
+    rgb2hsv as rgb2hsv_legacy,
+    rgb2hex as rgb2hex_legacy,
+    hex2rgb as hex2rgb_legacy,
+    hex2hsv as hex2hsv_legacy,
+    hsv2hex as hsv2hex_legacy
+)
+from .presentation.dialogs.screen_color_picker import ScreenColorPicker, pick_screen_color
+# Основные классы и функции
+from .presentation.dialogs.simple_color_picker import get_simple_color, SimpleColorPicker
+# Типы данных
+from .shared.types import (
+    RGBColor,
+    RGBAColor,
+    HSVColor,
+    HSVAColor,
+    HexColor,
+    Color
+)
 # Утилиты для работы с цветами
 from .shared.utils.color_utils import (
     hsv2rgb,
@@ -42,35 +67,6 @@ from .shared.utils.color_utils import (
     hsv2hex,
     clamp_rgb,
     safe_int
-)
-
-# Функции из legacy_color_picker.py для обратной совместимости
-from .presentation.dialogs.legacy_color_picker import (
-    hsv2rgb as hsv2rgb_legacy,
-    rgb2hsv as rgb2hsv_legacy,
-    rgb2hex as rgb2hex_legacy,
-    hex2rgb as hex2rgb_legacy,
-    hex2hsv as hex2hsv_legacy,
-    hsv2hex as hsv2hex_legacy
-)
-
-# Конфигурация
-from .data.config import (
-    use_alpha,
-    use_light_theme,
-    get_config,
-    set_config,
-    ColorPickerConfig
-)
-
-# Типы данных
-from .shared.types import (
-    RGBColor,
-    RGBAColor,
-    HSVColor,
-    HSVAColor,
-    HexColor,
-    Color
 )
 
 # Обратная совместимость

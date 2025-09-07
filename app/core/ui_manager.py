@@ -4,9 +4,10 @@
 Менеджер для управления UI компонентами и их взаимодействием.
 """
 
-from typing import Optional, Dict, Any, Callable, List
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Optional, Dict, Callable, List
+
 from qtpy.QtCore import QObject, QPoint, Qt
 
 try:
@@ -20,9 +21,7 @@ from qtpy.QtWidgets import (
     QApplication, QDialog, QGraphicsDropShadowEffect
 )
 
-from ..shared.types import RGBColor, RGBAColor, HSVColor
-from ..shared.exceptions import UIError
-
+from ..shared.types import RGBColor
 
 
 class UITheme(Enum):

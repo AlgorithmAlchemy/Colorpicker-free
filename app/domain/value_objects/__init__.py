@@ -4,9 +4,9 @@
 Содержит объекты-значения, представляющие концепции домена.
 """
 
-from .rgb_color import RGBColor
-from .hsv_color import HSVColor
 from .hex_color import HexColor
+from .hsv_color import HSVColor
+from .rgb_color import RGBColor
 
 __all__ = [
     'RGBColor',

@@ -8,6 +8,7 @@
 import sys
 import time
 from typing import Tuple, Optional, Callable
+
 from qtpy.QtCore import Qt, QTimer, QRect, QPoint
 from qtpy.QtGui import QPixmap, QScreen, QCursor, QPainter, QPen, QColor, QKeySequence
 from qtpy.QtWidgets import (
@@ -17,7 +18,6 @@ from qtpy.QtWidgets import (
 
 from ...shared.types import RGBColor
 from ...shared.utils.color_utils import rgb2hex
-from ...shared.exceptions import UIError
 
 
 class ScreenColorPicker(QWidget):

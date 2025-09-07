@@ -4,9 +4,10 @@
 Базовая версия для обеспечения работоспособности.
 """
 
-from qtpy.QtWidgets import QApplication, QColorDialog
-from qtpy.QtGui import QColor
 from typing import Optional, Tuple
+
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import QApplication, QColorDialog
 
 from ...shared.types import RGBColor
 

@@ -5,6 +5,7 @@
 """
 
 from typing import Optional
+
 from qtpy.QtCore import Qt, QTimer
 from qtpy.QtGui import QKeySequence
 from qtpy.QtWidgets import (
@@ -12,12 +13,10 @@ from qtpy.QtWidgets import (
     QPushButton, QTabWidget, QWidget, QShortcut, QLabel, QFrame
 )
 
-from .color_picker import ColorPicker
 from .screen_color_picker import ScreenColorPicker
-from ...shared.types import RGBColor, RGBAColor
-from ...shared.utils.color_utils import rgb2hex, hex2rgb
-from ...data.config import get_config
 from ...application.services.color_state_service import ColorStateService
+from ...shared.types import RGBColor
+from ...shared.utils.color_utils import rgb2hex
 
 
 class EnhancedColorPicker(QDialog):

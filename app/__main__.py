@@ -10,7 +10,6 @@
 
 import argparse
 import sys
-from typing import Optional
 
 # Автоматическая установка зависимостей при первом запуске
 try:

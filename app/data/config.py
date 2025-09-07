@@ -4,9 +4,10 @@
 Управление настройками цветового пикера.
 """
 
-from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Dict, Any
+
 from ..shared.exceptions import ConfigurationError
 
 

@@ -5,6 +5,7 @@
 """
 
 from dataclasses import dataclass
+
 from ...shared.exceptions import ColorFormatError
 
 

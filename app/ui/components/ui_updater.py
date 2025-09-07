@@ -4,11 +4,8 @@
 Предоставляет функции для обновления всех текстовых элементов интерфейса.
 """
 
-from typing import Optional
-from PySide6.QtWidgets import QWidget, QApplication
 from PySide6.QtCore import QObject, Signal
-
-from ...i18n import get_text
+from PySide6.QtWidgets import QWidget, QApplication
 
 
 class UIUpdater(QObject):

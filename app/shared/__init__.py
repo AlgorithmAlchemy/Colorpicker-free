@@ -4,6 +4,9 @@
 Содержит утилиты, константы и исключения, используемые во всем приложении.
 """
 
+from .compat import *
+# Импортируем все из подмодулей
+from .constants import *
 from .exceptions import (
     AppError,
     ColorFormatError,
@@ -13,12 +16,8 @@ from .exceptions import (
     DatabaseError,
     ExternalServiceError
 )
-
-# Импортируем все из подмодулей
-from .constants import *
 from .types import *
 from .validators import *
-from .compat import *
 
 __all__ = [
     'AppError',

@@ -4,14 +4,14 @@
 Современная система событий для управления взаимодействием между компонентами.
 """
 
-from typing import Dict, List, Callable, Any, Optional, Union
-from dataclasses import dataclass, field
-from enum import Enum
-from collections import defaultdict
 import asyncio
 import threading
 import time
+from collections import defaultdict
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Callable, Any, Optional
 
 
 class EventPriority(Enum):

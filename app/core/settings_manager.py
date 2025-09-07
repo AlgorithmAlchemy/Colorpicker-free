@@ -4,11 +4,10 @@
 Сохраняет пользовательские настройки в локальной базе данных.
 """
 
-import sqlite3
 import json
-import os
-from typing import Any, Dict, Optional, Union
+import sqlite3
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class SettingsManager:

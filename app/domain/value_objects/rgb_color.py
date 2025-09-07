@@ -6,6 +6,7 @@
 
 from dataclasses import dataclass
 from typing import Tuple
+
 from ...shared.exceptions import ColorFormatError
 
 

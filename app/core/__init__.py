@@ -5,9 +5,9 @@
 """
 
 from .color_engine import ColorEngine
-from .ui_manager import UIManager
 from .event_system import EventSystem
 from .settings_manager import SettingsManager
+from .ui_manager import UIManager
 
 __all__ = [
     'ColorEngine',
