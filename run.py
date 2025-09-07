@@ -21,7 +21,7 @@ try:
         QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QMessageBox,
         QSizePolicy, QMenu, QSystemTrayIcon
     )
-    from PySide6.QtCore import Qt, QTimer, Signal, QObject, QEvent
+    from PySide6.QtCore import Qt, QTimer, Signal, QObject, QEvent, QThread
     from PySide6.QtGui import QCursor, QColor, QAction
     PYSIDE6_AVAILABLE = True
     logger.log_message('pyside6_available', 'SUCCESS')
@@ -102,87 +102,84 @@ WS_EX_TOOLWINDOW = 0x00000080
 WS_EX_APPWINDOW = 0x00040000
 WS_EX_WINDOWEDGE = 0x00000100
 
-# Функции для работы с окнами
-SetWindowLong = ctypes.windll.user32.SetWindowLongW
-GetWindowLong = ctypes.windll.user32.GetWindowLongW
-SetLayeredWindowAttributes = ctypes.windll.user32.SetLayeredWindowAttributes
 
-# Дополнительные функции для максимально агрессивной работы
-SetWindowPos = ctypes.windll.user32.SetWindowPos
-GetWindowRect = ctypes.windll.user32.GetWindowRect
-GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
-SetForegroundWindow = ctypes.windll.user32.SetForegroundWindow
-BringWindowToTop = ctypes.windll.user32.BringWindowToTop
-IsWindowVisible = ctypes.windll.user32.IsWindowVisible
-ShowWindow = ctypes.windll.user32.ShowWindow
-UpdateWindow = ctypes.windll.user32.UpdateWindow
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
 
-
-# Выводим информацию о доступности
-if not WIN32_AVAILABLE and not KEYBOARD_AVAILABLE:
-    print("WARNING Библиотеки для глобальных горячих клавиш не установлены.")
-    print("TIP Установите: pip install pywin32 keyboard")
-elif WIN32_AVAILABLE:
-    print("OK win32api доступен для глобальных горячих клавиш")
-elif KEYBOARD_AVAILABLE:
-    print("OK keyboard доступен для глобальных горячих клавиш")
-
-
-class SingleInstanceApp:
+class SingleInstanceApp(metaclass=Singleton):
     """Класс для обеспечения единственного экземпляра приложения."""
+    pass
 
-    def __init__(self, app_name="DesktopColorPicker"):
-        self.app_name = app_name
-        self.lock_file = None
 
-    def is_already_running(self):
-        """Проверяет, запущено ли уже приложение."""
+class LockFileManager:
+    """Менеджер для lock-файла."""
+    def __init__(self, filename="color_picker.lock"):
+        # Используем временную директорию для lock-файла
+        self.lock_file = os.path.join(tempfile.gettempdir(), filename)
+        self._acquired = False
+
+    def acquire(self):
+        """Захватывает lock-файл."""
         try:
-            # Путь к файлу блокировки
-            lock_path = os.path.join(tempfile.gettempdir(), f"{self.app_name}.lock")
-
-            # Существует ли файл блокировки
-            if os.path.exists(lock_path):
-                # Читаем PID из файла
-                try:
-                    with open(lock_path, 'r') as f:
-                        pid_str = f.read().strip()
-                        if pid_str.isdigit():
-                            pid = int(pid_str)
-                            # Существует ли процесс с этим PID
-                            try:
-                                os.kill(pid, 0)  # существование процесса
-                                print(f"WARNING Приложение уже запущено (PID: {pid})")
-                                return True
-                            except OSError:
-                                # Процесс не существует, удаляем старый файл блокировки
-                                print(f"TOOL Удаляем старый файл блокировки (PID {pid} не существует)")
-                                os.unlink(lock_path)
-                except Exception:
-                    # Не удалось прочитать файл, удаляем его
-                    os.unlink(lock_path)
-
-            # Новый файл блокировки
-            with open(lock_path, 'w') as f:
+            if os.path.exists(self.lock_file):
+                print("WARNING Lock-файл уже существует. Возможно, приложение уже запущено.")
+                return False
+            with open(self.lock_file, "w") as f:
                 f.write(str(os.getpid()))
+            self._acquired = True
+            print(f"OK Lock-файл создан: {self.lock_file}")
+            return True
+        except IOError as e:
+            print(f"ERROR Не удалось создать lock-файл: {e}")
+            return False
 
-            self.lock_file = lock_path
-            print(f"OK Файл блокировки создан: {lock_path}")
-            return False  # Приложение не запущено
+    def release(self):
+        """Освобождает lock-файл."""
+        if self._acquired and os.path.exists(self.lock_file):
+            try:
+                os.remove(self.lock_file)
+                self._acquired = False
+                print(f"OK Lock-файл удален: {self.lock_file}")
+            except IOError as e:
+                print(f"ERROR Не удалось удалить lock-файл: {e}")
 
-        except Exception as e:
-            print(f"ERROR Ошибка проверки единственного экземпляра: {e}")
-            return False  # В случае ошибки позволяем запуск
+    def __enter__(self):
+        self.acquire()
+        return self
 
-    def cleanup(self):
-        """Очищает блокировку при завершении."""
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
+
+
+class ColorPickerWorker(QObject):
+    """Рабочий для захвата цвета в отдельном потоке."""
+    color_picked = Signal(int, int, tuple)
+    error_occurred = Signal(str)
+    finished = Signal()
+
+    def __init__(self, x, y):
+        super().__init__()
+        self.x = x
+        self.y = y
+
+    def run(self):
+        """Выполняет захват цвета."""
         try:
-            if self.lock_file and os.path.exists(self.lock_file):
-                os.unlink(self.lock_file)
-                print(f"OK Файл блокировки удален: {self.lock_file}")
+            color = get_pixel_color_qt(self.x, self.y)
+            if color:
+                self.color_picked.emit(self.x, self.y, color)
+            else:
+                self.error_occurred.emit("Не удалось получить цвет пикселя")
         except Exception as e:
-            print(f"WARNING Ошибка удаления файла блокировки: {e}")
+            self.error_occurred.emit(f"Ошибка в потоке: {e}")
+        finally:
+            self.finished.emit()
 
 
 def get_pixel_color_qt(x: int, y: int):
@@ -376,6 +373,20 @@ class Win32HotkeyManager(QObject if PYSIDE6_AVAILABLE else object):
         if self._running:
             print("TARGET Escape нажат! (win32api)")
             self.escape_pressed.emit()
+
+    def bring_to_front(self):
+        """Более агрессивный способ поднять окно на передний план."""
+        try:
+            if WIN32_AVAILABLE:
+                hwnd = self._hwnd
+                if hwnd:
+                    win32gui.SetWindowPos(
+                        hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                        win32con.SWP_NOMOVE | win32con.SWP_NOSIZE |
+                        win32con.SWP_SHOWWINDOW | win32con.SWP_NOACTIVATE
+                    )
+        except Exception:
+            pass  # Убираем вывод ошибок в лог
 
 
 class KeyboardHotkeyManager(QObject):
@@ -1368,29 +1379,53 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
 
     def _handle_ctrl_press(self):
         """Обрабатывает нажатие Ctrl (локальное или глобальное)."""
-        print("TOOL _handle_ctrl_press вызван! frozen =", self.frozen)
-        if not self.frozen:
-            # Замораживаем текущие координаты и цвет
-            try:
-                x, y = get_cursor_position()
-                self.frozen_coords = (x, y)
-                color = get_pixel_color_qt(x, y)
-                if color:
-                    self.frozen_color = color
-                else:
-                    self.frozen_color = (0, 0, 0)
-                self.frozen = True
-                self.capture_btn.setText("CTRL - Разморозить")
-                coords = f"({self.frozen_coords[0]}, {self.frozen_coords[1]})"
-                color = f"RGB{self.frozen_color}"
-                print(f"Заморожено: {coords} - {color}")
-            except Exception as e:
-                print(f"Ошибка заморозки: {e}")
-        else:
+        if self.frozen:
             # Размораживаем
             self.frozen = False
             self.capture_btn.setText("CTRL")
             print("Разморожено")
+            return
+
+        # Замораживаем
+        try:
+            x, y = get_cursor_position()
+
+            # Создаем рабочего и поток
+            self.thread = QThread()
+            self.worker = ColorPickerWorker(x, y)
+            self.worker.moveToThread(self.thread)
+
+            # Соединяем сигналы
+            self.thread.started.connect(self.worker.run)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker.color_picked.connect(self._on_color_picked)
+            self.worker.error_occurred.connect(self._on_picker_error)
+
+            # Запускаем
+            self.thread.start()
+
+        except Exception as e:
+            print(f"Ошибка создания потока для захвата цвета: {e}")
+
+    def _on_color_picked(self, x, y, color):
+        """Обрабатывает успешный захват цвета из рабочего потока."""
+        self.frozen_coords = (x, y)
+        self.frozen_color = color
+        self.frozen = True
+        self.capture_btn.setText("CTRL - Разморозить")
+        coords = f"({self.frozen_coords[0]}, {self.frozen_coords[1]})"
+        color_str = f"RGB{self.frozen_color}"
+        print(f"Заморожено: {coords} - {color_str}")
+
+    def _on_picker_error(self, error_message):
+        """Обрабатывает ошибку захвата цвета из рабочего потока."""
+        print(f"Ошибка захвата цвета: {error_message}")
+        self.frozen_coords = get_cursor_position()
+        self.frozen_color = (0, 0, 0)
+        self.frozen = True # Все равно замораживаем, но с черным цветом
+        self.capture_btn.setText("Ошибка!")
 
     def keyPressEvent(self, event):
         """Обработка нажатий клавиш (локальные горячие клавиши)."""
@@ -2573,7 +2608,7 @@ class FixedDesktopColorPicker(QWidget if PYSIDE6_AVAILABLE else object):
             print(f"Ошибка проверки в играх: {e}")
 
     def closeEvent(self, event):
-        """Обработчик закрытия окна."""
+        """Обработка закрытия окна."""
         try:
             print("TOOL Закрытие программы...")
 
