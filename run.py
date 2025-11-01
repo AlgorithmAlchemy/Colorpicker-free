@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
 # Импортируем логгер
 from logger import logger
 
-# Проверяем доступность PySide6
 try:
     PYSIDE6_AVAILABLE = True
     logger.log_message('pyside6_available', 'SUCCESS')
@@ -25,7 +24,6 @@ except ImportError:
     PYSIDE6_AVAILABLE = False
     logger.error("PySide6 не найден")
 
-# Проверяем доступность keyboard
 try:
     import keyboard
 
