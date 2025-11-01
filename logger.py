@@ -4,9 +4,6 @@ from datetime import datetime
 
 
 class ColoredLogger:
-    """Логгер с цветной разкраской, временем и поддержкой русского/английского языков."""
-
-    # ANSI цвета для Windows
     COLORS = {
         'RESET': '\033[0m',
         'BLACK': '\033[30m',
@@ -29,7 +26,6 @@ class ColoredLogger:
         'UNDERLINE': '\033[4m'
     }
 
-    # Цвета для разных типов сообщений
     MESSAGE_COLORS = {
         'ERROR': 'BRIGHT_RED',
         'WARNING': 'BRIGHT_YELLOW',
@@ -45,7 +41,6 @@ class ColoredLogger:
         'DEFAULT': 'WHITE'
     }
 
-    # Сообщения на русском и английском
     MESSAGES = {
         'ru': {
             'pyside6_available': 'PySide6 доступен',
@@ -133,7 +128,6 @@ class ColoredLogger:
         self.show_colors = True
         self.language = language
 
-        # Проверяем поддержку цветов в Windows
         if platform.system() == 'Windows':
             try:
                 import colorama
@@ -145,32 +139,27 @@ class ColoredLogger:
             self.windows_colors = False
 
     def _get_color(self, color_name):
-        """Получает ANSI код цвета."""
         if not self.show_colors:
             return ''
         return self.COLORS.get(color_name, '')
 
     def _get_message_color(self, message_type):
-        """Определяет цвет для типа сообщения."""
         for key, color in self.MESSAGE_COLORS.items():
             if key in message_type.upper():
                 return self._get_color(color)
         return self._get_color('DEFAULT')
 
     def _format_time(self):
-        """Форматирует текущее время."""
         if not self.show_time:
             return ''
         return f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] "
 
     def get_message(self, key, **kwargs):
-        """Получает сообщение на текущем языке."""
         messages = self.MESSAGES.get(self.language, self.MESSAGES['en'])
         message = messages.get(key, key)
         return message.format(**kwargs) if kwargs else message
 
     def log(self, message, message_type='INFO'):
-        """Основной метод логирования."""
         if not self.enabled:
             return
 
@@ -182,7 +171,6 @@ class ColoredLogger:
         print(formatted_message)
 
     def log_message(self, key, message_type='INFO', **kwargs):
-        """Логирование с автоматическим переводом."""
         message = self.get_message(key, **kwargs)
         self.log(message, message_type)
 
@@ -231,9 +219,7 @@ class ColoredLogger:
         self.log(message, 'EMERGENCY')
 
 
-# Создаем глобальные экземпляры логгеров
 logger_ru = ColoredLogger('ru')
 logger_en = ColoredLogger('en')
 
-# По умолчанию используем русский
 logger = logger_ru

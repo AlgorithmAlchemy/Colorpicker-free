@@ -12,7 +12,7 @@ from pathlib import Path
 
 def run_command(command: list[str], description: str) -> bool:
     """Выполняет команду и обрабатывает ошибки."""
-    print(f"🔄 {description}...")
+    print(f"{description}...")
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
         print(f"OK {description} завершено успешно")
