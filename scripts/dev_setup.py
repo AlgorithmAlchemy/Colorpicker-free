@@ -64,7 +64,6 @@ print("  isort colorpicker/              # Сортировка импортов
 print("  flake8 colorpicker/             # Проверка стиля кода")
 print("  mypy colorpicker/               # Проверка типов")
 print("  python -m colorpicker           # Запуск цветового пикера")
-else:
 print("\nERROR Настройка завершена с ошибками")
 sys.exit(1)
 

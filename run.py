@@ -2612,14 +2612,11 @@ def _force_cleanup_menus(self):
 
 
 def _cleanup_resources(self):
-    """Очищает ресурсы для экономии памяти."""
     try:
-        # Кэш стилей
         if hasattr(self, '_style_cache'):
             self._style_cache.clear()
         self._last_style_key = None
 
-        # Все таймеры
         if hasattr(self, 'coordinates_timer'):
             self.coordinates_timer.stop()
         if hasattr(self, 'visibility_timer'):
@@ -2640,7 +2637,6 @@ def _cleanup_resources(self):
             except Exception:
                 pass
 
-        # Останавливаем таймер проверки мыши
         if hasattr(self, 'mouse_check_timer'):
             try:
                 self.mouse_check_timer.stop()
@@ -2648,7 +2644,7 @@ def _cleanup_resources(self):
                 pass
 
     except Exception as e:
-        pass  # Убираем вывод ошибок в лог
+        pass
 
 
 def _check_hotkeys_periodically(self):
